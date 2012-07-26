@@ -1,0 +1,617 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Marty <martijn.ruijzendaal@gmail.com>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-07-01 10:03+0200\n"
+"PO-Revision-Date: 2012-07-01 12:03+0200\n"
+"Last-Translator: Marty <martijn.ruijzendaal@gmail.com>\n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: SA.py:123
+msgid ""
+"Your OS is not Windows32 and not Linux2, could you PM me the next output?\n"
+"\n"
+"\n"
+msgstr ""
+"Your OS is not Windows32 and not Linux2, could you PM me the next output?\n"
+"\n"
+"\n"
+
+#: SA.py:211
+#, python-format
+msgid "%s is not defined yet, SORRY!"
+msgstr "%s is not defined yet, SORRY!"
+
+#: SA.py:308
+msgid "First Run"
+msgstr "First Run"
+
+#: SA.py:308
+msgid ""
+"Hi there! It seems this is your first time to run StudioAndroid!\n"
+"Please note this tool still has a long way to go,\n"
+" and I need testers and reporters...\n"
+" So please publish your LOG!"
+msgstr ""
+"Hi there! It seems this is your first time to run StudioAndroid!\n"
+"Please note this tool still has a long way to go,\n"
+" and I need testers and reporters...\n"
+" So please publish your LOG!"
+
+#: SA.py:330
+msgid "OS = "
+msgstr "OS = "
+
+#: SA.py:331
+msgid "Cores = "
+msgstr "Cores = "
+
+#: SA.py:332
+msgid "Home = "
+msgstr "Home = "
+
+#: SA.py:333
+msgid "ScriptDir = "
+msgstr "ScriptDir = "
+
+#: SA.py:334
+msgid "File = "
+msgstr "File = "
+
+#: SA.py:356
+msgid "Options"
+msgstr "Options"
+
+#: SA.py:361
+msgid "Check the log"
+msgstr "Check the log"
+
+#: SA.py:365
+msgid "Changelog"
+msgstr "Changelog"
+
+#: SA.py:369
+msgid "Help"
+msgstr "Help"
+
+#: SA.py:373
+msgid "Update"
+msgstr "Update"
+
+#: SA.py:377
+msgid "Restart"
+msgstr "Restart"
+
+#: SA.py:381
+msgid "Debug"
+msgstr "Debug"
+
+#: SA.py:385
+msgid "Report a bug"
+msgstr "Report a bug"
+
+#: SA.py:403
+msgid "Utilities"
+msgstr "Utilities"
+
+#: SA.py:410
+msgid "Clean Workspace"
+msgstr "Clean Workspace"
+
+#: SA.py:414
+msgid "Install Utilities"
+msgstr "Install Utilities"
+
+#: SA.py:418
+msgid "CopieFrom"
+msgstr "CopieFrom"
+
+#: SA.py:422
+msgid "Resize"
+msgstr "Resize"
+
+#: SA.py:426
+msgid "Batch Theme"
+msgstr "Batch Theme"
+
+#: SA.py:430 SA.py:1597 SA.py:1611
+msgid "Optimize Images"
+msgstr "Optimize Images"
+
+#: SA.py:439
+msgid "Development"
+msgstr "Development"
+
+#: SA.py:448
+msgid "Prepare Building"
+msgstr "Prepare Building"
+
+#: SA.py:452 SA.py:1479
+msgid "Build from Source"
+msgstr "Build from Source"
+
+#: SA.py:456
+msgid "Build Kernel"
+msgstr "Build Kernel"
+
+#: SA.py:460
+msgid "Add Governor"
+msgstr "Add Governor"
+
+#: SA.py:464
+msgid "Install Android-SDK"
+msgstr "Install Android-SDK"
+
+#: SA.py:468
+msgid "Install Java JDK"
+msgstr "Install Java JDK"
+
+#: SA.py:472
+msgid "Binary port a ROM"
+msgstr "Binary port a ROM"
+
+#: SA.py:488
+msgid "(De)Compile"
+msgstr "(De)Compile"
+
+#: SA.py:492
+msgid "Extract/Repackage"
+msgstr "Extract/Repackage"
+
+#: SA.py:496
+msgid "Sign APK"
+msgstr "Sign APK"
+
+#: SA.py:500
+msgid "Zipalign APK"
+msgstr "Zipalign APK"
+
+#: SA.py:504
+msgid "Install APK"
+msgstr "Install APK"
+
+#: SA.py:513
+msgid "Advanced"
+msgstr "Advanced"
+
+#: SA.py:520
+msgid "(Bak)Smali"
+msgstr "(Bak)Smali"
+
+#: SA.py:524
+msgid "ODEX"
+msgstr "ODEX"
+
+#: SA.py:528
+msgid "DE-ODEX"
+msgstr "DE-ODEX"
+
+#: SA.py:532
+msgid "Aroma Menu"
+msgstr "Aroma Menu"
+
+#: SA.py:616
+msgid ""
+"Sorry, windows does not support PATH modifications from cmd...\n"
+"Instead, I will open up a site for you"
+msgstr ""
+"Sorry, windows does not support PATH modifications from cmd...\n"
+"Instead, I will open up a site for you"
+
+#: SA.py:617
+msgid "That site contains a HOWTO on adding a directory to the PATH."
+msgstr "That site contains a HOWTO on adding a directory to the PATH."
+
+#: SA.py:618
+msgid "Add this directory: "
+msgstr "Add this directory: "
+
+#: SA.py:623
+msgid ""
+"\n"
+" Options: [n] NVM  [1] Open link"
+msgstr ""
+"\n"
+" Options: [n] NVM  [1] Open link"
+
+#: SA.py:640
+msgid ""
+"Hey there!\n"
+" Please select the tools you want to install.\n"
+"ImageMagick is needed for all image tools I included!"
+msgstr ""
+"Hey there!\n"
+" Please select the tools you want to install.\n"
+"ImageMagick is needed for all image tools I included!"
+
+#: SA.py:668
+msgid "ALL!"
+msgstr "ALL!"
+
+#: SA.py:675 SA.py:1803
+msgid "Install"
+msgstr "Install"
+
+#: SA.py:683
+msgid "Install Utils"
+msgstr "Install Utils"
+
+#: SA.py:697
+msgid "Copying files FROM "
+msgstr "Copying files FROM "
+
+#: SA.py:701 SA.py:2091
+#, python-format
+msgid "Copying %s to %s"
+msgstr "Copying %s to %s"
+
+#: SA.py:707 SA.py:762
+msgid "CopyFrom"
+msgstr "CopyFrom"
+
+#: SA.py:712
+msgid ""
+"This tool copies files existing in a directory FROM an other directory.\n"
+"\t\t\tCan be handy for porting themes and such\n"
+"\n"
+"Make sure both directories have the same structure!\n"
+"\n"
+"\n"
+msgstr ""
+"This tool copies files existing in a directory FROM an other directory.\n"
+"\t\t\tCan be handy for porting themes and such\n"
+"\n"
+"Make sure both directories have the same structure!\n"
+"\n"
+"\n"
+
+#: SA.py:731
+msgid "Enter the directory you want to copy the files TO"
+msgstr "Enter the directory you want to copy the files TO"
+
+#: SA.py:739
+msgid "Enter the directory you want to copy the files FROM"
+msgstr "Enter the directory you want to copy the files FROM"
+
+#: SA.py:751
+msgid "Enter the extension of the files you want to copy"
+msgstr "Enter the extension of the files you want to copy"
+
+#: SA.py:773 SA.py:784
+msgid "Start resizing"
+msgstr "Start resizing"
+
+#: SA.py:868
+#, python-format
+msgid "Resize percentage is %s"
+msgstr "Resize percentage is %s"
+
+#: SA.py:895
+msgid "Resized"
+msgstr "Resized"
+
+#: SA.py:895
+msgid "You can find the resized images in Resized"
+msgstr "You can find the resized images in Resized"
+
+#: SA.py:916
+msgid "Enter the resize percentage 0-100 %"
+msgstr "Enter the resize percentage 0-100 %"
+
+#: SA.py:922 SA.py:953
+msgid "Enter the directory containing the images"
+msgstr "Enter the directory containing the images"
+
+#: SA.py:931
+msgid "Easy resizing using ..DPI values"
+msgstr "Easy resizing using ..DPI values"
+
+#: SA.py:939 SA.py:967
+msgid "Give the DPI of the images"
+msgstr "Give the DPI of the images"
+
+#: SA.py:945
+msgid "Give the Resized DPI"
+msgstr "Give the Resized DPI"
+
+#: SA.py:959
+msgid "Resize an APK using DPI values"
+msgstr "Resize an APK using DPI values"
+
+#: SA.py:982
+msgid "Choose the APK"
+msgstr "Choose the APK"
+
+#: SA.py:986
+msgid "Enter the directory containing the APK"
+msgstr "Enter the directory containing the APK"
+
+#: SA.py:1027
+msgid "Place the images you want to theme inside "
+msgstr "Place the images you want to theme inside "
+
+#: SA.py:1040
+msgid "Enter the RED value (0-100)"
+msgstr "Enter the RED value (0-100)"
+
+#: SA.py:1046
+msgid "Enter the GREEN value (0-100)"
+msgstr "Enter the GREEN value (0-100)"
+
+#: SA.py:1052
+msgid "Enter the BLUE value (0-100)"
+msgstr "Enter the BLUE value (0-100)"
+
+#: SA.py:1058
+msgid "Show Color"
+msgstr "Show Color"
+
+#: SA.py:1071
+msgid "Start theming!"
+msgstr "Start theming!"
+
+#: SA.py:1086
+msgid "Please check the terminal for further progress."
+msgstr "Please check the terminal for further progress."
+
+#: SA.py:1246
+msgid ""
+"You need this option before you can build.\n"
+"Please select your OS..."
+msgstr ""
+"You need this option before you can build.\n"
+"Please select your OS..."
+
+#: SA.py:1283
+msgid ""
+"\n"
+"\n"
+" Downloading SDK installer!\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+" Downloading SDK installer!\n"
+"\n"
+
+#: SA.py:1299
+msgid ""
+"\n"
+"\n"
+"\n"
+" A popup will show. This is the SDK installer, configure it!\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+" A popup will show. This is the SDK installer, configure it!\n"
+"\n"
+"\n"
+
+#: SA.py:1337
+msgid ""
+" does not exist!\n"
+"Press SYNC instead."
+msgstr ""
+" does not exist!\n"
+"Press SYNC instead."
+
+#: SA.py:1410
+msgid ""
+"You can choose a specific device in the top bar.\n"
+"\n"
+msgstr ""
+"You can choose a specific device in the top bar.\n"
+"\n"
+
+#: SA.py:1415
+msgid "Choose the OS you want to build:"
+msgstr "Choose the OS you want to build:"
+
+#: SA.py:1446 SA.py:1464
+msgid "Force sync"
+msgstr "Force sync"
+
+#: SA.py:1449 SA.py:1467
+msgid "Be quiet!"
+msgstr "Be quiet!"
+
+#: SA.py:1452 SA.py:1470
+msgid "Sync local only"
+msgstr "Sync local only"
+
+#: SA.py:1455 SA.py:1473
+#, python-format
+msgid "Custom number of parallel jobs: %s"
+msgstr "Custom number of parallel jobs: %s"
+
+#: SA.py:1458
+msgid "Build (Only when synced)"
+msgstr "Build (Only when synced)"
+
+#: SA.py:1566
+msgid "Start (De)Compiling"
+msgstr "Start (De)Compiling"
+
+#: SA.py:1597
+msgid "Successfully optimized images"
+msgstr "Successfully optimized images"
+
+#: SA.py:1599
+msgid "Closed, no files selected"
+msgstr "Closed, no files selected"
+
+#: SA.py:1607
+msgid "Choose Images and Optimize"
+msgstr "Choose Images and Optimize"
+
+#: SA.py:1697
+msgid "Choose the key you want to sign with:"
+msgstr "Choose the key you want to sign with:"
+
+#: SA.py:1751
+msgid "Choose the APKs you want to zipalign"
+msgstr "Choose the APKs you want to zipalign"
+
+#: SA.py:1762
+msgid "Zipalign"
+msgstr "Zipalign"
+
+#: SA.py:1776
+msgid ""
+"\n"
+" Waiting for device to connect via ADB...\n"
+"\n"
+msgstr ""
+"\n"
+" Waiting for device to connect via ADB...\n"
+"\n"
+
+#: SA.py:1784
+msgid "The Android SDK is not installed. Do you want to install it now?\n"
+msgstr "The Android SDK is not installed. Do you want to install it now?\n"
+
+#: SA.py:1792
+msgid "Choose the APKs you want to install"
+msgstr "Choose the APKs you want to install"
+
+#: SA.py:1818 SA.py:1833
+msgid "No smali folder selected!"
+msgstr "No smali folder selected!"
+
+#: SA.py:1829
+#, python-format
+msgid "Baksmaling %s to %s with %s"
+msgstr "Baksmaling %s to %s with %s"
+
+#: SA.py:1845
+#, python-format
+msgid "Smaling %s into %s with %s"
+msgstr "Smaling %s into %s with %s"
+
+#: SA.py:1850
+#, python-format
+msgid "Choose a DEX file from %s to BakSmali:"
+msgstr "Choose a DEX file from %s to BakSmali:"
+
+#: SA.py:1864
+msgid "Choose a Smali folder to BakSmali:"
+msgstr "Choose a Smali folder to BakSmali:"
+
+#: SA.py:1884
+msgid "Choose a custom API Level:"
+msgstr "Choose a custom API Level:"
+
+#: SA.py:1914
+#, python-format
+msgid "Deodexing %s"
+msgstr "Deodexing %s"
+
+#: SA.py:1930 SA.py:2002
+msgid ""
+"\n"
+"\n"
+"Deodexing done!\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"Deodexing done!\n"
+"\n"
+
+#: SA.py:1931 SA.py:2003
+msgid "Done!"
+msgstr "Done!"
+
+#: SA.py:1953
+msgid "Start deodex"
+msgstr "Start deodex"
+
+#: SA.py:1959 SA.py:2029
+#, python-format
+msgid "No file inside %s!"
+msgstr "No file inside %s!"
+
+#: SA.py:1963 SA.py:2033
+#, python-format
+msgid "Paste your ROMs update inside %s"
+msgstr "Paste your ROMs update inside %s"
+
+#: SA.py:1967
+msgid "Choose a custom API level (default = 14)"
+msgstr "Choose a custom API level (default = 14)"
+
+#: SA.py:1970 SA.py:2036
+msgid "Done"
+msgstr "Done"
+
+#: SA.py:1997
+#, python-format
+msgid "Odexing %s"
+msgstr "Odexing %s"
+
+#: SA.py:2023
+msgid "Start Odex"
+msgstr "Start Odex"
+
+#: SA.py:2081
+msgid "Info"
+msgstr "Info"
+
+#: SA.py:2081
+#, python-format
+msgid ""
+"Choose a ROM you want to port to your device with version %s.\n"
+"\n"
+" Version of your BASE: %s\n"
+"Version of the ROM you want to port: %s"
+msgstr ""
+"Choose a ROM you want to port to your device with version %s.\n"
+"\n"
+" Version of your BASE: %s\n"
+"Version of the ROM you want to port: %s"
+
+#: SA.py:2085
+#, python-format
+msgid "Removing %s"
+msgstr "Removing %s"
+
+#: SA.py:2124
+msgid "Choose ROM you want to port to:"
+msgstr "Choose ROM you want to port to:"
+
+#: SA.py:2128
+msgid "Choose the ROM you want to port"
+msgstr "Choose the ROM you want to port"
+
+#: SA.py:2133
+msgid "Start porting"
+msgstr "Start porting"
+
+#: SA.py:2136
+msgid "Binary port"
+msgstr "Binary port"
+
+#: SA.py:2175
+msgid "Delete log"
+msgstr "Delete log"
+
+#: SA.py:2196
+msgid ""
+"The log content has been copied to the clipboardPlease paste it in the "
+"website that will be opened now!"
+msgstr ""
+"The log content has been copied to the clipboardPlease paste it in the "
+"website that will be opened now!"

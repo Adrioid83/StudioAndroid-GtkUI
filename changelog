@@ -1,0 +1,73 @@
+This is the changelog for the StudioAndroid GUI.
+
+==Alpha 12==
+-Utility tab: everything defined
+-Development tab: not defined::
+                  --Build Kernel
+                  --Add governor
+-APK Tab: everything defined
+-Advanced tab:	not defined::
+                --Aroma menu
+
+
+==Alpha 14==
+Updates:
+	Translations
+	Batch Theme now has scrollbars
+	Resize now has FileChoosers
+	Optimize Images Defined with FileChoosers
+	CopyFrom now has FileChoosers
+	Included Compile.py into StudioAndroid (Lets you compile any python script)
+	New images
+	New Devices added
+	Zipalign APK Fixed
+
+==Alpha 15==
+Updates:
+	Batch Theme now fully works, no strange colors anymore!
+	Removed unnecessary utilities
+	Removed BuildKernel.
+		It's just to advanced to inlude, and we don't wat XDA to get spammed with stock kernels built by my tool.
+	Added AddGovernor
+		Does NOT work yet, I'm working on it.
+	Quick fix on ImageMagick installation
+	Fix (?) on install Utilities for Windows (NO EXE YET!)
+	Device fix
+
+==Alpha16==
+Updates:
+	ResizeAPK Fully working, waiting for sign job (?)
+	NewTranslation.py removed, included the TUTORIAL in the StudioAndroid post @XDA
+	Permissions bug fixed (Utils weren't working anymore)
+
+==Alpha17==
+Updates:
+	AddGovernor completed (?) for 6 governors
+		Please test if you are building a kernel, with and without my tool please!
+	Permissions now really fixed
+	Upgraded BakSmali with a filechooser
+
+==Alpha18==
+Updates:
+	SDK fix, should work on all platforms now.
+	Some small things the user won't see
+
+==Beta1==
+-Utility tab: everything defined
+-Development tab: everything defined
+-APK Tab: everything defined
+-Advanced tab:	--Aroma menu
+	Bugs: ReCompiling on Windows (aapt error)
+	Tasklist:
+		Make everything more comfortable in use
+		Add optimize images inside APK
+		Finish BinaryPort
+		Support [De]Odexing for single apps (not selecting a complete ROM)
+		When every single bug is fixed, AromaMenu will get defined.
+		When everything is done, and builds get weekly, I will make an Windows Installer, Mac PKG and Linux Debian package.
+
+
+
+I will switch to BETAs when every option is defined
+Feature requests are always welcome :)
+Also, if you want to contribute, don't hestitate to contact me!

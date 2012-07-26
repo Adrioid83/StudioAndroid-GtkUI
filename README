@@ -1,0 +1,29 @@
+Welcome to StudioAndroid
+I hope you like it!
+
+If you encounter ANY problem, please click "Options > Report Bug" in StudioAndroid.
+Thanks
+
+If you have some free time, please suggest some ideas!
+
+If you have experience in Python, you can contribute!
+Contact me if so!
+
+
+
+HOW TO RUN
+[Easy]
+-Linux: double-click "StudioLinux"
+-Windows: double-click "StudioWindows.exe" [Not frequent updated]
+
+[Hard but tech]
+-Linux: open terminal, type "python " and drag SA.py into the terminal. press enter.
+-Windows: Right-click SA.py, Open with > Python
+
+
+HOW TO COMPILE (TECH):
+-Make sure you have Python installed
+-Run SA.py in python
+-"Advanced > Compile to Exe"
+-"Start Compiling"
+-When compiled, please send me your SA-Compiled!
