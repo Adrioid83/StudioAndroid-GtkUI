@@ -66,6 +66,11 @@ Updates:
 		When every single bug is fixed, AromaMenu will get defined.
 		When everything is done, and builds get weekly, I will make an Windows Installer, Mac PKG and Linux Debian package.
 
+==Beta2==
+	External output is now copied to the log too
+	Fixed the bugs related to switching ^^
+	Windows PyInstaller compile fix
+
 
 
 I will switch to BETAs when every option is defined

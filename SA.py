@@ -1,7 +1,7 @@
 
 # IMPORTS
 from __future__ import division
-import os, sys, platform
+import os, sys, platform, commands
 import gtk, pygtk
 pygtk.require('2.0')
 import shutil
@@ -10,7 +10,7 @@ import webbrowser, urllib, urllib2
 import random
 import time
 import zipfile, tarfile
-import threading, multiprocessing
+import threading, multiprocessing, subprocess
 import gettext, locale
 from Source.SourceP500 import *
 from Source.SourceMaguro import *
@@ -120,6 +120,12 @@ class Logger(object):
 	self.log.flush()
 
 sys.stdout = Logger()
+
+def SystemLog(cmd):
+	if Debug == True:
+		print(commands.getoutput(cmd))
+	elif Debug == False:
+		os.system(cmd)
 
 # OS Determination
 
@@ -621,7 +627,7 @@ def Utils():
 				os.mkdir(os.path.join(Home, "bin"))
 			Copy()
 			if button10.get_active():
-				os.system("sudo apt-get install imagemagick")
+				SystemLog("sudo apt-get install imagemagick")
 		if OS == 'Win':
 			NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
@@ -882,7 +888,7 @@ def Resize():
 					os.makedirs(os.path.join(DstDir, Sub))
 				print("%s -> %s" %(Image, DstFile))
 				if Debug == True: print("convert %s -resize %s %s" % (Image, Perc, DstFile))
-				os.system("convert %s -resize %s %s" % (Image, Perc, DstFile))
+				SystemLog("convert %s -resize %s %s" % (Image, Perc, DstFile))
 			if ApkResize.get_active():
 				FinDstDir = os.path.join(ScriptDir, "Resized")
 				if os.path.exists(FinDstDir):
@@ -1017,7 +1023,6 @@ def Theme():
 		Green = int(str(GreenScale.get_value()).split('.')[0])
 		Blue = int(str(BlueScale.get_value()).split('.')[0])
 		Clr = RGBToHTMLColor((Red, Green, Blue))
-		print Clr
 	def StartTheming(cmd):
 		StockRed = RedScale.get_value()
 		StockBlue = BlueScale.get_value()
@@ -1028,14 +1033,13 @@ def Theme():
 		Blue = int(str(BlueScale.get_value()).split('.')[0])
 		Clr = RGBToHTMLColor((Red, Green, Blue))
 		SrcDir = os.path.join(ScriptDir, "Theme")
-		os.system("mkdir -p " + SrcDir)
+		SystemLog("mkdir -p " + SrcDir)
+		print(Clr)
 		for Image in find_files(SrcDir, "*.png"):
 			Image1 = str(Image)
-			print Clr
-
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
-			os.system('convert %s -colorspace gray %s' %(Image1, Image1) )
-			os.system('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
+			SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
+			SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
 	ThemeWindow = window	
 	SrcDir = os.path.join(ScriptDir, "Theme")
@@ -1114,7 +1118,7 @@ def Theme():
 def PrepareBuilding():
 	def Prepare(cmd):
 		NewDialog("Info", _("Please check the terminal for further progress."))
-		os.system("""sudo add-apt-repository ppa:fkrull/deadsnakes
+		SystemLog("""sudo add-apt-repository ppa:fkrull/deadsnakes
 sudo apt-get update &
 sudo apt-get upgrade &
 sudo apt-get install python2.5 &
@@ -1250,19 +1254,19 @@ echo '-----BEGIN PGP PUBLIC KEY BLOCK-----
     -----END PGP PUBLIC KEY BLOCK-----' > ~/gpgimport
 gpg --import ~/gpgimport
 rm ~/gpgimport""")
-		os.system("""sudo apt-get install git-core gnupg flex bison gperf build-essential \
+		SystemLog("""sudo apt-get install git-core gnupg flex bison gperf build-essential \
 zip curl zlib1g-dev libc6-dev tofrodos python-markdown \
 libxml2-utils xsltproc x11proto-core-dev libgl1-mesa-dev libx11-dev""")
 		if Button64.get_active():
-			os.system("""sudo apt-get install lib32ncurses5-dev ia32-libs lib32readline5-dev lib32z-dev g++-multilib mingw32""")
+			SystemLog("""sudo apt-get install lib32ncurses5-dev ia32-libs lib32readline5-dev lib32z-dev g++-multilib mingw32""")
 		if Button32.get_active():
-			os.system("sudo apt-get install libncurses5-dev libreadline6-dev")
+			SystemLog("sudo apt-get install libncurses5-dev libreadline6-dev")
 		if Button1010.get_active():
-			os.system("sudo ln -s /usr/lib32/mesa/libGL.so.1 /usr/lib32/mesa/libGL.so")
+			SystemLog("sudo ln -s /usr/lib32/mesa/libGL.so.1 /usr/lib32/mesa/libGL.so")
 		if Button1110.get_active():
-			os.system("sudo apt-get install libx11-dev:i386")
+			SystemLog("sudo apt-get install libx11-dev:i386")
 		if Button1204.get_active():
-			os.system("""sudo apt-get install libncurses5-dev:i386 libx11-dev:i386 libreadline6-dev:i386 libgl1-mesa-dev:i386 \
+			SystemLog("""sudo apt-get install libncurses5-dev:i386 libx11-dev:i386 libreadline6-dev:i386 libgl1-mesa-dev:i386 \
 g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i386""")
 		KillPage("cmd", box)
 
@@ -1312,7 +1316,7 @@ g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i3
 def SDK():
 	if OS == 'Win':
 		urllib.urlretrieve('http://dl.google.com/android/installer_r18-windows.exe', os.path.join(Home, 'SDK.exe'))
-		os.system("start %s" % os.path.join(Home, 'SDK.exe'))
+		SystemLog("start %s" % os.path.join(Home, 'SDK.exe'))
 	else:
 		if OS == 'Mac':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-macosx.zip', os.path.join(Home, 'SDK.zip'))
@@ -1327,13 +1331,13 @@ def SDK():
 			if not os.path.isdir(file):
 				os.chmod(file, 0755)
 		os.chdir(os.path.join(sdkdir, "tools"))
-		os.system("./android &")
+		SystemLog("./android &")
 
 
 
 def JDK():
 	if OS == 'Lin':
-		os.system('gksudo "apt-get -y install openjdk-7-jdk"')
+		SystemLog('gksudo "apt-get -y install openjdk-7-jdk"')
 	else:
 		Web.open('http://www.oracle.com/technetwork/java/javase/downloads/jdk-7u4-downloads-1591156.html')
 
@@ -1360,7 +1364,7 @@ def BuildSource():
 		print >>open(os.path.join(ScriptDir, "Source", "repocmd"), "w"), repocmd
 		print >>open(os.path.join(ScriptDir, "Source", "syncswitches"), "w"), switches
 		
-		os.system(os.path.join(ScriptDir, "Source", "Build.sh") + ' sync')
+		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + ' sync')
 		StartBuild("cmd")
 	def StartBuild(cmd):
 		if not os.path.exists(os.path.join(SourceDir, ".repo")):
@@ -1412,7 +1416,7 @@ def BuildSource():
 		active = str([r for r in GroupStandard.get_group() if r.get_active()][0].get_label().replace('--', '_'))
 		active = active.replace(' ', '')
 		print >>open(os.path.join(ScriptDir, "Source", "makeswitches"), "w"), switches
-		os.system(os.path.join(ScriptDir, "Source", "Build.sh") + " make " + active)			
+		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + " make " + active)			
 
 		
 	def NewSources(cmd, SourceFile):
@@ -1671,7 +1675,7 @@ def DeCompile():
 						APK = os.path.join(ScriptDir, "APK", "IN", APK)
 						OutDir = os.path.join(ScriptDir, "APK", "DEC", ApkDir)
 						if Debug == True: print("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
-						os.system("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
+						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						print("Decompile " + APK)
 		if CompileButton.get_active():
 			Number = len(comname)
@@ -1682,7 +1686,7 @@ def DeCompile():
 						ApkFolder = os.path.join(ScriptDir, "APK", "DEC", dec)
 						ApkName = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Dec + ".apk")
 						if Debug == True: print("\njava -jar %s b -f %s %s\n" %(ApkJar, ApkFolder, ApkName))
-						os.system("java -jar %s b -f %s %s" %(ApkJar, ApkFolder, ApkName))
+						SystemLog("java -jar %s b -f %s %s" %(ApkJar, ApkFolder, ApkName))
 	DeCompileWindow = window
 	notebook = MainApp.notebook
 	sw = gtk.ScrolledWindow()
@@ -1741,7 +1745,7 @@ def OptimizeImage():
 			dialog.hide_all()
 			for file in dialog.get_filenames():
 				if Debug == True: print ("%s -o99 %s" %(OptPng, file))				
-				os.system("%s -o99 %s" %(OptPng, file))
+				SystemLog("%s -o99 %s" %(OptPng, file))
 			NewDialog(_("Optimize Images"),  _("Successfully optimized images"))
 		elif response == gtk.RESPONSE_CANCEL:
 			print _('Closed, no files selected')
@@ -1773,7 +1777,7 @@ def ExPackage():
 				APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 				DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
 				print APKPath
-				os.system("%s x -y -o%s %s" %(sz, DstDir, APKPath))
+				SystemLog("%s x -y -o%s %s" %(sz, DstDir, APKPath))
 		elif RepackageButton.get_active():
 			Number = len(repname)
 			for num in range(0, Number):
@@ -1781,7 +1785,7 @@ def ExPackage():
 				DirPath = os.path.join(ScriptDir, "APK", "EX", Ex , "*")
 				DstFile = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk")
 				if Debug == True: print("%s a -y -tzip %s %s -mx9" %(sz, DstFile, DirPath))
-				os.system("%s a -y -tzip %s %s -mx9" %(sz, DstFile, DirPath))
+				SystemLog("%s a -y -tzip %s %s -mx9" %(sz, DstFile, DirPath))
 	notebook = MainApp.notebook
 	ExPackWindow = window
 	vbox = gtk.VBox()
@@ -1837,7 +1841,7 @@ def Sign():
 			APK = os.path.join(ScriptDir, "APK", APK)
 			APKName = os.path.join(ScriptDir, "APK", "OUT", "Signed-" + APKName)
 			if Debug == True: print("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
-			os.system("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
+			SystemLog("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
 		
 		
 	notebook = MainApp.notebook
@@ -1892,7 +1896,7 @@ def Zipalign():
 			Name = os.path.basename(FullAPK)
 			OutFile = os.path.join(ScriptDir, "APK", "OUT", "Aligned-" + Name)
 			if Debug == True: print(ZipalignFile + " -fv 4 %s %s" %(FullAPK, OutFile))
-			os.system("%s -fv 4 %s %s" %(ZipalignFile, FullAPK, OutFile))
+			SystemLog("%s -fv 4 %s %s" %(ZipalignFile, FullAPK, OutFile))
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 
@@ -1922,14 +1926,15 @@ def Zipalign():
 def Install():
 	def StartInst(cmd):
 		print _("\n Waiting for device to connect via ADB...\n\n")
-		os.system("adb wait-for-device")
+		SystemLog("adb wait-for-device")
 		print _("Connected")
 		Number = len(apk)
 		for num in range(0, Number):
 			APK = apk[num]
-			os.system("adb install %s" % APK)
+			SystemLog("adb install %s" % APK)
+	SystemLog("adb version")
 	ADB = str(os.system("adb version"))
-	if not ADB == '0':
+	if not ADB == "0":
 		print _("The Android SDK is not installed. Do you want to install it now?\n")
 		Choice = raw_input("Choose option [Y/n] :  ")
 		if not Choice == 'n' :
@@ -1977,7 +1982,7 @@ def BakSmali():
 			Out = os.path.join(ScriptDir, "Advance", "Smali", "OUT", OutputText)
 			if Debug==True: print("java -jar %s %s -o %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out))
 			print _("Smaling %s into %s with %s" %(os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
-			os.system("java -jar %s %s -o %s %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
+			SystemLog("java -jar %s %s -o %s %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 
 	def StartBakSmali(cmd):
 		dialog = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
@@ -2002,7 +2007,7 @@ def BakSmali():
 				dexname = dexname.replace('.odex', '')
 				outdir = os.path.join(ScriptDir, "Advance", "Smali", "Smali", dexname)
 				print _("Baksmaling %s to %s with %s" %(dexfile, outdir, Api))
-				os.system("java -jar %s %s -o %s %s" %(BaksmaliJar, dexfile, outdir, Api))
+				SystemLog("java -jar %s %s -o %s %s" %(BaksmaliJar, dexfile, outdir, Api))
 			NewDialog(_("BakSmali"),  _("Successfully finished BakSmali"))
 		elif response == gtk.RESPONSE_CANCEL:
 			print _('Closed, no files selected')
@@ -2066,8 +2071,8 @@ def Deodex():
 			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
 			WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 			print _("Deodexing %s" % odex)
-			os.system("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT") ) )
-			os.system("java -Xmx512m -jar %s %s %s -o %s" %(SmaliJar, api, os.path.join(WorkDir, "*"), os.path.join(WorkDir, "classes.dex")))
+			SystemLog("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT") ) )
+			SystemLog("java -Xmx512m -jar %s %s %s -o %s" %(SmaliJar, api, os.path.join(WorkDir, "*"), os.path.join(WorkDir, "classes.dex")))
 			cont = []
 			for fname in os.listdir(WorkDir):
 				if not fname == "classes.dex":
@@ -2076,10 +2081,10 @@ def Deodex():
 						shutil.rmtree(fname)
 					elif not os.path.isdir(fname):
 						os.remove(fname)
-			os.system("%s x -y -o%s %s" %(sz, WorkDir, apk))
+			SystemLog("%s x -y -o%s %s" %(sz, WorkDir, apk))
 			os.remove(odex)
 			os.remove(apk)
-			os.system("%s a -y -tzip %s %s -mx9" %(sz, apk, os.path.join(WorkDir, "*")))
+			SystemLog("%s a -y -tzip %s %s -mx9" %(sz, apk, os.path.join(WorkDir, "*")))
 
 		print _("\n\nDeodexing done!\n\n")
 		NewDialog("Deodex", _("Done!"))
@@ -2149,7 +2154,7 @@ def Odex():
 			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
 			WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 			print _("Odexing %s" % odex)
-			os.system("%s e -tzip %s classes.dex -o%s" %(sz, apk, WorkDir))
+			SystemLog("%s e -tzip %s classes.dex -o%s" %(sz, apk, WorkDir))
 			Classes = os.path.join(WorkDir, "classes.dex")
 			shutil.move(Classes, odex)
 
@@ -2319,7 +2324,7 @@ def Compile():
 		Name = str(os.path.basename(ScriptFile)).replace(".py", "")
 		compiled = os.path.join(PyInstDir, Name, "dist", Name)
 
-		if not New == True:
+		if New == True:
 			urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
 			zipfile.ZipFile(PyFile).extractall(path=PyDir)
 			os.remove(PyFile)
@@ -2331,22 +2336,24 @@ def Compile():
 		else:
 			print("%s already exists" % PyInstDir)
 
-		for x in os.listdir(DwnDir):
-			CopySrc = os.path.join(DwnDir, x)
-			CopyDst = os.path.join(PyInstDir, x)
-			if not os.path.exists(CopyDst):
-				if os.path.isdir(CopySrc):
-					shutil.copytree(CopySrc, CopyDst)
-				else:
-					shutil.copy(CopySrc, CopyDst)
+		if New == True:
+			for x in os.listdir(DwnDir):
+				CopySrc = os.path.join(DwnDir, x)
+				CopyDst = os.path.join(PyInstDir, x)
+				if not os.path.exists(CopyDst):
+					if os.path.isdir(CopySrc):
+						shutil.copytree(CopySrc, CopyDst)
+					else:
+						shutil.copy(CopySrc, CopyDst)
 
 		os.chdir(PyInstDir)
-
-		os.system("python setup.py")
 		if OS == 'Lin':
-			os.system("python pyinstaller.py -y -s -F %s %s" %(ScriptFile, icon))
+			SystemLog("python pyinstaller.py -y -s -F %s %s" %(ScriptFile, icon))
 		else:
-			os.system("python pyinstaller.py -y -F %s %s" %(ScriptFile, icon))
+			if os.path.exists("C:\\Program Files\\Python27\\python.exe"):
+				SystemLog("C:\\Program Files\\Python27\\python.exe pyinstaller.py -y -F %s %s" %(ScriptFile, icon) )
+			else:
+				SystemLog("python pyinstaller.py -y -F %s %s" %(ScriptFile, icon))
 		shutil.copy(compiled, os.path.join(ScriptDir, Name + "-Compiled"))
 	
 	notebook = MainApp.notebook
