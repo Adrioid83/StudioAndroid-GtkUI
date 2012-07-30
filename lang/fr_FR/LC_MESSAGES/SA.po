@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-07-30 19:10+0200\n"
-"PO-Revision-Date: 2012-07-26 17:44+0200\n"
-"Last-Translator: Marty <marty@durin>\n"
+"PO-Revision-Date: 2012-07-30 21:52+0100\n"
+"Last-Translator: Martijn Ruijzendaal <martijn.ruijzendaal@gmail.com>\n"
 "Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
@@ -23,7 +23,7 @@ msgid ""
 "\n"
 "\n"
 msgstr ""
-"Votre" OS n'est ni Windows32 ni Linux2, Pouvez vous me MP ?\n"
+"Votre OS n'est ni Windows32 ni Linux2, Pouvez vous me MP ?\n"
 "\n"
 "\n"
 
@@ -88,7 +88,8 @@ msgstr "Changelog"
 msgid "Help"
 msgstr "Aide"
 
-#: SA.py:410 SA.py:2487
+#: SA.py:410
+#: SA.py:2487
 msgid "Update"
 msgstr "Mise à jour"
 
@@ -128,11 +129,14 @@ msgstr "Redimensionner"
 msgid "Batch Theme"
 msgstr "Batch Theme"
 
-#: SA.py:467 SA.py:1759 SA.py:1773
+#: SA.py:467
+#: SA.py:1759
+#: SA.py:1773
 msgid "Optimize Images"
 msgstr "Optimisation Images"
 
-#: SA.py:476 SA.py:1532
+#: SA.py:476
+#: SA.py:1532
 msgid "Development"
 msgstr "Developemment"
 
@@ -140,11 +144,13 @@ msgstr "Developemment"
 msgid "Prepare Building"
 msgstr "Préparer un build"
 
-#: SA.py:489 SA.py:1523
+#: SA.py:489
+#: SA.py:1523
 msgid "Build from Source"
 msgstr "Build à partir de Source"
 
-#: SA.py:493 SA.py:1668
+#: SA.py:493
+#: SA.py:1668
 msgid "Add Governor"
 msgstr "Ajouter un governor"
 
@@ -228,12 +234,8 @@ msgid "ImageMagick"
 msgstr "ImageMagick"
 
 #: SA.py:645
-msgid ""
-"To install imagemagick, you will download a file. run it to install "
-"ImageMagick"
-msgstr ""
-"Pour installer imagemagick, vous devez installer un fichier. éxécutez le pour l'installer "
-"ImageMagick"
+msgid "To install imagemagick, you will download a file. run it to install ImageMagick"
+msgstr "Pour installer imagemagick, vous devez installer un fichier. éxécutez le pour l'installer ImageMagick"
 
 #: SA.py:659
 msgid ""
@@ -249,7 +251,8 @@ msgstr ""
 msgid "ALL!"
 msgstr "TOUT!"
 
-#: SA.py:688 SA.py:1969
+#: SA.py:688
+#: SA.py:1969
 msgid "Install"
 msgstr "Installer"
 
@@ -261,12 +264,14 @@ msgstr "Installer Utilitaires"
 msgid "Copying files FROM "
 msgstr "Copie des fichiers de FROM "
 
-#: SA.py:720 SA.py:2279
+#: SA.py:720
+#: SA.py:2279
 #, python-format
 msgid "Copying %s to %s"
 msgstr "Copie de %s vers %s"
 
-#: SA.py:726 SA.py:776
+#: SA.py:726
+#: SA.py:776
 msgid "CopyFrom"
 msgstr "CopyFrom"
 
@@ -298,7 +303,8 @@ msgstr "Entrez le repertoire où vous voulez RECEVOIR les fichiers"
 msgid "Enter the extension of the files you want to copy"
 msgstr "Entrez l'extension des fichiers que vous voulez copier"
 
-#: SA.py:787 SA.py:798
+#: SA.py:787
+#: SA.py:798
 msgid "Start resizing"
 msgstr "Redimensionnement"
 
@@ -323,7 +329,8 @@ msgstr "Vous pouvez retrouver les images redimensionnées dans Resized"
 msgid "Enter the resize percentage 0-100 %"
 msgstr "Entrez le pourcentage de redimensionnement 0-100 %"
 
-#: SA.py:942 SA.py:973
+#: SA.py:942
+#: SA.py:973
 msgid "Choose the directory containing the images"
 msgstr "Choisissez le dossier contenant les images"
 
@@ -331,7 +338,8 @@ msgstr "Choisissez le dossier contenant les images"
 msgid "Easy resizing using ..DPI values"
 msgstr "Redimensionnement facile en utilisant les valeurs ..DPI"
 
-#: SA.py:959 SA.py:987
+#: SA.py:959
+#: SA.py:987
 msgid "Give the DPI of the images"
 msgstr "Donner le DPI des images"
 
@@ -343,7 +351,8 @@ msgstr "Donner le DPI de redimensionnement"
 msgid "Resize an APK using DPI values"
 msgstr "Redimensionnement une APK en utilisant des valeurs DPI"
 
-#: SA.py:1002 SA.py:1006
+#: SA.py:1002
+#: SA.py:1006
 msgid "Choose the APK"
 msgstr "Choisissez l'APK"
 
@@ -407,19 +416,23 @@ msgstr "Choisissez l'OS que vous vous voulez build:"
 msgid "Sync"
 msgstr "Sync"
 
-#: SA.py:1490 SA.py:1508
+#: SA.py:1490
+#: SA.py:1508
 msgid "Force sync"
 msgstr "Forcer sync"
 
-#: SA.py:1493 SA.py:1511
+#: SA.py:1493
+#: SA.py:1511
 msgid "Be quiet!"
 msgstr "Restez calme!"
 
-#: SA.py:1496 SA.py:1514
+#: SA.py:1496
+#: SA.py:1514
 msgid "Sync local only"
 msgstr "Sync local only"
 
-#: SA.py:1499 SA.py:1517
+#: SA.py:1499
+#: SA.py:1517
 #, python-format
 msgid "Custom number of parallel jobs: %s"
 msgstr "Choisissezle nombre de taches parallèles: %s"
@@ -428,7 +441,8 @@ msgstr "Choisissezle nombre de taches parallèles: %s"
 msgid "Build (Only when synced)"
 msgstr "Build (Only when synced)"
 
-#: SA.py:1537 SA.py:1557
+#: SA.py:1537
+#: SA.py:1557
 msgid "Device"
 msgstr "Appareil"
 
@@ -464,7 +478,8 @@ msgstr "Start (De)Compiling"
 msgid "Successfully optimized images"
 msgstr "Successfully optimized images"
 
-#: SA.py:1761 SA.py:2025
+#: SA.py:1761
+#: SA.py:2025
 msgid "Closed, no files selected"
 msgstr "Closed, no files selected"
 
@@ -570,7 +585,8 @@ msgstr "Removing %s"
 msgid "Adding %s to %s"
 msgstr "Copying %s to %s"
 
-#: SA.py:2110 SA.py:2190
+#: SA.py:2110
+#: SA.py:2190
 msgid ""
 "\n"
 "\n"
@@ -582,7 +598,8 @@ msgstr ""
 "Deodexing done!\n"
 "\n"
 
-#: SA.py:2111 SA.py:2191
+#: SA.py:2111
+#: SA.py:2191
 msgid "Done!"
 msgstr "Done!"
 
@@ -595,12 +612,14 @@ msgstr "Extracting Update.zip"
 msgid "Start deodex"
 msgstr "Start deodex"
 
-#: SA.py:2140 SA.py:2217
+#: SA.py:2140
+#: SA.py:2217
 #, python-format
 msgid "No file inside %s!"
 msgstr "No file inside %s!"
 
-#: SA.py:2151 SA.py:2221
+#: SA.py:2151
+#: SA.py:2221
 #, python-format
 msgid "Paste your ROMs update inside %s"
 msgstr "Paste your ROMs update inside %s"
@@ -609,7 +628,8 @@ msgstr "Paste your ROMs update inside %s"
 msgid "Choose a custom API level (default = 14)"
 msgstr "Choose a custom API level (default = 14)"
 
-#: SA.py:2158 SA.py:2224
+#: SA.py:2158
+#: SA.py:2224
 msgid "Done"
 msgstr "Done"
 
@@ -696,3 +716,4 @@ msgstr "Removing old %s"
 #: SA.py:2487
 msgid "Succesfully updated to the newest version :)"
 msgstr "Succesfully updated to the newest version :)"
+
