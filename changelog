@@ -76,6 +76,8 @@ Updates:
 	Fixed some bugs
 	Updated De-ODEX with filechooser, fixed bugs
 	Removed 7za usage, all is done with Python ZipFile now (Windows bugs fixed)
+	Updated Dutch translation :)
+	Fixed some bugs
 
 
 

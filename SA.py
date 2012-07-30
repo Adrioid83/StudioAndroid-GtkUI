@@ -122,6 +122,8 @@ class Logger(object):
 
 sys.stdout = Logger()
 
+# External Output redirection
+
 def SystemLog(cmd):
 	if Debug == True:
 		print(commands.getoutput(cmd))
@@ -301,7 +303,7 @@ def RGBToHTMLColor(rgb_tuple):
     hexcolor = '#%02x%02x%02x' % rgb_tuple
     # that's it! '%02x' means zero-padded, 2-digit hex values
     return hexcolor
-
+# (C) ActivateState
 
 
 def find_files(directory, pattern):
@@ -310,7 +312,7 @@ def find_files(directory, pattern):
             if fnmatch.fnmatch(basename, pattern):
                 filename = os.path.join(root, basename)
                 yield filename
-# FInd files (C) StackOverflow
+# FindFiles (C) StackOverflow
 
 
 zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
@@ -368,7 +370,7 @@ print _("Home = " + Home)
 print _("ScriptDir = " + ScriptDir)
 print _("File = " + sys.argv[0])
 print ("Debug = " + bug)
-print ("Language = " + Language)
+print _("Language = " + Language)
 
 
 
@@ -1308,9 +1310,9 @@ g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i3
 	if (sys.maxsize > 2**32) == True:
 		Button64.set_active()
 	if platform.dist()[1] == 12.04: Button1204.set_active(True)
-	elif platform.dist()[1] == 1110: Button1110.set_active(True)
-	elif platform.dist()[1] == 1010: Button1010.set_active(True)
-	elif platform.dist()[1] == 1004: Button1004.set_active(True)
+	elif platform.dist()[1] == 11.10: Button1110.set_active(True)
+	elif platform.dist()[1] == 10.10: Button1010.set_active(True)
+	elif platform.dist()[1] == 10.04: Button1004.set_active(True)
 	box.pack_start(Button64, False, False, 10)
 	ButtonPrepare = gtk.Button("Prepare to Build")
 	ButtonPrepare.connect("clicked", Prepare)
@@ -2377,8 +2379,8 @@ def Compile():
 		if OS == 'Lin':
 			SystemLog("python pyinstaller.py -y -s -F %s %s" %(ScriptFile, icon))
 		else:
-			if os.path.exists("C:\\Program Files\\Python27\\python.exe"):
-				SystemLog("C:\\Program Files\\Python27\\python.exe pyinstaller.py -y -F %s %s" %(ScriptFile, icon) )
+			if os.path.exists("C:\\Python27\\python.exe"):
+				SystemLog("C:\\Python27\\python.exe pyinstaller.py -y -F %s %s" %(ScriptFile, icon) )
 			else:
 				SystemLog("python pyinstaller.py -y -F %s %s" %(ScriptFile, icon))
 		shutil.copy(compiled, os.path.join(ScriptDir, Name + "-Compiled"))

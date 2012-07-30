@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-07-30 16:19+0200\n"
-"PO-Revision-Date: 2012-07-23 11:41+0100\n"
+"POT-Creation-Date: 2012-07-30 19:10+0200\n"
+"PO-Revision-Date: 2012-07-30 19:13+0100\n"
 "Last-Translator: Martijn Ruijzendaal <martijn.ruijzendaal@gmail.com>\n"
 "Language-Team: English\n"
 "Language: en_US\n"
@@ -17,201 +17,209 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: SA.py:139
+#: SA.py:142
 msgid ""
 "Your OS is not Windows32 and not Linux2, could you PM me the next output?\n"
 "\n"
 "\n"
 msgstr ""
-"Jouwn OS is niet Windows32 en ook niet Linux2, zou je me jouwn OS kunnen "
-"sturen?\n"
+"Jouwn OS is niet Windows32 en ook niet Linux2, zou je me jouwn OS kunnen sturen?\n"
 "\n"
 "\n"
 
-#: SA.py:229
+#: SA.py:231
 #, python-format
 msgid "%s is not defined yet, SORRY!"
 msgstr "%s is nog niet bepaald, SORRY!"
 
-#: SA.py:343
+#: SA.py:345
 msgid "First Run"
 msgstr "Eerste keer"
 
-#: SA.py:343
+#: SA.py:345
 msgid ""
 "Hi there! It seems this is your first time to run StudioAndroid!\n"
 "Please note this tool still has a long way to go,\n"
 " and I need testers and reporters...\n"
 " So please publish your LOG!"
 msgstr ""
-"Hallo! Het lijkt erop dat dit de eerste keer is dat je StudioAndroid "
-"gebruikt!\n"
+"Hallo! Het lijkt erop dat dit de eerste keer is dat je StudioAndroid gebruikt!\n"
 "Let erop dat deze tool nog een lange weg te gaan heeft,\n"
 " en ik heb testers nodig...\n"
 " Dus publiceer je log AUB!"
 
-#: SA.py:365
+#: SA.py:367
 msgid "OS = "
 msgstr "OS = "
 
-#: SA.py:366
+#: SA.py:368
 msgid "Cores = "
 msgstr "Kernen = "
 
-#: SA.py:367
+#: SA.py:369
 msgid "Home = "
 msgstr "Thuis = "
 
-#: SA.py:368
+#: SA.py:370
 msgid "ScriptDir = "
 msgstr "ScriptDir = "
 
-#: SA.py:369
+#: SA.py:371
 msgid "File = "
 msgstr "Bestand= "
 
-#: SA.py:391
+#: SA.py:373
+msgid "Language = "
+msgstr "Taal = "
+
+#: SA.py:393
 msgid "Options"
 msgstr "Opties"
 
-#: SA.py:396
+#: SA.py:398
 msgid "Check the log"
 msgstr "Open de log"
 
-#: SA.py:400
+#: SA.py:402
 msgid "Changelog"
 msgstr "Wat is nieuw?"
 
-#: SA.py:404
+#: SA.py:406
 msgid "Help"
 msgstr "Help"
 
-#: SA.py:408 SA.py:2482
+#: SA.py:410
+#: SA.py:2487
 msgid "Update"
 msgstr "Update"
 
-#: SA.py:412
+#: SA.py:414
 msgid "Restart"
 msgstr "Herstart"
 
-#: SA.py:416
+#: SA.py:418
 msgid "Debug"
 msgstr "Debug"
 
-#: SA.py:420
+#: SA.py:422
 msgid "Report a bug"
 msgstr "Meld een fout"
 
-#: SA.py:438
+#: SA.py:440
 msgid "Utilities"
 msgstr "Handigheid"
 
-#: SA.py:445
+#: SA.py:447
 msgid "Clean Workspace"
 msgstr "Reset StudioAndroid"
 
-#: SA.py:449
+#: SA.py:451
 msgid "Install Utilities"
 msgstr "Installeer handigheden"
 
-#: SA.py:453
+#: SA.py:455
 msgid "CopieFrom"
 msgstr "KopieërVanaf"
 
-#: SA.py:457
+#: SA.py:459
 msgid "Resize"
 msgstr "Grootte aanpassen"
 
-#: SA.py:461
+#: SA.py:463
 msgid "Batch Theme"
 msgstr "Batch Theme"
 
-#: SA.py:465 SA.py:1757 SA.py:1771
+#: SA.py:467
+#: SA.py:1759
+#: SA.py:1773
 msgid "Optimize Images"
 msgstr "Optimalizeer Foto's"
 
-#: SA.py:474 SA.py:1530
+#: SA.py:476
+#: SA.py:1532
 msgid "Development"
 msgstr "Ontwikkeling"
 
-#: SA.py:483
+#: SA.py:485
 msgid "Prepare Building"
 msgstr "Bereid bouwen voor"
 
-#: SA.py:487 SA.py:1521
+#: SA.py:489
+#: SA.py:1523
 msgid "Build from Source"
 msgstr "Bouw van bron"
 
-#: SA.py:491 SA.py:1666
+#: SA.py:493
+#: SA.py:1668
 msgid "Add Governor"
 msgstr "Voeg een Governor toe"
 
-#: SA.py:495
+#: SA.py:497
 msgid "Install Android-SDK"
 msgstr "Installeer Android-SDK"
 
-#: SA.py:499
+#: SA.py:501
 msgid "Install Java JDK"
 msgstr "Installeer Java JDK"
 
-#: SA.py:503
+#: SA.py:505
 msgid "Binary port a ROM"
 msgstr "Binary port a ROM"
 
-#: SA.py:519
+#: SA.py:521
 msgid "(De)Compile"
 msgstr "(De)Compileer"
 
-#: SA.py:523
+#: SA.py:525
 msgid "Extract/Repackage"
 msgstr "Pak uit/in"
 
-#: SA.py:527
+#: SA.py:529
 msgid "Sign APK"
 msgstr "Signeer APK"
 
-#: SA.py:531
+#: SA.py:533
 msgid "Zipalign APK"
 msgstr "Zipalign APK"
 
-#: SA.py:535
+#: SA.py:537
 msgid "Install APK"
 msgstr "Installeer APK"
 
-#: SA.py:544
+#: SA.py:546
 msgid "Advanced"
 msgstr "Ge-avanceerd"
 
-#: SA.py:551
+#: SA.py:553
 msgid "(Bak)Smali"
 msgstr "(Bak)Smali"
 
-#: SA.py:555
+#: SA.py:557
 msgid "ODEX"
 msgstr "ODEX"
 
-#: SA.py:559
+#: SA.py:561
 msgid "DE-ODEX"
 msgstr "DE-ODEX"
 
-#: SA.py:563
+#: SA.py:565
 msgid "Aroma Menu"
 msgstr "Aroma Menu"
 
-#: SA.py:567
+#: SA.py:569
 #, fuzzy
 msgid "Compile to an exe"
 msgstr "Compileer Python naar een uitvoerbaar bestand"
 
-#: SA.py:571
+#: SA.py:573
 msgid "Translate ;)"
 msgstr "Vertaal"
 
-#: SA.py:640
+#: SA.py:642
 msgid ":("
 msgstr ":("
 
-#: SA.py:640
+#: SA.py:642
 #, fuzzy, python-format
 msgid ""
 "Sorry, windows does not support PATH modifications from cmd...\n"
@@ -221,19 +229,15 @@ msgstr ""
 "Sorry, windows staat PATH veranderingen niet toe...\n"
 "In plaats daarvan, zal ik een site openen"
 
-#: SA.py:643
+#: SA.py:645
 msgid "ImageMagick"
 msgstr "ImageMagick"
 
-#: SA.py:643
-msgid ""
-"To install imagemagick, you will download a file. run it to install "
-"ImageMagick"
-msgstr ""
-"Om ImageMagick te instaleren ga je nu een bestand downloaden. Open het om te "
-"installeren."
+#: SA.py:645
+msgid "To install imagemagick, you will download a file. run it to install ImageMagick"
+msgstr "Om ImageMagick te instaleren ga je nu een bestand downloaden. Open het om te installeren."
 
-#: SA.py:657
+#: SA.py:659
 msgid ""
 "Hey there!\n"
 " Please select the tools you want to install.\n"
@@ -243,32 +247,35 @@ msgstr ""
 " Selecteer de tools die je wilt installeren.\n"
 "ImageMagick is nodig voor alle afbeelding-tools!"
 
-#: SA.py:679
+#: SA.py:681
 msgid "ALL!"
 msgstr "ALLE!"
 
-#: SA.py:686 SA.py:1965
+#: SA.py:688
+#: SA.py:1969
 msgid "Install"
 msgstr "Installeer"
 
-#: SA.py:694
+#: SA.py:696
 msgid "Install Utils"
 msgstr "Installeer Handigheden"
 
-#: SA.py:714
+#: SA.py:716
 msgid "Copying files FROM "
 msgstr "Kopieer bestanden VAN"
 
-#: SA.py:718 SA.py:2274
+#: SA.py:720
+#: SA.py:2279
 #, python-format
 msgid "Copying %s to %s"
 msgstr "Kopieer %s -> %s"
 
-#: SA.py:724 SA.py:774
+#: SA.py:726
+#: SA.py:776
 msgid "CopyFrom"
 msgstr "CopyFrom"
 
-#: SA.py:729
+#: SA.py:731
 msgid ""
 "This tool copies files existing in a directory FROM an other directory.\n"
 "\t\t\tCan be handy for porting themes and such\n"
@@ -284,97 +291,101 @@ msgstr ""
 "\n"
 "\n"
 
-#: SA.py:743
+#: SA.py:745
 msgid "Enter the directory you want to copy the files TO"
 msgstr "Geef de map op waar je de bestanden HEEN wilt kopiëren"
 
-#: SA.py:751
+#: SA.py:753
 msgid "Enter the directory you want to copy the files FROM"
 msgstr "Geef de map op waar je de bestanden VANAF wilt kopiëren"
 
-#: SA.py:763
+#: SA.py:765
 msgid "Enter the extension of the files you want to copy"
 msgstr "Geef de extensie van de bestanden die je wilt kopiëren op."
 
-#: SA.py:785 SA.py:796
+#: SA.py:787
+#: SA.py:798
 msgid "Start resizing"
 msgstr "Start resizing"
 
-#: SA.py:805
+#: SA.py:807
 msgid "Please select a directory/APK before you click START"
 msgstr "Selecteer een map/APK voor je op start klikt."
 
-#: SA.py:881
+#: SA.py:883
 #, python-format
 msgid "Resize percentage is %s"
 msgstr "Vergrotingspercentage is %s"
 
-#: SA.py:913
+#: SA.py:915
 msgid "Resized"
 msgstr "Vergroot / Verkleind"
 
-#: SA.py:913
+#: SA.py:915
 msgid "You can find the resized images in Resized"
 msgstr "Je kan de veranderde afbeeldingen vinden in Resized"
 
-#: SA.py:934
+#: SA.py:936
 msgid "Enter the resize percentage 0-100 %"
 msgstr "Geef een grootte percentage 0-100 %"
 
-#: SA.py:940 SA.py:971
+#: SA.py:942
+#: SA.py:973
 #, fuzzy
 msgid "Choose the directory containing the images"
 msgstr "Geef de directory met de afbeeldingen op"
 
-#: SA.py:949
+#: SA.py:951
 msgid "Easy resizing using ..DPI values"
 msgstr "Gemakkelijk grootte veranderen met ..DPI waarden"
 
-#: SA.py:957 SA.py:985
+#: SA.py:959
+#: SA.py:987
 msgid "Give the DPI of the images"
 msgstr "Geef de DPI van de afbeeldingen"
 
-#: SA.py:963
+#: SA.py:965
 msgid "Give the Resized DPI"
 msgstr "Give the Resized DPI"
 
-#: SA.py:977
+#: SA.py:979
 msgid "Resize an APK using DPI values"
 msgstr "Resize an APK using DPI values"
 
-#: SA.py:1000 SA.py:1004
+#: SA.py:1002
+#: SA.py:1006
 msgid "Choose the APK"
 msgstr "Choose the APK"
 
-#: SA.py:1054
+#: SA.py:1056
 msgid "Place the images you want to theme inside "
 msgstr "Place the images you want to theme inside "
 
-#: SA.py:1074
+#: SA.py:1076
 msgid "Enter the RED value (0-100)"
 msgstr "Enter the RED value (0-100)"
 
-#: SA.py:1084
+#: SA.py:1086
 msgid "Enter the GREEN value (0-100)"
 msgstr "Enter the GREEN value (0-100)"
 
-#: SA.py:1094
+#: SA.py:1096
 msgid "Enter the BLUE value (0-100)"
 msgstr "Enter the BLUE value (0-100)"
 
-#: SA.py:1099
+#: SA.py:1101
 msgid "Show Color"
 msgstr "Show Color"
 
-#: SA.py:1112
+#: SA.py:1114
 msgid "Start theming!"
 msgstr "Start theming!"
 
-#: SA.py:1128
+#: SA.py:1130
 msgid "Please check the terminal for further progress."
 msgstr "Please check the terminal for further progress."
 
-#: SA.py:1288
+#: SA.py:1290
 msgid ""
 "You need this option before you can build.\n"
 "Please select your OS..."
@@ -382,7 +393,7 @@ msgstr ""
 "You need this option before you can build.\n"
 "Please select your OS..."
 
-#: SA.py:1379
+#: SA.py:1381
 msgid ""
 " does not exist!\n"
 "Press SYNC instead."
@@ -390,7 +401,7 @@ msgstr ""
 " does not exist!\n"
 "Press SYNC instead."
 
-#: SA.py:1452
+#: SA.py:1454
 msgid ""
 "You can choose a specific device in the top bar.\n"
 "\n"
@@ -398,102 +409,108 @@ msgstr ""
 "You can choose a specific device in the top bar.\n"
 "\n"
 
-#: SA.py:1457
+#: SA.py:1459
 msgid "Choose the OS you want to build:"
 msgstr "Choose the OS you want to build:"
 
-#: SA.py:1483
+#: SA.py:1485
 msgid "Sync"
 msgstr "Synchroniseer"
 
-#: SA.py:1488 SA.py:1506
+#: SA.py:1490
+#: SA.py:1508
 msgid "Force sync"
 msgstr "Force sync"
 
-#: SA.py:1491 SA.py:1509
+#: SA.py:1493
+#: SA.py:1511
 msgid "Be quiet!"
 msgstr "Be quiet!"
 
-#: SA.py:1494 SA.py:1512
+#: SA.py:1496
+#: SA.py:1514
 msgid "Sync local only"
 msgstr "Sync local only"
 
-#: SA.py:1497 SA.py:1515
+#: SA.py:1499
+#: SA.py:1517
 #, python-format
 msgid "Custom number of parallel jobs: %s"
 msgstr "Custom number of parallel jobs: %s"
 
-#: SA.py:1500
+#: SA.py:1502
 msgid "Build (Only when synced)"
 msgstr "Build (Only when synced)"
 
-#: SA.py:1535 SA.py:1555
+#: SA.py:1537
+#: SA.py:1557
 msgid "Device"
 msgstr "Apparaat"
 
-#: SA.py:1555
+#: SA.py:1557
 #, fuzzy
 msgid "You can choose the device you want to build for in the top bar."
 msgstr ""
 "You can choose a specific device in the top bar.\n"
 "\n"
 
-#: SA.py:1643
+#: SA.py:1645
 msgid "Added"
 msgstr "Toegevoegd"
 
-#: SA.py:1643
+#: SA.py:1645
 #, fuzzy
 msgid "Added governors"
 msgstr "Voeg een Governor toe"
 
-#: SA.py:1662
+#: SA.py:1664
 msgid "Pick your drivers/cpufreq/Kconfig and start!"
 msgstr "Kies jouwn drivers/cpufreq/Kconfig en start!"
 
-#: SA.py:1703
+#: SA.py:1705
 #, fuzzy
 msgid "Decompile"
 msgstr "(De)Compileer"
 
-#: SA.py:1704
+#: SA.py:1706
 msgid "Compile"
 msgstr "Compileer"
 
-#: SA.py:1726
+#: SA.py:1728
 msgid "Start (De)Compiling"
 msgstr "Start (De)Compileren"
 
-#: SA.py:1757
+#: SA.py:1759
 msgid "Successfully optimized images"
 msgstr "Optimalizeren afbeeldingen succesvol"
 
-#: SA.py:1759 SA.py:2021
+#: SA.py:1761
+#: SA.py:2025
 msgid "Closed, no files selected"
 msgstr "Gesloten, geen bestanden geselecteerd"
 
-#: SA.py:1767
+#: SA.py:1769
 msgid "Choose Images and Optimize"
 msgstr "Kies afbeeldingen en optimalizeer"
 
-#: SA.py:1823
+#: SA.py:1827
 #, fuzzy
 msgid "Extract / Repackage"
 msgstr "Pak uit/in"
 
-#: SA.py:1857
+#: SA.py:1861
 msgid "Choose the key you want to sign with:"
 msgstr "Kies de KEY waarmee je wilt signeren"
 
-#: SA.py:1911
+#: SA.py:1915
 msgid "Choose the APKs you want to zipalign"
 msgstr "Kies de APKs die wilt zipalignen"
 
-#: SA.py:1922
+#: SA.py:1926
 msgid "Zipalign"
 msgstr "Zipalign"
 
-#: SA.py:1936
+#: SA.py:1940
 msgid ""
 "\n"
 " Waiting for device to connect via ADB...\n"
@@ -503,48 +520,48 @@ msgstr ""
 " Wachten tot apparaat is aangesloten via ADB...\n"
 "\n"
 
-#: SA.py:1938
+#: SA.py:1942
 msgid "Connected"
-msgstr ""
+msgstr "Verbonden"
 
-#: SA.py:1946
+#: SA.py:1950
 msgid "The Android SDK is not installed. Do you want to install it now?\n"
 msgstr "De Android SDK is niet geïnstalleerd, wil je die nu installeren?\n"
 
-#: SA.py:1954
+#: SA.py:1958
 msgid "Choose the APKs you want to install"
 msgstr "Kies de APKs die je wilt installeren"
 
-#: SA.py:1980
+#: SA.py:1984
 msgid "No smali folder selected!"
 msgstr "Geen smali folder geselecteerd!"
 
-#: SA.py:1992
+#: SA.py:1996
 #, python-format
 msgid "Smaling %s into %s with %s"
 msgstr "Smaling %s naar %s met %s"
 
-#: SA.py:2017
+#: SA.py:2021
 #, python-format
 msgid "Baksmaling %s to %s with %s"
 msgstr "Baksmaling %s naar %s met %s"
 
-#: SA.py:2019
+#: SA.py:2023
 #, fuzzy
 msgid "BakSmali"
 msgstr "(Bak)Smali"
 
-#: SA.py:2019
+#: SA.py:2023
 #, fuzzy
 msgid "Successfully finished BakSmali"
 msgstr "Optimalizeren afbeeldingen succesvol"
 
-#: SA.py:2027
+#: SA.py:2031
 #, fuzzy
 msgid "Choose file(s) to Baksmali"
 msgstr "Kies een DEX bestand van %s om te BakSmali:"
 
-#: SA.py:2031
+#: SA.py:2035
 #, fuzzy
 msgid ""
 "\n"
@@ -552,31 +569,32 @@ msgid ""
 " OR choose a Smali folder to BSmali:"
 msgstr "Kies een smali folder om te Smali:"
 
-#: SA.py:2051
+#: SA.py:2055
 msgid "Choose a custom API Level:"
 msgstr "Choose a custom API Level:"
 
-#: SA.py:2082
+#: SA.py:2087
 #, python-format
 msgid "Deodexing %s"
 msgstr "Deodexing %s"
 
-#: SA.py:2083
+#: SA.py:2088
 #, fuzzy, python-format
 msgid "BakSmaling %s"
 msgstr "(Bak)Smali"
 
-#: SA.py:2085
+#: SA.py:2090
 #, fuzzy, python-format
 msgid "Smaling %s"
 msgstr "Removing %s"
 
-#: SA.py:2097
+#: SA.py:2102
 #, fuzzy, python-format
 msgid "Adding %s to %s"
 msgstr "Kopieer %s -> %s"
 
-#: SA.py:2105 SA.py:2185
+#: SA.py:2110
+#: SA.py:2190
 msgid ""
 "\n"
 "\n"
@@ -588,51 +606,55 @@ msgstr ""
 "Deodexing klaar!\n"
 "\n"
 
-#: SA.py:2106 SA.py:2186
+#: SA.py:2111
+#: SA.py:2191
 msgid "Done!"
 msgstr "Klaar!"
 
-#: SA.py:2115
+#: SA.py:2120
 #, fuzzy, python-format
 msgid "Extracting %s"
 msgstr "Odexing %s"
 
-#: SA.py:2129
+#: SA.py:2134
 msgid "Start deodex"
 msgstr "Start deodex"
 
-#: SA.py:2135 SA.py:2212
+#: SA.py:2140
+#: SA.py:2217
 #, python-format
 msgid "No file inside %s!"
 msgstr "Geen bestanden in %s!"
 
-#: SA.py:2146 SA.py:2216
+#: SA.py:2151
+#: SA.py:2221
 #, python-format
 msgid "Paste your ROMs update inside %s"
 msgstr "Kopieër je ROMs update in %s"
 
-#: SA.py:2150
+#: SA.py:2155
 msgid "Choose a custom API level (default = 14)"
 msgstr "Kies een API level ( standaar = 14)"
 
-#: SA.py:2153 SA.py:2219
+#: SA.py:2158
+#: SA.py:2224
 msgid "Done"
 msgstr "Klaar"
 
-#: SA.py:2180
+#: SA.py:2185
 #, python-format
 msgid "Odexing %s"
 msgstr "Odexing %s"
 
-#: SA.py:2206
+#: SA.py:2211
 msgid "Start Odex"
 msgstr "Start Odex"
 
-#: SA.py:2264
+#: SA.py:2269
 msgid "Info"
 msgstr "Info"
 
-#: SA.py:2264
+#: SA.py:2269
 #, python-format
 msgid ""
 "Choose a ROM you want to port to your device with version %s.\n"
@@ -645,64 +667,62 @@ msgstr ""
 " BASE versie: %s\n"
 "Versie van de ROM die je wilt porten: %s"
 
-#: SA.py:2268
+#: SA.py:2273
 #, python-format
 msgid "Removing %s"
 msgstr "Removing %s"
 
-#: SA.py:2307
+#: SA.py:2312
 msgid "Choose ROM you want to port to:"
 msgstr "Kies de ROM waarheen je wilt porten:"
 
-#: SA.py:2311
+#: SA.py:2316
 msgid "Choose the ROM you want to port"
 msgstr "Kies de ROM die je wilt porten:"
 
-#: SA.py:2316
+#: SA.py:2321
 msgid "Start porting"
 msgstr "Start porting"
 
-#: SA.py:2319
+#: SA.py:2324
 msgid "Binary port"
 msgstr "Binary port"
 
-#: SA.py:2445
+#: SA.py:2450
 msgid "Delete log"
 msgstr "Verwijder log"
 
-#: SA.py:2455
+#: SA.py:2460
 #, fuzzy
 msgid ""
 "The log content has been copied to the clipboard\n"
 "Please paste it in the reply that will be opened now!"
-msgstr ""
-"The log content has been copied to the clipboardPlease paste it in the "
-"website that will be opened now!"
-
-#: SA.py:2465
-msgid "Removing old update.zip"
-msgstr ""
-
-#: SA.py:2467
-msgid "Retrieving new Update.zip"
-msgstr ""
+msgstr "The log content has been copied to the clipboardPlease paste it in the website that will be opened now!"
 
 #: SA.py:2470
-msgid "Removing old UpdateDir"
-msgstr ""
+msgid "Removing old update.zip"
+msgstr "Verwijderen van oude update.zip"
 
 #: SA.py:2472
-msgid "Extracting Update.zip"
-msgstr ""
+msgid "Retrieving new Update.zip"
+msgstr "Verkrijgen van nieuwe Update.zip"
 
 #: SA.py:2475
+msgid "Removing old UpdateDir"
+msgstr "Verwijderen van oude UpdateMap"
+
+#: SA.py:2477
+msgid "Extracting Update.zip"
+msgstr "Uitpakken van Update.zip"
+
+#: SA.py:2480
 #, fuzzy, python-format
 msgid "Removing old %s"
 msgstr "Removing %s"
 
-#: SA.py:2482
+#: SA.py:2487
 msgid "Succesfully updated to the newest version :)"
-msgstr ""
+msgstr "Succesvol ge-update naar de nieuwste versie :)"
 
 #~ msgid ""
 #~ "\n"
