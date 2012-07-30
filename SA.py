@@ -61,9 +61,10 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 	EnBtn = gtk.RadioButton(FrBtn, "English")
 	ItBtn = gtk.RadioButton(FrBtn, "Italiano")
 	NlBtn = gtk.RadioButton(FrBtn, "Nederlands")
+	RoBtn = gtk.RadioButton(FrBtn, "Romanian")
 	NewLang = []
 	for langd in os.listdir(os.path.join(ScriptDir, "lang")):
-		if not langd.startswith("fr") and not langd.startswith("en") and not langd.startswith("it") and not langd.startswith("nl"):
+		if not "fr" in langd and not "en" in langd and not "it" in langd and not "nl" in langd and not "ro" in langd:
 			NewBtn = gtk.RadioButton(FrBtn, langd)
 			vbox.pack_start(NewBtn)
 			NewLang.append(langd)
@@ -160,7 +161,6 @@ def DebugOn(cmd):
 # Shotcuts 
 
 UtilDir = os.path.join(ScriptDir, "Utils")
-sz = os.path.join(ScriptDir, "Utils", "7za")
 ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
 SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
 ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
@@ -270,20 +270,28 @@ def DirChoose(DirChooser, filtern=None):
 	DirChooser.hide()
 	return Chosen
 
-def FileChoose(FileChooser, filtern=None):
+def FileChoose(FileChooser, filtern=None, multiple=False):
 	if not filtern == None:
 		filter = gtk.FileFilter()
 		filter.set_name(filtern)
 		filter.add_mime_type(filtern)
 		filter.add_pattern("*" + filtern)
 		FileChooser.add_filter(filter)
-	FileChooser.set_select_multiple(False)
+	FileChooser.set_select_multiple(multiple)
 	FileChooser.set_current_folder(ScriptDir)
 	response = FileChooser.run()
+	FileChooser.hide()
 	if response == gtk.RESPONSE_OK:
 		Chosen = FileChooser.get_filename()
-	FileChooser.hide()
-	return Chosen
+		return Chosen
+
+def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
+	Returned = FileChoose(FileChooser, filtern, Multi)
+	if not BtnChange == False:
+		Btn = BtnChange[0]
+		label = str(Btn.get_label()).split(" :")[0]
+		Btn.set_label("%s : %s" %(label, Returned))
+	MainApp.Out = Returned
 	
 
 
@@ -1777,15 +1785,17 @@ def ExPackage():
 				APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 				DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
 				print APKPath
-				SystemLog("%s x -y -o%s %s" %(sz, DstDir, APKPath))
+				zipfile.ZipFile(APKPath).extractall(path=DstDir)
 		elif RepackageButton.get_active():
 			Number = len(repname)
 			for num in range(0, Number):
 				Ex = repname[num]
-				DirPath = os.path.join(ScriptDir, "APK", "EX", Ex , "*")
-				DstFile = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk")
-				if Debug == True: print("%s a -y -tzip %s %s -mx9" %(sz, DstFile, DirPath))
-				SystemLog("%s a -y -tzip %s %s -mx9" %(sz, DstFile, DirPath))
+				DirPath = os.path.join(ScriptDir, "APK", "EX", Ex)
+				DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk"), "a")
+				for fpath in find_files(DirPath, "*"):
+					f = fpath.replace(DirPath, '')
+					DstFile.write(fpath, f)
+				DstFile.close()
 	notebook = MainApp.notebook
 	ExPackWindow = window
 	vbox = gtk.VBox()
@@ -2054,6 +2064,7 @@ def BakSmali():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Deodex():
+	MainApp.Out = None
 	def DoDeodex(cmd, deo, bootclass=''):
 		buildprop = open(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "build.prop"), "r")
 		for line in buildprop.readlines():
@@ -2064,16 +2075,18 @@ def Deodex():
 					api = ' -a 12'
 				elif version.startswith('4'):
 					api = ' -a 14'
+
+		WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 		for apk in deo:
-			shutil.rmtree(os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT"), True)
-			os.mkdir(os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT"))
+			shutil.rmtree(WorkDir, True)
+			os.makedirs(WorkDir)
 			apk = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk)
 			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
-			WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 			print _("Deodexing %s" % odex)
-			SystemLog("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT") ) )
+			if Debug == True: print _("BakSmaling %s" % odex)
+			SystemLog("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, WorkDir) )
+			if Debug == True: print _("Smaling %s" % odex)
 			SystemLog("java -Xmx512m -jar %s %s %s -o %s" %(SmaliJar, api, os.path.join(WorkDir, "*"), os.path.join(WorkDir, "classes.dex")))
-			cont = []
 			for fname in os.listdir(WorkDir):
 				if not fname == "classes.dex":
 					fname = os.path.join(WorkDir, fname)
@@ -2081,10 +2094,16 @@ def Deodex():
 						shutil.rmtree(fname)
 					elif not os.path.isdir(fname):
 						os.remove(fname)
-			SystemLog("%s x -y -o%s %s" %(sz, WorkDir, apk))
+
+			classes = os.path.join(WorkDir, "classes.dex")
+			if os.path.exists(classes):
+				if Debug == True: print _("Adding %s to %s" %(classes, apk))
+				zipf = zipfile.ZipFile(apk, "a")
+				zipf.write(classes, "classes.dex")
+				zipf.close()
+
+
 			os.remove(odex)
-			os.remove(apk)
-			SystemLog("%s a -y -tzip %s %s -mx9" %(sz, apk, os.path.join(WorkDir, "*")))
 
 		print _("\n\nDeodexing done!\n\n")
 		NewDialog("Deodex", _("Done!"))
@@ -2095,7 +2114,8 @@ def Deodex():
 			vbox = gtk.VBox()
 			sw.add_with_viewport(vbox)
 			deo = []
-			UpdateZip = os.path.join(ScriptDir, "Advance", "ODEX", "IN", os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "IN"))[0])
+			UpdateZip = MainApp.Out
+			print _("Extracting %s" % UpdateZip)
 			zipfile.ZipFile(UpdateZip).extractall(path=os.path.join(ScriptDir, "Advance", "ODEX", "WORKING"))
 			if os.path.exists(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "framework")):
 				bootclass = " -d %s" % os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "framework")
@@ -2118,6 +2138,13 @@ def Deodex():
 			NewDialog("ERROR", _("No file inside %s!" % os.path.join(ScriptDir, "Advance", "ODEX", "IN")) )
 	notebook = MainApp.notebook
 	vbox = gtk.VBox(False, 0)
+
+	RomChooser = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
+					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+
+	RomChooseBtn = gtk.Button("Choose ROM to deodex")
+	RomChooseBtn.connect("clicked", GetFile, RomChooser, [RomChooseBtn], False, ".zip")
+	vbox.pack_start(RomChooseBtn, False, False, 0)
 
 	InfoLabel = gtk.Label( _("Paste your ROMs update inside %s" % os.path.join(ScriptDir, "Advance", "ODEX", "IN") ) )
 	vbox.pack_start(InfoLabel, False, False, 3)
@@ -2154,7 +2181,7 @@ def Odex():
 			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
 			WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 			print _("Odexing %s" % odex)
-			SystemLog("%s e -tzip %s classes.dex -o%s" %(sz, apk, WorkDir))
+			zipfile.ZipFile(apk).extract(classes.dex, WorkDir)
 			Classes = os.path.join(WorkDir, "classes.dex")
 			shutil.move(Classes, odex)
 

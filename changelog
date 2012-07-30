@@ -71,6 +71,12 @@ Updates:
 	Fixed the bugs related to switching ^^
 	Windows PyInstaller compile fix
 
+==Beta3==
+	added base for Romanian translation (vladtz)
+	Fixed some bugs
+	Updated De-ODEX with filechooser, fixed bugs
+	Removed 7za usage, all is done with Python ZipFile now (Windows bugs fixed)
+
 
 
 I will switch to BETAs when every option is defined

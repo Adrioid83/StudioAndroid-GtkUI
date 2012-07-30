@@ -1,19 +1,19 @@
 # English translations for PACKAGE package.
 # Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# Marty <martijn.ruijzendaal@gmail.com>, 2012.
+# Marty <marty@durin>, 2012.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-07-30 16:19+0200\n"
-"PO-Revision-Date: 2012-07-01 12:03+0200\n"
-"Last-Translator: Marty <martijn.ruijzendaal@gmail.com>\n"
+"PO-Revision-Date: 2012-07-26 17:44+0200\n"
+"Last-Translator: Marty <marty@durin>\n"
 "Language-Team: English\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ASCII\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -198,35 +198,38 @@ msgstr "Aroma Menu"
 
 #: SA.py:567
 msgid "Compile to an exe"
-msgstr ""
+msgstr "Compile to an exe"
 
 #: SA.py:571
 msgid "Translate ;)"
-msgstr ""
+msgstr "Translate ;)"
 
 #: SA.py:640
 msgid ":("
-msgstr ""
+msgstr ":("
 
 #: SA.py:640
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "Sorry, windows does not support PATH modifications from cmd...\n"
 "Instead, I will open up a site for you\n"
 " Add %s to the PATH using that site."
 msgstr ""
 "Sorry, windows does not support PATH modifications from cmd...\n"
-"Instead, I will open up a site for you"
+"Instead, I will open up a site for you\n"
+" Add %s to the PATH using that site."
 
 #: SA.py:643
 msgid "ImageMagick"
-msgstr ""
+msgstr "ImageMagick"
 
 #: SA.py:643
 msgid ""
 "To install imagemagick, you will download a file. run it to install "
 "ImageMagick"
 msgstr ""
+"To install imagemagick, you will download a file. run it to install "
+"ImageMagick"
 
 #: SA.py:657
 msgid ""
@@ -297,7 +300,7 @@ msgstr "Start resizing"
 
 #: SA.py:805
 msgid "Please select a directory/APK before you click START"
-msgstr ""
+msgstr "Please select a directory/APK before you click START"
 
 #: SA.py:881
 #, python-format
@@ -317,9 +320,8 @@ msgid "Enter the resize percentage 0-100 %"
 msgstr "Enter the resize percentage 0-100 %"
 
 #: SA.py:940 SA.py:971
-#, fuzzy
 msgid "Choose the directory containing the images"
-msgstr "Enter the directory containing the images"
+msgstr "Choose the directory containing the images"
 
 #: SA.py:949
 msgid "Easy resizing using ..DPI values"
@@ -399,7 +401,7 @@ msgstr "Choose the OS you want to build:"
 
 #: SA.py:1483
 msgid "Sync"
-msgstr ""
+msgstr "Sync"
 
 #: SA.py:1488 SA.py:1506
 msgid "Force sync"
@@ -424,37 +426,31 @@ msgstr "Build (Only when synced)"
 
 #: SA.py:1535 SA.py:1555
 msgid "Device"
-msgstr ""
+msgstr "Device"
 
 #: SA.py:1555
-#, fuzzy
 msgid "You can choose the device you want to build for in the top bar."
-msgstr ""
-"You can choose a specific device in the top bar.\n"
-"\n"
+msgstr "You can choose the device you want to build for in the top bar."
 
 #: SA.py:1643
 msgid "Added"
-msgstr ""
+msgstr "Added"
 
 #: SA.py:1643
-#, fuzzy
 msgid "Added governors"
-msgstr "Add Governor"
+msgstr "Added governors"
 
 #: SA.py:1662
 msgid "Pick your drivers/cpufreq/Kconfig and start!"
-msgstr ""
+msgstr "Pick your drivers/cpufreq/Kconfig and start!"
 
 #: SA.py:1703
-#, fuzzy
 msgid "Decompile"
-msgstr "(De)Compile"
+msgstr "Decompile"
 
 #: SA.py:1704
-#, fuzzy
 msgid "Compile"
-msgstr "(De)Compile"
+msgstr "Compile"
 
 #: SA.py:1726
 msgid "Start (De)Compiling"
@@ -473,9 +469,8 @@ msgid "Choose Images and Optimize"
 msgstr "Choose Images and Optimize"
 
 #: SA.py:1823
-#, fuzzy
 msgid "Extract / Repackage"
-msgstr "Extract/Repackage"
+msgstr "Extract / Repackage"
 
 #: SA.py:1857
 msgid "Choose the key you want to sign with:"
@@ -501,7 +496,7 @@ msgstr ""
 
 #: SA.py:1938
 msgid "Connected"
-msgstr ""
+msgstr "Connected"
 
 #: SA.py:1946
 msgid "The Android SDK is not installed. Do you want to install it now?\n"
@@ -526,27 +521,26 @@ msgid "Baksmaling %s to %s with %s"
 msgstr "Baksmaling %s to %s with %s"
 
 #: SA.py:2019
-#, fuzzy
 msgid "BakSmali"
-msgstr "(Bak)Smali"
+msgstr "BakSmali"
 
 #: SA.py:2019
-#, fuzzy
 msgid "Successfully finished BakSmali"
-msgstr "Successfully optimized images"
+msgstr "Successfully finished BakSmali"
 
 #: SA.py:2027
-#, fuzzy
 msgid "Choose file(s) to Baksmali"
-msgstr "Choose a DEX file from %s to BakSmali:"
+msgstr "Choose file(s) to Baksmali"
 
 #: SA.py:2031
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 " OR choose a Smali folder to BSmali:"
-msgstr "Choose a Smali folder to BakSmali:"
+msgstr ""
+"\n"
+"\n"
+" OR choose a Smali folder to BSmali:"
 
 #: SA.py:2051
 msgid "Choose a custom API Level:"
@@ -560,7 +554,7 @@ msgstr "Deodexing %s"
 #: SA.py:2083
 #, fuzzy, python-format
 msgid "BakSmaling %s"
-msgstr "(Bak)Smali"
+msgstr "BakSmali"
 
 #: SA.py:2085
 #, fuzzy, python-format
@@ -591,7 +585,7 @@ msgstr "Done!"
 #: SA.py:2115
 #, fuzzy, python-format
 msgid "Extracting %s"
-msgstr "Odexing %s"
+msgstr "Extracting Update.zip"
 
 #: SA.py:2129
 msgid "Start deodex"
@@ -667,80 +661,34 @@ msgid "Delete log"
 msgstr "Delete log"
 
 #: SA.py:2455
-#, fuzzy
 msgid ""
 "The log content has been copied to the clipboard\n"
 "Please paste it in the reply that will be opened now!"
 msgstr ""
-"The log content has been copied to the clipboardPlease paste it in the "
-"website that will be opened now!"
+"The log content has been copied to the clipboard\n"
+"Please paste it in the reply that will be opened now!"
 
 #: SA.py:2465
 msgid "Removing old update.zip"
-msgstr ""
+msgstr "Removing old update.zip"
 
 #: SA.py:2467
 msgid "Retrieving new Update.zip"
-msgstr ""
+msgstr "Retrieving new Update.zip"
 
 #: SA.py:2470
 msgid "Removing old UpdateDir"
-msgstr ""
+msgstr "Removing old UpdateDir"
 
 #: SA.py:2472
 msgid "Extracting Update.zip"
-msgstr ""
+msgstr "Extracting Update.zip"
 
 #: SA.py:2475
-#, fuzzy, python-format
+#, python-format
 msgid "Removing old %s"
-msgstr "Removing %s"
+msgstr "Removing old %s"
 
 #: SA.py:2482
 msgid "Succesfully updated to the newest version :)"
-msgstr ""
-
-#~ msgid "Build Kernel"
-#~ msgstr "Build Kernel"
-
-#~ msgid "That site contains a HOWTO on adding a directory to the PATH."
-#~ msgstr "That site contains a HOWTO on adding a directory to the PATH."
-
-#~ msgid "Add this directory: "
-#~ msgstr "Add this directory: "
-
-#~ msgid ""
-#~ "\n"
-#~ " Options: [n] NVM  [1] Open link"
-#~ msgstr ""
-#~ "\n"
-#~ " Options: [n] NVM  [1] Open link"
-
-#~ msgid "Enter the directory containing the APK"
-#~ msgstr "Enter the directory containing the APK"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ " Downloading SDK installer!\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ " Downloading SDK installer!\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "\n"
-#~ " A popup will show. This is the SDK installer, configure it!\n"
-#~ "\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "\n"
-#~ " A popup will show. This is the SDK installer, configure it!\n"
-#~ "\n"
-#~ "\n"
+msgstr "Succesfully updated to the newest version :)"
