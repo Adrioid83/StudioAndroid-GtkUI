@@ -163,7 +163,9 @@ def DebugOn(cmd):
 # Shotcuts 
 
 UtilDir = os.path.join(ScriptDir, "Utils")
+SourceDir = os.path.join(ScriptDir, "Source")
 ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
+aapt = os.path.join(ScriptDir, "Utils", "aapt")
 SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
 ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
 SmaliJar = os.path.join(ScriptDir, "Utils", "smali-1.3.2.jar")
@@ -319,6 +321,8 @@ zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
 if not OS == "Win":
 	for filen in find_files(UtilDir, "*"):
 		os.chmod(filen, 0755)
+if not OS == "Win":
+	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
 
 def NewPage(Label, parent):
 	box = gtk.HBox()
@@ -1435,11 +1439,15 @@ def BuildSource():
 		SourceFile = SourceFile.replace('.py', '')
 		SourceFile = SourceFile.replace('\n', '')
 		global Sources, URL
-		if SourceFile == 'SourceP500': from Source.SourceP500 import URL, Sources
-		if SourceFile == 'SourceStock': from Source.SourceStock import URL,  Sources
+		if SourceFile == 'SourceP500': URL, Sources = Source.SourceP500.URL, Source.SourceP500.Sources
+		elif SourceFile == 'SourceStock': from Source.SourceStock import URL,  Sources
+		elif SourceFile == 'SourceMaguro': from Source.SourceMaguro import URL,  Sources
+		elif SourceFile == 'SourceCrespo': from Source.SourceCrespo import URL,  Sources
+		elif SourceFile == 'SourceDesire': from Source.SourceDesire import URL,  Sources
         	notebook.remove_page(6)
 		vbox3.destroy()
         	notebook.queue_draw_area(0,0,-1,-1)
+		f.close()
 		SetPage()
 
 	def SetURL(cmd, num, NameBtn):
@@ -1539,17 +1547,16 @@ def BuildSource():
 	DevelopmentMenu.append(DeviceOption)
 	DeviceOption.set_submenu(DeviceMenu)
 
-	for SourceFile in find_files(ScriptDir + "/Source", "Source*.py"):
+	for SourceFile in find_files(os.path.join(ScriptDir, "Source"), "Source*.py"):
 		SourceFile = os.path.basename(SourceFile)
-		Name = SourceFile.replace("Source", '')
-		Name = Name.replace(".py", '')
+		Name = str(SourceFile.replace("Source", '')).replace('.py', '')
 		MenuItem = gtk.MenuItem(Name)
 		DeviceMenu.append(MenuItem)
 		MenuItem.connect("activate", NewSources, SourceFile)
 		MenuItem.show()
 
 	if os.path.exists(os.path.join(Home, ".SA", "Device")):
-		Text = open(Home + "/.SA/Device", "r")
+		Text = open(os.path.join(Home, ".SA", "Device"), "r")
 		Text = Text.readlines()[0]
 		NewSources("cmd", Text)
 
@@ -1650,6 +1657,7 @@ def AddGovernor():
 	sw = gtk.ScrolledWindow()
 	
 	vbox = gtk.VBox()
+	label = gtk.Label( _("Ofcourse you need the kernel SOURCE, not the update.zip ;P") )
 
 	SmartAssBtn = gtk.CheckButton("smartass")
 	SmartAss2Btn = gtk.CheckButton("smartass2")
@@ -2032,7 +2040,7 @@ def BakSmali():
 	BakSmaliBtn.connect("clicked", StartBakSmali)
 	vbox.pack_start(BakSmaliBtn, False, False, 3)
 
-	label = gtk.Label( _("\n\n OR choose a Smali folder to BSmali:"))
+	label = gtk.Label( _("\n\n OR choose a Smali folder to Smali:"))
 	vbox.pack_start(label, False, False, 0)
 
 	Std = gtk.RadioButton(None, "Std")
@@ -2383,7 +2391,11 @@ def Compile():
 				SystemLog("C:\\Python27\\python.exe pyinstaller.py -y -F %s %s" %(ScriptFile, icon) )
 			else:
 				SystemLog("python pyinstaller.py -y -F %s %s" %(ScriptFile, icon))
-		shutil.copy(compiled, os.path.join(ScriptDir, Name + "-Compiled"))
+		if OS == "Win":
+			OutName = os.path.join(ScriptDir, Name + "-Compiled.exe")
+		else:
+			OutName = os.path.join(ScriptDir, Name + "-Compiled")
+		shutil.copy(compiled, OutName)
 	
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
