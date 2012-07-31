@@ -1375,8 +1375,12 @@ def BuildSource():
 		if not os.path.exists(SourceDir):
 			os.makedirs(SourceDir)
 		os.chdir(SourceDir)
-		print >>open(os.path.join(ScriptDir, "Source", "repocmd"), "w"), repocmd
-		print >>open(os.path.join(ScriptDir, "Source", "syncswitches"), "w"), switches
+		repocmdf = open(os.path.join(ScriptDir, "Source", "repocmd"), "w")
+		repocmdf.write(repocmd)
+		repocmdf.close()
+		switchesf = open(os.path.join(ScriptDir, "Source", "syncswitches"), "w")
+		switchesf.write(switches)
+		switchesf.close()
 		
 		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + ' sync')
 		StartBuild("cmd")
