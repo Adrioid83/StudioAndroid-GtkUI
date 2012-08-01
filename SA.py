@@ -323,15 +323,6 @@ if not OS == "Win":
 	for filen in find_files(UtilDir, "*"):
 		os.chmod(filen, 0755)
 	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
-else:
-	if not os.path.exists(os.path.join(ConfDir, "wfixed")):
-		wait = NewDialog(_("Windows fix"), _("Hey there! I Found a fix for windows, that should solve a few bugs.\n"
-						"When you click OK, Administrator rights will be asked.\n"
-						"Click OK to fix some issues!") )
-		subprocess.call(['runas', '/user:Administrator', os.path.join(SourceDir, "WPath.bat")])
-		fixed = open(os.path.join(ConfDir, "wfixed"), "w")
-		fixed.write("1")
-		fixed.close()
 
 def NewPage(Label, parent):
 	box = gtk.HBox()
@@ -2414,7 +2405,7 @@ def Compile():
 			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
-		compiled = os.path.join(CompiledDir, os.listdir(CompiledDir))
+		compiled = os.path.join(CompiledDir, os.listdir(CompiledDir)[0])
 
 		shutil.copy(compiled, ScriptDir)
 	
