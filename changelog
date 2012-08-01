@@ -79,6 +79,14 @@ Updates:
 	Updated Dutch translation :)
 	Fixed some bugs
 
+==Beta4==
+	Totally a windows update :)
+	Windows exe updated
+	Some bugs fixed related to Compiling
+	Anything using Python as an external command now works.
+	Windows (.exe) utilities added
+	Some typos fixed
+	Some bugs I don't remember
 
 
 I will switch to BETAs when every option is defined
