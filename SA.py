@@ -163,10 +163,12 @@ def DebugOn(cmd):
 
 # Shotcuts 
 
+sz = os.path.join(ScriptDir, "Utils", "7za")
 UtilDir = os.path.join(ScriptDir, "Utils")
 SourceDir = os.path.join(ScriptDir, "Source")
 ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
 aapt = os.path.join(ScriptDir, "Utils", "aapt")
+adb = os.path.join(ScriptDir, "Utils", "adb")
 SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
 ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
 SmaliJar = os.path.join(ScriptDir, "Utils", "smali-1.3.2.jar")
@@ -174,6 +176,10 @@ BaksmaliJar = os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar")
 OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
+
+if OS == "Win":
+	for dep in [aapt, adb, ZipalignFile, sz]:
+		dep = dep + ".exe"
 
 
 def callback(widget, option):
@@ -606,6 +612,7 @@ class MainApp():
 # FROM HERE, ALL FUNCTIONS USED IN MAINAPP WILL BE DEFINED
 
 def Clean():
+	open(os.path.join(ScriptDir, "log")).close()
 	for tree in ['APK', 'Resize', 'Resized', 'Resizing', 'Advance', 'Utils', 'Theme']:
 		tree = os.path.join(ScriptDir, tree)
 		shutil.rmtree(tree, True)
