@@ -2396,7 +2396,7 @@ def Compile():
 
 		os.chdir(PyInstDir)
 		if OS == 'Lin':
-			SystemLog("python pyinstaller.py -y -s -F %s %s -n %s" %(ScriptFile, icon, Name))
+			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
 		else:
 			PythonSiteDir = str(get_python_lib())
 			PythonDir = PythonSiteDir.split("Lib")[0]
@@ -2407,7 +2407,7 @@ def Compile():
 			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
-		compiled = os.path.join(CompiledDir, os.lisdit(CompiledDir))
+		compiled = os.path.join(CompiledDir, os.listdir(CompiledDir))
 
 		shutil.copy(compiled, ScriptDir)
 	
