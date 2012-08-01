@@ -2,6 +2,7 @@
 # IMPORTS
 from __future__ import division
 import os, sys, platform, commands
+from distutils.sysconfig import get_python_lib
 import gtk, pygtk
 pygtk.require('2.0')
 import shutil
@@ -2369,8 +2370,7 @@ def Compile():
 			print("%s already exists" % PyDir)
 
 
-		Name = str(os.path.basename(ScriptFile)).replace(".py", "")
-		compiled = os.path.join(PyInstDir, Name, "dist", Name)
+		Name = "StudioAndroid"
 
 		if New == True:
 			urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
@@ -2396,17 +2396,20 @@ def Compile():
 
 		os.chdir(PyInstDir)
 		if OS == 'Lin':
-			SystemLog("python pyinstaller.py -y -s -F %s %s" %(ScriptFile, icon))
+			SystemLog("python pyinstaller.py -y -s -F %s %s -n %s" %(ScriptFile, icon, Name))
 		else:
-			if os.path.exists("C:\\Python27\\python.exe"):
-				SystemLog("C:\\Python27\\python.exe pyinstaller.py -y -F %s %s" %(ScriptFile, icon) )
-			else:
-				SystemLog("python pyinstaller.py -y -F %s %s" %(ScriptFile, icon))
-		if OS == "Win":
-			OutName = os.path.join(ScriptDir, Name + "-Compiled.exe")
-		else:
-			OutName = os.path.join(ScriptDir, Name + "-Compiled")
-		shutil.copy(compiled, OutName)
+			PythonSiteDir = str(get_python_lib())
+			PythonDir = PythonSiteDir.split("Lib")[0]
+			PythonF = os.path.join(PythonDir, "python.exe")
+
+			print _("Python = " % PythonF)
+
+			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
+
+		CompiledDir = os.path.join(PyInstDir, Name, "dist")
+		compiled = os.path.join(CompiledDir, os.lisdit(CompiledDir))
+
+		shutil.copy(compiled, ScriptDir)
 	
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
