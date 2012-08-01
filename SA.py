@@ -247,7 +247,7 @@ def KillPage(cmd, child):
 	page = notebook.page_num(child)
 	if page == -1:
 		page = notebook.get_n_pages() - 1
-	notebook.remove_page(4)
+	notebook.remove_page(page)
 	child.destroy()
 	notebook.set_current_page(0)
 
@@ -588,6 +588,13 @@ class MainApp():
 	AdvanceVBox.pack_start(MainOptTrans, True, False, 10)
 
 	notebook.insert_page(AdvanceVBox, AdvanceLabel, 4)
+
+	# ANDROID TABLE
+
+	AndroidVBox = gtk.VBox()
+	AndroidLabel = gtk.Label( _("Android") )
+	
+	#notebook.insert_page(AndroidVBox, AndroidLabel, 5)
 
 
 	# END, show main tab
@@ -2402,7 +2409,7 @@ def Compile():
 			PythonDir = PythonSiteDir.split("Lib")[0]
 			PythonF = os.path.join(PythonDir, "python.exe")
 
-			print _("Python = " % PythonF)
+			print _("Python = %s" % PythonF)
 
 			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
 
