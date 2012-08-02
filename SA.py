@@ -2229,7 +2229,7 @@ def Odex():
 				print _("Skipped %s " % odex)
 			SystemLog("%s d -y -tzip %s classes.dex" %(sz, apk) )
 
-		print _("\n\nDeodexing done!\n\n")
+		print _("\n\nOdexing done!\n\n")
 		NewDialog("Odex", _("Done!"))
 			
 	def OdexStart(cmd):
