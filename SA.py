@@ -2109,15 +2109,20 @@ def Deodex():
 				version = line.replace('ro.build.version.release=', '')
 				if version.startswith('2.3'):
 					api = ' -a 12'
-				elif version.startswith('4'):
+				elif version.startswith('3'):
+					api = ' -a 13'
+				elif version.startswith('4.0'):
 					api = ' -a 14'
+				elif version.startswith('4.1'):
+					api = ' -a 15'
 
 		WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 		for apk in deo:
+			ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING")
 			shutil.rmtree(WorkDir, True)
 			os.makedirs(WorkDir)
-			apk = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk)
-			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
+			apk = os.path.join(ExDir, apk)
+			odex = apk.replace('apk', 'odex')
 			print _("Deodexing %s" % odex)
 			if Debug == True: print _("BakSmaling %s" % odex)
 			SystemLog("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, WorkDir) )
@@ -2145,33 +2150,32 @@ def Deodex():
 		NewDialog("Deodex", _("Done!"))
 			
 	def DeodexStart(cmd):
-		if not os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "IN")) == '':
-			sw = gtk.ScrolledWindow()
-			vbox = gtk.VBox()
-			sw.add_with_viewport(vbox)
-			deo = []
-			UpdateZip = MainApp.Out
-			print _("Extracting %s" % UpdateZip)
-			zipfile.ZipFile(UpdateZip).extractall(path=os.path.join(ScriptDir, "Advance", "ODEX", "WORKING"))
-			if os.path.exists(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "framework")):
-				bootclass = " -d %s" % os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "framework")
-			for filea in os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app")):
-				if filea.endswith('.apk') and os.path.exists(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", filea.replace('apk', 'odex'))):
-					NameBtn = gtk.CheckButton(filea)
-					NameBtn.set_active(1)
-					deo.append(filea)
-					NameBtn.connect("toggled", AddToList, deo, filea, NameBtn)
-					vbox.pack_start(NameBtn, False, False, 0)
-			StartButton = gtk.Button("Start deodex!")
-			StartButton.connect("clicked", DoDeodex, deo, bootclass)
-			vbox.pack_start(StartButton, False, False, 0)
-			DeodexLabel = NewPage( _("Start deodex") , sw)
-			DeodexLabel.show_all()
-			notebook.insert_page(sw, DeodexLabel)
-			window.show_all()
-			notebook.set_current_page(notebook.get_n_pages() - 1)
-		else:
-			NewDialog("ERROR", _("No file inside %s!" % os.path.join(ScriptDir, "Advance", "ODEX", "IN")) )
+		sw = gtk.ScrolledWindow()
+		vbox = gtk.VBox()
+		sw.add_with_viewport(vbox)
+		deo = []
+		UpdateZip = MainApp.Out
+		print _("Extracting %s" % UpdateZip)
+		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
+		zipfile.ZipFile(UpdateZip).extractall(path=ExDir)
+		if os.path.exists(os.path.join(ExDir, "system", "framework")):
+			bootclass = " -d %s" % os.path.join(ExDir, "system", "framework")
+		for filea in find_files(ExDir, "*.apk"):
+			if os.path.exists(filea.replace('apk', 'odex')):
+				files = filea.replace(ExDir, '')
+				NameBtn = gtk.CheckButton(files)
+				NameBtn.set_active(1)
+				deo.append(filea)
+				NameBtn.connect("toggled", AddToList, deo, files, NameBtn)
+				vbox.pack_start(NameBtn, False, False, 0)
+		StartButton = gtk.Button("Start deodex!")
+		StartButton.connect("clicked", DoDeodex, deo, bootclass)
+		vbox.pack_start(StartButton, False, False, 0)
+		DeodexLabel = NewPage( _("Start deodex") , sw)
+		DeodexLabel.show_all()
+		notebook.insert_page(sw, DeodexLabel)
+		window.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 	notebook = MainApp.notebook
 	vbox = gtk.VBox(False, 0)
 
@@ -2181,13 +2185,6 @@ def Deodex():
 	RomChooseBtn = gtk.Button("Choose ROM to deodex")
 	RomChooseBtn.connect("clicked", GetFile, RomChooser, [RomChooseBtn], False, ".zip")
 	vbox.pack_start(RomChooseBtn, False, False, 0)
-
-	InfoLabel = gtk.Label( _("Paste your ROMs update inside %s" % os.path.join(ScriptDir, "Advance", "ODEX", "IN") ) )
-	vbox.pack_start(InfoLabel, False, False, 3)
-
-	ApiBox = gtk.Entry()
-	ApiBox.set_text(_("Choose a custom API level (default = 14)"))
-	vbox.pack_start(ApiBox, False, False, 3)
 
 	DoneBtn = gtk.Button( _("Done") )
 	DoneBtn.connect("clicked", DeodexStart)
@@ -2200,6 +2197,7 @@ def Deodex():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Odex():
+	MainApp.Out = None
 	def DoOdex(cmd, odex, bootclass=''):
 		buildprop = open(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "build.prop"), "r")
 		for line in buildprop.readlines():
@@ -2208,56 +2206,73 @@ def Odex():
 				version = line.replace('ro.build.version.release=', '')
 				if version.startswith('2.3'):
 					api = ' -a 12'
-				elif version.startswith('4'):
+				elif version.startswith('3'):
+					api = ' -a 13'
+				elif version.startswith('4.0'):
 					api = ' -a 14'
+				elif version.startswith('4.1'):
+					api = ' -a 15'
 		for apk in odex:
-			shutil.rmtree(os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT"), True)
-			os.mkdir(os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT"))
-			apk = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk)
-			odex = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", apk.replace('apk', 'odex'))
+			ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING")
 			WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
+			shutil.rmtree(WorkDir, True)
+			os.makedirs(WorkDir)
+			apk = os.path.join(ExDir, apk)
+			odex = apk.replace('apk', 'odex')
+
 			print _("Odexing %s" % odex)
-			zipfile.ZipFile(apk).extract(classes.dex, WorkDir)
-			Classes = os.path.join(WorkDir, "classes.dex")
-			shutil.move(Classes, odex)
+			if "classes.dex" in zipfile.ZipFile(apk).namelist():
+				zipfile.ZipFile(apk).extract("classes.dex", WorkDir)
+				Classes = os.path.join(WorkDir, "classes.dex")
+				shutil.move(Classes, odex)
+			else:
+				print _("Skipped %s " % odex)
+			SystemLog("%s d -y -tzip %s classes.dex" %(sz, apk) )
 
 		print _("\n\nDeodexing done!\n\n")
-		NewDialog("Deodex", _("Done!"))
+		NewDialog("Odex", _("Done!"))
 			
 	def OdexStart(cmd):
-		if not os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "IN")) == '':
-			sw = gtk.ScrolledWindow()
-			vbox = gtk.VBox()
-			sw.add_with_viewport(vbox)
-			odex = []
-			UpdateZip = os.path.join(ScriptDir, "Advance", "ODEX", "IN", os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "IN"))[0])
-			zipfile.ZipFile(UpdateZip).extractall(path=os.path.join(ScriptDir, "Advance", "ODEX", "WORKING"))
-			for filea in os.listdir(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app")):
-				if filea.endswith('.apk') and not os.path.exists(os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", "system", "app", filea.replace('apk', 'odex'))):
-					NameBtn = gtk.CheckButton(filea)
-					NameBtn.set_active(1)
-					odex.append(filea)
-					NameBtn.connect("toggled", AddToList, odex, filea, NameBtn)
-					vbox.pack_start(NameBtn, False, False, 0)
-			StartButton = gtk.Button("Start Odex!")
-			StartButton.connect("clicked", DoOdex, odex)
-			vbox.pack_start(StartButton, False, False, 0)
-			DeodexLabel = NewPage( _("Start Odex") , sw)
-			DeodexLabel.show_all()
-			notebook.insert_page(sw, DeodexLabel)
-			window.show_all()
-			notebook.set_current_page(notebook.get_n_pages() - 1)
-		else:
-			NewDialog("ERROR", _("No file inside %s!" % os.path.join(ScriptDir, "Advance", "ODEX", "IN")) )
+		sw = gtk.ScrolledWindow()
+		vbox = gtk.VBox()
+		sw.add_with_viewport(vbox)
+		odex = []
+		UpdateZip = MainApp.Out
+		print _("Extracting %s" % UpdateZip)
+		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
+		zipfile.ZipFile(UpdateZip).extractall(path=ExDir)
+		if os.path.exists(os.path.join(ExDir, "system", "framework")):
+			bootclass = " -d %s" % os.path.join(ExDir, "system", "framework")
+		for filea in find_files(ExDir, "*.apk"):
+			if not os.path.exists(filea.replace('apk', 'odex')):
+				files = filea.replace(ExDir, '')
+				NameBtn = gtk.CheckButton(files)
+				NameBtn.set_active(1)
+				odex.append(filea)
+				NameBtn.connect("toggled", AddToList, odex, files, NameBtn)
+				vbox.pack_start(NameBtn, False, False, 0)
+		StartButton = gtk.Button("Start Odex!")
+		StartButton.connect("clicked", DoOdex, odex, bootclass)
+		vbox.pack_start(StartButton, False, False, 0)
+		DeodexLabel = NewPage( _("Start deodex") , sw)
+		DeodexLabel.show_all()
+		notebook.insert_page(sw, DeodexLabel)
+		window.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+
 	notebook = MainApp.notebook
 	vbox = gtk.VBox(False, 0)
 
-	InfoLabel = gtk.Label( _("Paste your ROMs update inside %s" % os.path.join(ScriptDir, "Advance", "ODEX", "IN") ) )
-	vbox.pack_start(InfoLabel, False, False, 3)
+	RomChooser = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
+					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+
+	RomChooseBtn = gtk.Button("Choose ROM to odex")
+	RomChooseBtn.connect("clicked", GetFile, RomChooser, [RomChooseBtn], False, ".zip")
+	vbox.pack_start(RomChooseBtn, False, False, 0)
 
 	DoneBtn = gtk.Button( _("Done") )
 	DoneBtn.connect("clicked", OdexStart)
-	vbox.pack_start(DoneBtn, False, False, 3)
+	vbox.pack_start(DoneBtn, False, False, 20)
 	
 	DeodexLabel = NewPage("Re-ODEX", vbox)
 	DeodexLabel.show_all()
