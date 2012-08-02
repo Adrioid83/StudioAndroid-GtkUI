@@ -1,1 +1,0 @@
-SETX PATH "%PATH%;C:\Python27"
