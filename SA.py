@@ -8,16 +8,13 @@ pygtk.require('2.0')
 import shutil
 import fnmatch
 import webbrowser, urllib, urllib2
+from HTMLParser import HTMLParser
 import random
 import time
 import zipfile, tarfile
 import threading, multiprocessing, subprocess
 import gettext, locale
-from Source.SourceP500 import *
-from Source.SourceMaguro import *
-from Source.SourceCrespo import *
-from Source.SourceDesire import *
-from Source.SourceStock import *
+import Source.Src
 _ = gettext.gettext
 
 
@@ -303,9 +300,21 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 		label = str(Btn.get_label()).split(" :")[0]
 		Btn.set_label("%s : %s" %(label, Returned))
 	MainApp.Out = Returned
-	
 
 
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def remove_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
@@ -645,11 +654,11 @@ def Utils():
 	def Install(cmd):
 		def Copy(Subdir="bin"):
 			if button1.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "adb"), os.path.join(Home, Subdir))
+				shutil.copy(adb, os.path.join(Home, Subdir))
 			if button2.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "aapt"), os.path.join(Home, Subdir))
+				shutil.copy(aapt, os.path.join(Home, Subdir))
 			if button3.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "7za"), os.path.join(Home, Subdir))
+				shutil.copy(sz, os.path.join(Home, Subdir))
 			if button6.get_active():
 				shutil.copy(os.path.join(ScriptDir, "Utils", "signapk.jar"), os.path.join(Home, Subdir))
 				shutil.copy(os.path.join(ScriptDir, "Utils", "testkey.pk8"), os.path.join(Home, Subdir))
@@ -659,18 +668,24 @@ def Utils():
 			if button8.get_active():
 				shutil.copy(os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar"), os.path.join(Home, Subdir))
 			NewDialog("Utilities", "Installed!")
-		if OS == 'Lin':
+		if not OS == 'Lin':
 			if not os.path.exists(os.path.join(Home, "bin")):
 				os.mkdir(os.path.join(Home, "bin"))
 			Copy()
 			if button10.get_active():
 				SystemLog("sudo apt-get install imagemagick")
-		if OS == 'Win':
-			NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
+		if not OS == 'Win':
+			#subprocess.call(['runas', '/user:Administrator', 'SETX PATH "%PATH%;%s' % UtilDir])
+			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
 			Web.open("http://www.computerhope.com/issues/ch000549.htm")
-			NewDialog(_("ImageMagick"), _("To install imagemagick, you will download a file. run it to install ImageMagick"))
-			Web.open("http://www.imagemagick.org/download/binaries/ImageMagick-6.7.8-5-Q16-windows-dll.exe")
+			urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
+			f = open(os.path.join(ConfDir, "index.html"), "r").readlines()
+			ln = f[10]
+			version = str(str(remove_tags(ln)).split('.exe')[0]).replace('Q8', 'Q16') + ".exe"
+			
+			wait = NewDialog(_("ImageMagick"), _("To install imagemagick, you will download a file. run it to install ImageMagick"))
+			Web.open("http://www.imagemagick.org/download/binaries/%s" % version)
 
 		KillPage("cmd", vbox)
 
@@ -1379,10 +1394,14 @@ def JDK():
 		Web.open('http://www.oracle.com/technetwork/java/javase/downloads/jdk-7u4-downloads-1591156.html')
 
 def BuildSource():
+	class BuildData():
+		data = ''
+
 	notebook = MainApp.notebook	
 	global vbox
 	vbox = gtk.VBox()
 	sw = gtk.ScrolledWindow()
+	BuildData.Sources, BuildData.URL = Source.Src.MakeVal("SourceStock")
 
 	def StartSync(cmd):
 		switches = ''
@@ -1399,12 +1418,12 @@ def BuildSource():
 			os.makedirs(SourceDir)
 		os.chdir(SourceDir)
 		repocmdf = open(os.path.join(ScriptDir, "Source", "repocmd"), "w")
-		repocmdf.write(repocmd)
+		repocmdf.write(BuildData.repocmd)
 		repocmdf.close()
 		switchesf = open(os.path.join(ScriptDir, "Source", "syncswitches"), "w")
 		switchesf.write(switches)
 		switchesf.close()
-		
+
 		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + ' sync')
 		StartBuild("cmd")
 	def StartBuild(cmd):
@@ -1459,18 +1478,13 @@ def BuildSource():
 		print >>open(os.path.join(ScriptDir, "Source", "makeswitches"), "w"), switches
 		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + " make " + active)			
 
-		
+
 	def NewSources(cmd, SourceFile):
 		f = open(os.path.join(Home, ".SA", "Device"), "w")
 		print >> f,SourceFile
 		SourceFile = SourceFile.replace('.py', '')
 		SourceFile = SourceFile.replace('\n', '')
-		global Sources, URL
-		if SourceFile == 'SourceP500': URL, Sources = Source.SourceP500.URL, Source.SourceP500.Sources
-		elif SourceFile == 'SourceStock': from Source.SourceStock import URL,  Sources
-		elif SourceFile == 'SourceMaguro': from Source.SourceMaguro import URL,  Sources
-		elif SourceFile == 'SourceCrespo': from Source.SourceCrespo import URL,  Sources
-		elif SourceFile == 'SourceDesire': from Source.SourceDesire import URL,  Sources
+		BuildData.Sources, BuildData.URL = Source.Src.MakeVal(SourceFile)
         	notebook.remove_page(6)
 		vbox3.destroy()
         	notebook.queue_draw_area(0,0,-1,-1)
@@ -1479,15 +1493,13 @@ def BuildSource():
 
 	def SetURL(cmd, num, NameBtn):
 		if NameBtn.get_active():
-			global repocmd, Name, SourceDir
-			repocmd = URL[num]
-			Name = Sources[num]
+			global Name, SourceDir
+			BuildData.repocmd = BuildData.URL[num]
+			Name = BuildData.Sources[num]
 			SourceDir = os.path.join(Home, "WORKING_" + Name)
 
 
 	global Force, Quiet, Local, Jobs
-	label = gtk.Label( _("You can choose a specific device in the top bar.\n\n"))
-	vbox.pack_start(label, False, False, 0)
 	hbox = gtk.HBox()
 
 	label = gtk.Label( _("Choose the OS you want to build:"))
@@ -1503,9 +1515,9 @@ def BuildSource():
 		global vbox3
 		vbox3 = gtk.VBox()
 		vbox2.pack_start(vbox3, False, False, 0)
-		Number = len(Sources)
+		Number = len(BuildData.Sources)
 		for num in range(0, Number):
-			Name = Sources[num]
+			Name = BuildData.Sources[num]
 			NameBtn = gtk.RadioButton(Std, Name)
 			NameBtn.connect("clicked", SetURL, num, NameBtn)
 			vbox3.pack_start(NameBtn, False, False, 0)
@@ -2548,9 +2560,6 @@ if not os.path.exists(os.path.join(Home, ".SA", "Language")):
 	window2.show_all()
 
 if not FirstRun == False:
-	if OS == 'Win':
-		NewDialog("Compile!", "Do you want to help me?\nIf so, click Advanced > Compile to exe > Start compiling..."
-					"\nDone that? In your current directory will be a SA-Compiled file.\nPLEASE SEND THAT TO ME!!!")
 	callback("cmd", "1")
 
 def main():
@@ -2558,6 +2567,7 @@ def main():
 		gtk.main()
 	except KeyboardInterrupt:
 		exit()
+
 if  __name__ == '__main__':
 	main()
 
