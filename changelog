@@ -88,6 +88,10 @@ Updates:
 	Some typos fixed
 	Some bugs I don't remember
 
+==Beta5==
+	Build from Source: You can now add source files without having to edit the SA.py to use them properly
+	Some small enhancements
+
 
 I will switch to BETAs when every option is defined
 Feature requests are always welcome :)
