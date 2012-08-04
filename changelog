@@ -91,6 +91,9 @@ Updates:
 ==Beta5==
 	Build from Source: You can now add source files without having to edit the SA.py to use them properly
 	Some small enhancements
+	Windows fix (try if Re-Compiling works now please)
+	Build from Source fix
+	Update fix
 
 
 I will switch to BETAs when every option is defined

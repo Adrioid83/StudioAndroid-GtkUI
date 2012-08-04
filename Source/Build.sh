@@ -12,6 +12,6 @@ if [ "$1" = "make" ]
 then
 	switches=$(cat ${0%%$MyCommand}/makeswitches)
 	. build/envsetup.sh
-	brunch $2
+	lunch $2
 	make otapackage
 fi

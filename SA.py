@@ -47,7 +47,7 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 		window2.destroy()
 		os.execl(sys.executable, sys.executable, * sys.argv)
 	if not os.path.exists(os.path.join(Home, ".SA")):
-		os.makedirs(Home + "/.SA")
+		os.makedirs(ConfDir)
 	window2 = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	window2.set_position(gtk.WIN_POS_MOUSE)
 	window2.set_resizable(False)
@@ -174,9 +174,14 @@ OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
 
-if OS == "Win":
-	for dep in [aapt, adb, ZipalignFile, sz]:
+zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
+
+for dep in [aapt, adb, ZipalignFile, sz]:
+	if OS == "Win":
+		os.remove(dep)
 		dep = dep + ".exe"
+	else:
+		os.remove(dep + ".exe")
 
 
 def callback(widget, option):
@@ -333,21 +338,6 @@ def find_files(directory, pattern):
 # FindFiles (C) StackOverflow
 
 
-zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
-if not OS == "Win":
-	for filen in find_files(UtilDir, "*"):
-		os.chmod(filen, 0755)
-	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
-else:
-	if not os.path.exists(os.path.join(ConfDir, "wfixed")):
-		wait = NewDialog(_("Windows fix"), _("Hey there! I Found a fix for windows, that should solve a few bugs.\n"
-						"When you click OK, Administrator rights will be asked.\n"
-						"Click OK to fix some issues!") )
-		subprocess.call(['runas', '/user:Administrator', os.path.join(SourceDir, "WPath.bat")])
-		fixed = open(os.path.join(ConfDir, "wfixed"), "w")
-		fixed.write("1")
-		fixed.close()
-
 def NewPage(Label, parent):
 	box = gtk.HBox()
 	label = gtk.Label(Label)
@@ -361,11 +351,31 @@ def NewPage(Label, parent):
 	box.pack_end(closebtn, False, False)
 	return box
 
-for DIR in ["/APK/IN", "/APK/OUT", "/APK/EX", "/APK/DEC", "/Resize", "/Advance/Smali/IN", "/Advance/Smali/Smali", "/Advance/Smali/OUT", "/Advance/ODEX/IN", "/Advance/ODEX/CURRENT", "/Advance/ODEX/WORKING", "/Advance/ODEX/OUT", "/Advance/PORT/TO", "/Advance/PORT/ROM", "/Advance/PORT/WORKING"]:
+for DIRS in [["APK", "IN"], ["APK", "OUT"], ["APK", "EX"], ["APK", "DEC"], ["Resize"], ["Advance", "Smali", "IN"], ["Advance", "Smali", "Smali"], ["Advance", "Smali", "OUT"], ["Advance", "ODEX", "IN"], ["Advance", "ODEX", "CURRENT"], ["Advance", "ODEX", "WORKING"], ["Advance", "ODEX", "OUT"], ["Advance", "PORT", "TO"], ["Advance", "PORT", "ROM"], ["Advance", "PORT", "WORKING"]]:
 	try:
-		os.makedirs(ScriptDir + DIR)
-	except os.error:
+		subdir = ''
+		for x in DIRS:
+			subdir = os.path.join(subdir, x)
+		dir = os.path.join(ScriptDir, subdir)
+		os.makedirs(dir)
+	except:
 		pass
+
+# FIX PERMISSIONS
+if not OS == "Win":
+	for filen in find_files(UtilDir, "*"):
+		os.chmod(filen, 0755)
+	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
+else:
+	# ADD PYTHON TO THE PATH
+	if not os.path.exists(os.path.join(ConfDir, "wfixed")):
+		wait = NewDialog(_("Windows fix"), _("Hey there! I Found a fix for windows, that should solve a few bugs.\n"
+						"When you click OK, Administrator rights will be asked.\n"
+						"Click OK to fix some issues!") )
+		subprocess.call(['runas', '/user:Administrator', os.path.join(SourceDir, "WPath.bat")])
+		fixed = open(os.path.join(ConfDir, "wfixed"), "w")
+		fixed.write("1")
+		fixed.close()
 
 
 if not os.path.exists(os.path.join(Home, ".SA", "ran")):
@@ -668,14 +678,14 @@ def Utils():
 			if button8.get_active():
 				shutil.copy(os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar"), os.path.join(Home, Subdir))
 			NewDialog("Utilities", "Installed!")
-		if not OS == 'Lin':
+		if OS == 'Lin':
 			if not os.path.exists(os.path.join(Home, "bin")):
 				os.mkdir(os.path.join(Home, "bin"))
 			Copy()
 			if button10.get_active():
 				SystemLog("sudo apt-get install imagemagick")
-		if not OS == 'Win':
-			#subprocess.call(['runas', '/user:Administrator', 'SETX PATH "%PATH%;%s' % UtilDir])
+		if OS == 'Win':
+			subprocess.call(['runas', '/user:Administrator', 'SETX PATH "%PATH%;%s' % UtilDir])
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
 			Web.open("http://www.computerhope.com/issues/ch000549.htm")
@@ -1468,15 +1478,13 @@ def BuildSource():
 			switches = switches + " -f"
 		if Quiet2.get_active():
 			switches = switches + " -q"
-		if Local2.get_active():
-			switches = switches + " -l"
 		if Jobs2.get_active():
 			switches = switches +  " -j" + Cores
 		os.chdir(SourceDir)
 		active = str([r for r in GroupStandard.get_group() if r.get_active()][0].get_label().replace('--', '_'))
 		active = active.replace(' ', '')
 		print >>open(os.path.join(ScriptDir, "Source", "makeswitches"), "w"), switches
-		SystemLog(os.path.join(ScriptDir, "Source", "Build.sh") + " make " + active)			
+		SystemLog("%s make %s&" %(os.path.join(ScriptDir, "Source", "Build.sh"), active))			
 
 
 	def NewSources(cmd, SourceFile):
@@ -1551,14 +1559,11 @@ def BuildSource():
 	hbox.pack_start(vbox5)
 
 
-	Force2 = gtk.CheckButton( _("Force sync"))
+	Force2 = gtk.CheckButton( _("Force build"))
 	vbox5.pack_start(Force2, False, False, 0)
 
 	Quiet2 = gtk.CheckButton( _("Be quiet!"))
 	vbox5.pack_start(Quiet2, False, False, 0)
-
-	Local2 = gtk.CheckButton( _("Sync local only"))
-	vbox5.pack_start(Local2, False, False, 0)
 
 	Jobs2 = gtk.CheckButton(_("Custom number of parallel jobs: %s" % Cores ))
 	vbox5.pack_start(Jobs2, False, False, 0)
@@ -1733,6 +1738,7 @@ def DeCompile():
 						if Debug == True: print("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						print("Decompile " + APK)
+			Refresh("cmd")
 		if CompileButton.get_active():
 			Number = len(comname)
 			for num in range(0, Number):
@@ -1742,7 +1748,13 @@ def DeCompile():
 						ApkFolder = os.path.join(ScriptDir, "APK", "DEC", dec)
 						ApkName = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Dec + ".apk")
 						if Debug == True: print("\njava -jar %s b -f %s %s\n" %(ApkJar, ApkFolder, ApkName))
-						SystemLog("java -jar %s b -f %s %s" %(ApkJar, ApkFolder, ApkName))
+						SystemLog("java -jar %s b -f %s %s &" %(ApkJar, ApkFolder, ApkName))
+
+	def Refresh(cmd):
+		KillPage("cmd", vbox)
+		DeCompile()
+
+
 	DeCompileWindow = window
 	notebook = MainApp.notebook
 	sw = gtk.ScrolledWindow()
@@ -1776,6 +1788,11 @@ def DeCompile():
 	vbox.pack_start(StartButton, False, False, 15)
 
 
+	RefreshBtn = gtk.Button(_("Refresh") )
+	RefreshBtn.connect("clicked", Refresh)
+	vbox.pack_end(RefreshBtn, False, False, 10)
+
+
 
 	DeComLabel = NewPage("(De)Compile", sw)
 	DeComLabel.show_all()
@@ -1801,7 +1818,7 @@ def OptimizeImage():
 			dialog.hide_all()
 			for file in dialog.get_filenames():
 				if Debug == True: print ("%s -o99 %s" %(OptPng, file))				
-				SystemLog("%s -o99 %s" %(OptPng, file))
+				SystemLog("%s -o99 %s &" %(OptPng, file))
 			NewDialog(_("Optimize Images"),  _("Successfully optimized images"))
 		elif response == gtk.RESPONSE_CANCEL:
 			print _('Closed, no files selected')
@@ -1834,6 +1851,7 @@ def ExPackage():
 				DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
 				print APKPath
 				zipfile.ZipFile(APKPath).extractall(path=DstDir)
+				Refresh("cmd")
 		elif RepackageButton.get_active():
 			Number = len(repname)
 			for num in range(0, Number):
@@ -1844,6 +1862,11 @@ def ExPackage():
 					f = fpath.replace(DirPath, '')
 					DstFile.write(fpath, f)
 				DstFile.close()
+
+	def Refresh(cmd):
+		KillPage("cmd", vbox)
+		ExPackage()
+		
 	notebook = MainApp.notebook
 	ExPackWindow = window
 	vbox = gtk.VBox()
@@ -1853,7 +1876,7 @@ def ExPackage():
 
 	exname = []
 
-	for apk in find_files(ScriptDir + "/APK/IN", "*.apk"):
+	for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), "*.apk"):
 		name = os.path.basename(apk)
 		NameBtn = gtk.CheckButton(name)
 		NameBtn.connect("toggled", AddToList, exname, name, NameBtn)
@@ -1873,6 +1896,10 @@ def ExPackage():
 	StartButton = gtk.Button(_("Extract / Repackage"))
 	StartButton.connect("clicked", Start)
 	vbox.pack_start(StartButton, False, False, 10)
+
+	RefreshBtn = gtk.Button(_("Refresh") )
+	RefreshBtn.connect("clicked", Refresh)
+	vbox.pack_end(RefreshBtn, False, False, 10)
 	sw = gtk.ScrolledWindow()
 	
 	ExPackLabel = NewPage("ExPackage", sw)
@@ -2006,7 +2033,7 @@ def Install():
 	
 	apk = []
 
-	for APK in find_files(ScriptDir + "/APK", "*.apk"):
+	for APK in find_files(os.path.join(ScriptDir, "APK"), "*.apk"):
 		Name = APK
 		NameBtn = gtk.CheckButton(Name)
 		NameBtn.connect("toggled", AddToList, apk, Name, NameBtn)
@@ -2125,8 +2152,10 @@ def Deodex():
 					api = ' -a 13'
 				elif version.startswith('4.0'):
 					api = ' -a 14'
-				elif version.startswith('4.1'):
+				elif version.split('.')[0] == '4' and version.split('.')[1] == '0' and version.split('.')[-1] >= 3:
 					api = ' -a 15'
+				elif version.startswith('4.1'):
+					api = ' -a 16'
 
 		WorkDir = os.path.join(ScriptDir, "Advance", "ODEX", "CURRENT")
 		for apk in deo:
@@ -2546,14 +2575,21 @@ def Update():
 	if os.path.exists(os.path.join(Home, "StudioAndroid")):
 		print _("Removing old %s" % os.path.join(Home, "StudioAndroid"))
 		shutil.rmtree(os.path.join(Home, "StudioAndroid"))
+	else:
+		shutl.rmtree(ScriptDir)
 	UpdDir = os.path.join(Home, "StudioAndroidUpdate")
 	UpdCont = os.listdir(UpdDir)[0]
 	FullUpdDir = os.path.join(UpdDir, UpdCont)
 	shutil.copytree(FullUpdDir, os.path.join(Home, "StudioAndroid"))
 	shutil.rmtree(UpdDir)
 	NewDialog(_("Update"), _("Succesfully updated to the newest version :)"))
-	Restart("cmd")
-
+	os.chdir(os.path.join(Home, "StudioAndroid"))
+	if OS == "Win":
+		SystemLog("start StudioWindows.exe")
+	elif OS == "Lin":
+		SystemLog("./StudioLinux")
+	elif OS == "Mac":
+		SystemLog("./StudioMac")
 
 if not os.path.exists(os.path.join(Home, ".SA", "Language")):
 	window.destroy()
