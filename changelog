@@ -94,6 +94,10 @@ Updates:
 	Windows fix (try if Re-Compiling works now please)
 	Build from Source fix
 	Update fix
+	Added refresh button (Decompiling, ExPackage)
+	Auto-refresh after decompile / extract
+	Build fix
+	added Toro  to devices
 
 
 I will switch to BETAs when every option is defined
