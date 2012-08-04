@@ -212,6 +212,8 @@ def callback(widget, option):
 		DeCompile()
 	elif option == 'ExP':
 		ExPackage()
+	elif option == 'OptInside':
+		OptimizeInside()
 	elif option == 'Sign':
 		Sign()
 	elif option == 'Zip':
@@ -575,6 +577,10 @@ class MainApp():
 	MainOpt18 = gtk.Button( _("Install APK") )
 	MainOpt18.connect("clicked", callback, "Inst")
 	APKVBox.pack_start(MainOpt18, True, False, 10)
+	
+	MainOpt19 = gtk.Button( _("Optimize Image Inside APK") )
+	MainOpt19.connect("clicked", callback, "OptInside")
+	APKVBox.pack_start(MainOpt19, True, False, 10)
 
 	notebook.insert_page(APKVBox, ApkLabel, 3)
 
@@ -588,21 +594,21 @@ class MainApp():
 	image.show()
 	AdvanceVBox.pack_start(image, False, False, 10)
 
-	MainOpt19 = gtk.Button( _("(Bak)Smali"))
-	MainOpt19.connect("clicked", callback, "BakSmali")
-	AdvanceVBox.pack_start(MainOpt19, True, False, 10)
+	MainOpt20 = gtk.Button( _("(Bak)Smali"))
+	MainOpt20.connect("clicked", callback, "BakSmali")
+	AdvanceVBox.pack_start(MainOpt20, True, False, 10)
 
-	MainOpt21 = gtk.Button( _("ODEX") )
-	MainOpt21.connect("clicked", callback, "Odex")
-	AdvanceVBox.pack_start(MainOpt21, True, False, 10)
-
-	MainOpt22 = gtk.Button(_("DE-ODEX"))
-	MainOpt22.connect("clicked", callback, "Deodex")
+	MainOpt22 = gtk.Button( _("ODEX") )
+	MainOpt22.connect("clicked", callback, "Odex")
 	AdvanceVBox.pack_start(MainOpt22, True, False, 10)
 
-	MainOpt23 = gtk.Button(_("Aroma Menu"))
-	MainOpt23.connect("clicked", callback, "Aroma")
+	MainOpt23 = gtk.Button(_("DE-ODEX"))
+	MainOpt23.connect("clicked", callback, "Deodex")
 	AdvanceVBox.pack_start(MainOpt23, True, False, 10)
+
+	MainOpt24 = gtk.Button(_("Aroma Menu"))
+	MainOpt24.connect("clicked", callback, "Aroma")
+	AdvanceVBox.pack_start(MainOpt24, True, False, 10)
 
 	MainOptComp = gtk.Button(_("Compile to an exe"))
 	MainOptComp.connect("clicked", callback, "Compile")
@@ -1839,7 +1845,61 @@ def OptimizeImage():
 	notebook.insert_page(sw, OptimizeLabel)
 	OptimizeImageWindow.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
-	
+
+#TODO: Verify if this method are 100% running for all APK and reuse optimize function!
+def OptimizeInside():
+	def Start(cmd):
+		Number = len(apkname)
+		for num in range(0, Number):
+			#Extract APK
+			APK = apkname[num]
+			APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
+			DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
+			print APKPath
+			zipfile.ZipFile(APKPath).extractall(path=DstDir)
+			
+			#Do Optimize
+			for apk_img in find_files(ScriptDir + "/APK/EX/"+APK.replace('.apk', ''), "*.png"):
+				name = os.path.abspath(apk_img)
+				if Debug == True: print ("%s -o99 %s" %(OptPng, name))		
+				print ("%s -o99 \"%s\"" %(OptPng, name))		
+				SystemLog("%s -o99 \"%s\"" %(OptPng, name))
+				
+			#Repackage APK
+			DirPath = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
+			DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + APK), "w")
+			for fpath in find_files(DirPath, "*"):
+				f = fpath.replace(DirPath, '')
+				DstFile.write(fpath, f)
+			DstFile.close()
+			#Do a CLEAN
+			tree = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
+			shutil.rmtree(tree, True)
+
+	notebook = MainApp.notebook
+	OptInsideWindow = window
+	vbox = gtk.VBox()
+	sw = gtk.ScrolledWindow()
+
+	apkname = []
+
+	for apk in find_files(ScriptDir + "/APK/IN", "*.apk"):
+		name = os.path.basename(apk)
+		NameBtn = gtk.CheckButton(name)
+		NameBtn.connect("toggled", AddToList, apkname, name, NameBtn)
+		vbox.pack_start(NameBtn, False, False, 0)
+
+	StartButton = gtk.Button(_("Do Optimize Inside APK"))
+	StartButton.connect("clicked", Start)
+	vbox.pack_start(StartButton, False, False, 10)
+
+	OptInsideLabel = NewPage(_("Optimize Inside APK"), sw)
+	OptInsideLabel.show_all()
+	sw.add_with_viewport(vbox)
+	notebook.insert_page(sw, OptInsideLabel)
+	OptInsideWindow.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+
 
 def ExPackage():
 	def Start(cmd):
@@ -1857,7 +1917,7 @@ def ExPackage():
 			for num in range(0, Number):
 				Ex = repname[num]
 				DirPath = os.path.join(ScriptDir, "APK", "EX", Ex)
-				DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk"), "a")
+				DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk"), "w")
 				for fpath in find_files(DirPath, "*"):
 					f = fpath.replace(DirPath, '')
 					DstFile.write(fpath, f)
