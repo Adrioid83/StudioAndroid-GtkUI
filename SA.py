@@ -614,10 +614,6 @@ class MainApp():
 	MainOptComp.connect("clicked", callback, "Compile")
 	AdvanceVBox.pack_start(MainOptComp, True, False, 10)
 
-	MainOptTrans = gtk.Button(_("Translate ;)"))
-	MainOptTrans.connect("clicked", callback, "Translate")
-	AdvanceVBox.pack_start(MainOptTrans, True, False, 10)
-
 	notebook.insert_page(AdvanceVBox, AdvanceLabel, 4)
 
 	# ANDROID TABLE

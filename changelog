@@ -72,7 +72,7 @@ Updates:
 	Windows PyInstaller compile fix
 
 ==Beta3==
-	added base for Romanian translation (vladtz)
+	added base for Romanian translation (vlt)
 	Fixed some bugs
 	Updated De-ODEX with filechooser, fixed bugs
 	Removed 7za usage, all is done with Python ZipFile now (Windows bugs fixed)
@@ -98,6 +98,14 @@ Updates:
 	Auto-refresh after decompile / extract
 	Build fix
 	added Toro  to devices
+
+==Beta6==
+	Added Optimize Images inside APK (Ablzankin)
+
+	Tasklist:
+		Finish BinaryPort
+		Support [De]Odexing for single apps (not selecting a complete ROM)
+		When every single bug is fixed, AromaMenu will get defined.
 
 
 I will switch to BETAs when every option is defined
