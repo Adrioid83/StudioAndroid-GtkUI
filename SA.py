@@ -38,6 +38,8 @@ elif sys.platform == 'win32':
 	OS = 'Win'
 elif sys.platform == 'win64':
 	OS = 'Win'
+elif sys.platform == 'darwin':
+	OS = 'Mac'
 else:
 	print _("Your OS is not Windows and not Linux2, could you PM me the next output?\n\n\n" + sys.platform)
 	OS = 'Default'
@@ -109,7 +111,10 @@ gettext.bindtextdomain(APP, DIR)
 gettext.bind_textdomain_codeset("default", 'UTF-8')
 locale.setlocale(locale.LC_ALL, "")
 Language = open(os.path.join(Home, ".SA", "Language"), "r").read()
-LANG = Language
+if OS == 'Mac':
+	LANG='C'
+else:
+	LANG = Language
 
 
 lang = gettext.translation(APP, DIR, languages=[LANG], fallback = True)
@@ -183,7 +188,20 @@ Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
 
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
-zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
+
+def ExZip(zipf, expath, members=None, pwd=None):
+	Zip = zipfile.ZipFile(zipf, "r")
+	for f in Zip.namelist():
+		if f.endswith('/'):
+			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
+		else: Zip.extract(f, path=expath)
+#UtilZip = zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip"), "r")
+#for f in UtilZip.namelist():
+#	if f.endswith('/'):
+#		if not os.path.exists(os.path.join(ScriptDir, f)):os.makedirs(os.path.join(ScriptDir, f))
+#	else: UtilZip.extract(f, path=ScriptDir)
+
+ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
 
 for dep in [aapt, adb, ZipalignFile, sz]:
 	if OS == "Win":
@@ -910,7 +928,7 @@ def Resize():
 				FullZipDir = os.path.join(ScriptDir, "Resizing")
 				if os.path.exists(FullZipDir):
 					shutil.rmtree(FullZipDir)
-				zipfile.ZipFile(MainApp.In).extractall(path=FullZipDir)
+				ExZip(MainApp.In, FullZipDir)
 				Apk = MainApp.In
 				MainApp.ResizeAPK = MainApp.In
 				MainApp.In = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + InDir1)
@@ -1369,7 +1387,7 @@ def SDK():
 	else:
 		if OS == 'Mac':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-macosx.zip', os.path.join(Home, 'SDK.zip'))
-			zipfile.ZipFile(os.path.join(Home, 'SDK.zip')).extractall(path=Home)
+			ExZip(os.path.join(Home, 'SDK.zip'), Home)
 		elif OS == 'Lin':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-linux.tgz', os.path.join(Home, 'SDK.tgz'))
 			tar = tarfile.open(os.path.join(Home, "SDK.tgz"))
@@ -2485,7 +2503,8 @@ def Compile():
 
 		if New == True:
 			urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
-			zipfile.ZipFile(PyFile).extractall(path=PyDir)
+			ExZip(PyFile, PyDir)
+			#zipfile.ZipFile(PyFile).extractall(path=PyDir)
 			os.remove(PyFile)
 		DwnDir = os.path.join(PyDir, os.listdir(PyDir)[0])
 
@@ -2506,14 +2525,15 @@ def Compile():
 						shutil.copy(CopySrc, CopyDst)
 
 		os.chdir(PyInstDir)
-		if OS == 'Lin':
-			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
-		else:
+		if OS == 'Win':
 			PythonF = os.path.join(PythonDir, "python.exe")
 
 			print _("Python = %s" % PythonF)
 
 			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
+		else:
+			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
+
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
 		compiled = os.path.join(CompiledDir, os.listdir(CompiledDir)[0])
