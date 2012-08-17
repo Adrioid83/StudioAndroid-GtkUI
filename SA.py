@@ -18,12 +18,34 @@ import Source.Src
 _ = gettext.gettext
 
 
-ScriptDir=os.path.abspath(os.path.dirname(sys.argv[0]))
+# VARIABLES
+
+ScriptDir=os.path.dirname(os.path.realpath(__file__))
 Home=os.path.expanduser('~')
 ConfDir = os.path.join(Home, ".SA")
-MyFile = os.path.abspath(sys.argv[0].replace(ScriptDir, ''))
+MyFile = os.path.basename(__file__)
 FullFile = os.path.abspath(os.path.join(ScriptDir, "SA.py"))
 Cores = str(multiprocessing.cpu_count())
+Python = os.path.abspath(sys.executable)
+PythonDir = os.path.dirname(Python)
+
+
+# OS Determination
+
+if sys.platform == 'linux2':
+	OS = 'Lin'
+elif sys.platform == 'win32':
+	OS = 'Win'
+elif sys.platform == 'win64':
+	OS = 'Win'
+else:
+	print _("Your OS is not Windows and not Linux2, could you PM me the next output?\n\n\n" + sys.platform)
+	OS = 'Default'
+
+PATH = []
+if OS == "WIN": sep = ";"
+else: sep = ":"
+for x in str(os.getenv("PATH")).split(sep): PATH.append(x)
 
 # Choose language
 
@@ -35,7 +57,6 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 	def PickLanguage(cmd):
 		f = open(os.path.join(Home, ".SA", "Language"), "w")
 		f.flush()
-		#f = open(os.path.join(Home, ".SA", "Language"), "w")
 		if FrBtn.get_active(): f.write("fr_FR")
 		elif EnBtn.get_active(): f.write("en_US")
 		elif ItBtn.get_active(): f.write("it_IT")
@@ -96,6 +117,17 @@ _ = lang.gettext
 	
 
 
+# Double output
+class Logger(object):
+    def __init__(self):
+        self.terminal = sys.stdout
+        self.log = open(os.path.join(ScriptDir, "log"), "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+	self.log.flush()
+sys.stdout = Logger()
 
 # Debug
 
@@ -106,20 +138,6 @@ else:
 	Debug = False
 	bug = "OFF"
 
-# Double output
-
-class Logger(object):
-    def __init__(self):
-        self.terminal = sys.stdout
-        self.log = open(os.path.join(ScriptDir, "log"), "a")
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)  
-	self.log.flush()
-
-sys.stdout = Logger()
-
 # External Output redirection
 
 def SystemLog(cmd):
@@ -128,17 +146,7 @@ def SystemLog(cmd):
 	elif Debug == False:
 		os.system(cmd)
 
-# OS Determination
 
-if sys.platform == 'linux2':
-	OS = 'Lin'
-elif sys.platform == 'win32':
-	OS = 'Win'
-elif sys.platform == 'win64':
-	OS = 'Win'
-else:
-	print _("Your OS is not Windows32 and not Linux2, could you PM me the next output?\n\n\n" + sys.platform)
-	OS = 'Default'
 
 # GTK TOOLS
 
@@ -174,6 +182,7 @@ OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
 
+# EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip")).extractall(path=ScriptDir)
 
 for dep in [aapt, adb, ZipalignFile, sz]:
@@ -186,62 +195,34 @@ for dep in [aapt, adb, ZipalignFile, sz]:
 
 def callback(widget, option):
 	# REDIRECTS THE BUTTON OPTION TO A FUNCTION
-	if option == 'Cl':
-		Clean()
-	elif option == '1':
-		Utils()
-	elif option == '2':
-		CopyFrom()
-	elif option == '3':
-		Resize()
-	elif option == '4':
-		Theme()
-	elif option == '5':
-		OptimizeImage()
-	elif option == '6':
-		PrepareBuilding()
-	elif option == 'BuildSource':
-		BuildSource()
-	elif option == 'Gov':
-		AddGovernor()
-	elif option == 'SDK':
-		SDK()
-	elif option == 'JDK':
-		JDK()
-	elif option == 'DeC':
-		DeCompile()
-	elif option == 'ExP':
-		ExPackage()
-	elif option == 'OptInside':
-		OptimizeInside()
-	elif option == 'Sign':
-		Sign()
-	elif option == 'Zip':
-		Zipalign()
-	elif option == 'Inst':
-		Install()
-	elif option == 'BakSmali':
-		BakSmali()
-	elif option == 'Odex':
-		Odex()
-	elif option == 'Deodex':
-		Deodex()
-	elif option == 'BP':
-		BinaryPort()
-	elif option == 'Compile':
-		Compile()
-	elif option == 'Log':
-		Log()
-	elif option == 'Bug':
-		Bug()
-	elif option == 'change':
-		Changelog()
-	elif option == 'help':
-		Help()
-	elif option == 'upd':
-		Update()
-	else :
-		print _("%s is not defined yet, SORRY!" % option)
+	if option == 'Cl':Clean()
+	elif option == '1':Utils()
+	elif option == '2':CopyFrom()
+	elif option == '3':Resize()
+	elif option == '4':Theme()
+	elif option == '5':OptimizeImage()
+	elif option == '6':PrepareBuilding()
+	elif option == 'BuildSource':BuildSource()
+	elif option == 'Gov':AddGovernor()
+	elif option == 'SDK':SDK()
+	elif option == 'JDK':JDK()
+	elif option == 'DeC':DeCompile()
+	elif option == 'ExP':ExPackage()
+	elif option == 'OptInside':OptimizeInside()
+	elif option == 'Sign':Sign()
+	elif option == 'Zip':Zipalign()
+	elif option == 'Inst':Install()
+	elif option == 'BakSmali':BakSmali()
+	elif option == 'Odex':Odex()
+	elif option == 'Deodex':Deodex()
+	elif option == 'BP':BinaryPort()
+	elif option == 'Compile':Compile()
+	elif option == 'Log':Log()
+	elif option == 'Bug':Bug()
+	elif option == 'change':Changelog()
+	elif option == 'help':Help()
+	elif option == 'upd':Update()
+	else : print _("%s is not defined yet, SORRY!" % option)
 
 # New dialog
 
@@ -369,15 +350,12 @@ if not OS == "Win":
 		os.chmod(filen, 0755)
 	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
 else:
-	# ADD PYTHON TO THE PATH
-	if not os.path.exists(os.path.join(ConfDir, "wfixed")):
-		wait = NewDialog(_("Windows fix"), _("Hey there! I Found a fix for windows, that should solve a few bugs.\n"
-						"When you click OK, Administrator rights will be asked.\n"
-						"Click OK to fix some issues!") )
-		subprocess.call(['runas', '/user:Administrator', os.path.join(SourceDir, "WPath.bat")])
-		fixed = open(os.path.join(ConfDir, "wfixed"), "w")
-		fixed.write("1")
-		fixed.close()
+	if " " in ScriptDir:
+		print _("You extracted StudioAndroid to a path with spaces!\nPlease move it somewhere without spaces.")
+		exit()
+	# ADD PYTHON AND UTILS TO THE PATH
+	if not UtilDir in PATH:
+		SystemLog('PATH %s;%s;' % (UtilDir, PythonDir) + r'%path%')
 
 
 if not os.path.exists(os.path.join(Home, ".SA", "ran")):
@@ -404,13 +382,21 @@ hbox = gtk.HBox(False, 5)
 
 # PRINT INFO
 
-print _("OS = " + OS)
-print _("Cores = " + Cores)
-print _("Home = " + Home)
-print _("ScriptDir = " + ScriptDir)
-print _("File = " + sys.argv[0])
-print ("Debug = " + bug)
-print _("Language = " + Language)
+Weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+Months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+Weekday = Weekdays[time.localtime()[6]]
+Month = Months[time.localtime()[1]]
+
+
+print("### %s %s %s - %s.%s.%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
+print _("OS = %s" %(OS))
+print _("PythonDir = %s" %(PythonDir))
+print _("Cores = %s" %(Cores))
+print _("Home = %s" %(Home))
+print _("ScriptDir = %s" %(ScriptDir))
+print _("File = %s" %(MyFile))
+print ("Debug = %s" %(bug))
+print _("Language = %s" %(Language))
 
 
 
@@ -687,7 +673,6 @@ def Utils():
 			if button10.get_active():
 				SystemLog("sudo apt-get install imagemagick")
 		if OS == 'Win':
-			subprocess.call(['runas', '/user:Administrator', 'SETX PATH "%PATH%;%s' % UtilDir])
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
 			Web.open("http://www.computerhope.com/issues/ch000549.htm")
@@ -1395,7 +1380,7 @@ def SDK():
 			if not os.path.isdir(file):
 				os.chmod(file, 0755)
 		os.chdir(os.path.join(sdkdir, "tools"))
-		SystemLog("./android &")
+		SystemLog(os.path.join(".", "android") + " &")
 
 
 
@@ -1449,7 +1434,7 @@ def BuildSource():
 			vbox = gtk.VBox()
 			Std = gtk.RadioButton(None, "Std")
 
-			for devi in find_files(SourceDir + "/device", "vendorsetup.sh"):
+			for devi in find_files(os.path.join(SourceDir, "device"), "vendorsetup.sh"):
 				for line in open(devi).readlines():
 					if not line.startswith('#') and 'add_lunch_combo' in line:
 						Text = line.replace('\n', '')
@@ -1457,7 +1442,7 @@ def BuildSource():
 						Text = Text.replace('_', '--')
 						NameBtn = gtk.RadioButton(Std, Text)
 						vbox.pack_start(NameBtn)
-			for devi in find_files(SourceDir + "/vendor", "vendorsetup.sh"):
+			for devi in find_files(os.path.join(SourceDir, "vendor"), "vendorsetup.sh"):
 				for line in open(devi).readlines():
 					if not line.startswith('#') and 'add_lunch_combo' in line:
 						Text = line.replace('\n', '')
@@ -1599,14 +1584,14 @@ def BuildSource():
 		DeviceMenu.append(MenuItem)
 		MenuItem.connect("activate", NewSources, SourceFile)
 		MenuItem.show()
+	menu.show_all()
 
 	if os.path.exists(os.path.join(Home, ".SA", "Device")):
 		Text = open(os.path.join(Home, ".SA", "Device"), "r")
 		Text = Text.readlines()[0]
 		NewSources("cmd", Text)
-
-	menu.show_all()
-	NewDialog(_("Device"), _("You can choose the device you want to build for in the top bar."))
+	else:
+		NewDialog(_("Device"), _("You can choose the device you want to build for in the top bar."))
 
 
 def AddGovernor():
@@ -1739,7 +1724,7 @@ def DeCompile():
 						OutDir = os.path.join(ScriptDir, "APK", "DEC", ApkDir)
 						if Debug == True: print("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
-						print("Decompile " + APK)
+						print _("Decompiled " + APK)
 			Refresh("cmd")
 		if CompileButton.get_active():
 			Number = len(comname)
@@ -1750,7 +1735,10 @@ def DeCompile():
 						ApkFolder = os.path.join(ScriptDir, "APK", "DEC", dec)
 						ApkName = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Dec + ".apk")
 						if Debug == True: print("\njava -jar %s b -f %s %s\n" %(ApkJar, ApkFolder, ApkName))
-						SystemLog("java -jar %s b -f %s %s &" %(ApkJar, ApkFolder, ApkName))
+						os.chdir(UtilDir)
+						SystemLog("java -jar %s b -f %s %s " %(ApkJar, ApkFolder, ApkName))
+						print _("Compiled %s" % ApkName)
+						
 
 	def Refresh(cmd):
 		KillPage("cmd", vbox)
@@ -1855,7 +1843,7 @@ def OptimizeInside():
 			zipfile.ZipFile(APKPath).extractall(path=DstDir)
 			
 			#Do Optimize
-			for apk_img in find_files(ScriptDir + "/APK/EX/"+APK.replace('.apk', ''), "*.png"):
+			for apk_img in find_files(os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', '')), "*.png"):
 				name = os.path.abspath(apk_img)
 				if Debug == True: print ("%s -o99 %s" %(OptPng, name))		
 				print ("%s -o99 \"%s\"" %(OptPng, name))		
@@ -1879,7 +1867,7 @@ def OptimizeInside():
 
 	apkname = []
 
-	for apk in find_files(ScriptDir + "/APK/IN", "*.apk"):
+	for apk in find_files(os.path.join(ScriptDir , "APK", "IN"), "*.apk"):
 		name = os.path.basename(apk)
 		NameBtn = gtk.CheckButton(name)
 		NameBtn.connect("toggled", AddToList, apkname, name, NameBtn)
@@ -1967,11 +1955,13 @@ def ExPackage():
 
 def Sign():
 	def StartSign(cmd):
-		if media.get_active(): name = 'media'
-		elif platform.get_active(): name = 'platform'
-		elif shared.get_active(): name = 'shared'
-		elif superuser.get_active(): name = 'superuser'
-		else: name = 'testkey'
+		#if media.get_active(): name = 'media'
+		#elif platform.get_active(): name = 'platform'
+		#elif shared.get_active(): name = 'shared'
+		#elif superuser.get_active(): name = 'superuser'
+		#else: name = 'testkey'
+		print Std.get_group()
+		name = [r for r in Std.get_group() if r.get_active()][0].get_label()
 		key1 = os.path.join(ScriptDir, "Utils", name + ".x509.pem")
 		key2 = os.path.join(ScriptDir, "Utils", name + ".pk8")
 		Number = len(sign)
@@ -1989,17 +1979,12 @@ def Sign():
 	vbox = gtk.VBox()
 	label = gtk.Label(_("Choose the key you want to sign with:"))
 	vbox.pack_start(label, False, False, 10)
-	media = gtk.RadioButton(None, "Media")
-	vbox.pack_start(media, False, False, 2)
-	platform = gtk.RadioButton(media, "Platform")
-	vbox.pack_start(platform, False, False, 2)
-	shared = gtk.RadioButton(media, "Shared")
-	vbox.pack_start(shared, False, False, 2)
-	superuser = gtk.RadioButton(media, "SuperUser")
-	vbox.pack_start(superuser, False, False, 2)
-	testkey = gtk.RadioButton(media, "TestKey")
-	vbox.pack_start(testkey, False, False, 2)
-	testkey.set_active(True)
+	Std = gtk.RadioButton(None, "None")
+	for key in find_files(UtilDir, "*.pk8"):
+		name = str(os.path.basename(key)).replace(".pk8", '')
+		NameBtn = gtk.RadioButton(Std, name)
+		vbox.pack_start(NameBtn, False, False, 2)
+	[r for r in Std.get_group() if r.get_label() == "testkey"][0].set_active(True)
 
 	label = gtk.Label("Choose the APK you want to sign:")
 	vbox.pack_start(label, False, False, 10)
@@ -2524,8 +2509,6 @@ def Compile():
 		if OS == 'Lin':
 			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
 		else:
-			PythonSiteDir = str(get_python_lib())
-			PythonDir = PythonSiteDir.split("Lib")[0]
 			PythonF = os.path.join(PythonDir, "python.exe")
 
 			print _("Python = %s" % PythonF)

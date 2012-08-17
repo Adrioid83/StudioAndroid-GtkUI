@@ -1,5 +1,5 @@
-Sources = ['GB-AOSP', 'Oxygen', 'CM7', 'ICS-AOSP', 'AOKP', 'CM9', 'GUMMY', 'JB']
-URL = ['repo init -u https://android.googlesource.com/platform/manifest -b android-2.3.7_r1', 'repo init -u git://github.com/popdog123/android_manifest.git -b gingerbread', 'repo init -u git://github.com/CyanogenMod/android.git -b gingerbread ', 'repo init -u https://android.googlesource.com/platform/manifest -b android-4.0.1_r1', 'repo init -u git://github.com/AOKP/platform_manifest.git -b ics', 'repo init -u git://github.com/CyanogenMod/android.git -b ics', 'repo init -u https://github.com/teamgummy/platform_manifest.git -b master', 'repo init -u https://android.googlesource.com/platform/manifest -b android-4.1.1_r3']
+Sources = ['Oxygen', 'CM10']
+URL = ['repo init -u git://github.com/popdog123/android_manifest.git -b gingerbread', 'repo init -u git://github.com/LG-Android-Coding/android.git -b jellybean']
 
 # To add a new source, use this: (w/o the # )
 #

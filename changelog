@@ -107,6 +107,22 @@ Updates:
 		Support [De]Odexing for single apps (not selecting a complete ROM)
 		When every single bug is fixed, AromaMenu will get defined.
 
+==Beta7==
+	Some os.path improvements
+	exit if path contains spaces
+	Relative directories with os.path instead of + /APK/IN etc
+	Added python directory to info screen
+	ScriptDir fixed.
+	MyFile fixed
+	More verbose again
+	Only give Device Dialog when device is not pre-chosen
+	Source files updated: only the ones who differ get overwritten
+	Updated sourcefiles ^^
+	StudioLinux is not a compiled Python script anymore, but a compiled C script (converted from bash). This should fix some errors.
+	Recompiling on windows fixed! (KeitIG helped a lot with testing!)
+	Before any output, print ### Thursday 16 Sep - 16.21.11 ### (log divider)
+	New Windows EXE
+
 
 I will switch to BETAs when every option is defined
 Feature requests are always welcome :)
