@@ -41,7 +41,6 @@ elif sys.platform == 'win64':
 elif sys.platform == 'darwin':
 	OS = 'Mac'
 else:
-	print _("Your OS is not Windows and not Linux2, could you PM me the next output?\n\n\n" + sys.platform)
 	OS = 'Default'
 
 PATH = []
@@ -129,6 +128,7 @@ class Logger(object):
         self.terminal.write(message)
         self.log.write(message)  
 	self.log.flush()
+
 sys.stdout = Logger()
 
 # Debug

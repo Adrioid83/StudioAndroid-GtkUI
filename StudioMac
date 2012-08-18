@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+MyCommand=${0##*/}
+Dir=${0%%/"$MyCommand"}
+ScriptDir=$(cd $Dir && pwd)
+
+python $ScriptDir/Source/VerifyMac.py
+
+if [ "$?" = "0" ]
+then
+	python $ScriptDir/SA.py
+fi
