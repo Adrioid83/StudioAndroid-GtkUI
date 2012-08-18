@@ -689,17 +689,21 @@ def Utils():
 				elif OS == 'Mac': 
 					urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
+					SystemLog(''' export MAGICK_HOME="$HOME/ImageMagick-6.7.9" 
+export PATH="$MAGICK_HOME/bin:$PATH"
+export DYLD_LIBRARY_PATH="$MAGICK_HOME/lib/" ''' )
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
 			Web.open("http://www.computerhope.com/issues/ch000549.htm")
-			urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
-			f = open(os.path.join(ConfDir, "index.html"), "r").readlines()
-			ln = f[10]
-			version = str(str(remove_tags(ln)).split('.exe')[0]).replace('Q8', 'Q16') + ".exe"
+			if button10.get_active():
+				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
+				f = open(os.path.join(ConfDir, "index.html"), "r").readlines()
+				ln = f[10]
+				version = str(str(remove_tags(ln)).split('.exe')[0]).replace('Q8', 'Q16') + ".exe"
 			
-			wait = NewDialog(_("ImageMagick"), _("To install imagemagick, you will download a file. run it to install ImageMagick"))
-			Web.open("http://www.imagemagick.org/download/binaries/%s" % version)
+				wait = NewDialog(_("ImageMagick"), _("To install imagemagick, you will download a file. run it to install ImageMagick"))
+				Web.open("http://www.imagemagick.org/download/binaries/%s" % version)
 
 		KillPage("cmd", vbox)
 
