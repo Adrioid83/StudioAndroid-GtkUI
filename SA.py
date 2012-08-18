@@ -689,7 +689,7 @@ def Utils():
 				w = NewDialog(_("MacPorts"), _("The installer will now be opened. please install MacPorts to prevent further issues!"))
 				SystemLog("open %s" % os.path.join(ConfDir, "MacPorts.pkg"))
 				w = NewDialog(_("Info"), _("After your installation has completed,\ncome back here to install the rest of your selected utilities.\n Exiting...") )
-				Exit(0)
+				exit(0)
 			if button10.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
 				elif OS == 'Mac':SystemLog("sudo port install ImageMagick")
