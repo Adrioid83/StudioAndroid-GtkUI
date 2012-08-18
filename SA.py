@@ -692,14 +692,7 @@ def Utils():
 				Exit(0)
 			if button10.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
-				elif OS == 'Mac':
-					if not os.path.exists(os.path.join(ConfDir, "IM.tar.gz")):
-						urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
-					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
-					SystemLog('''export MAGICK_HOME="$HOME/ImageMagick-6.7.8" 
-export PATH="$MAGICK_HOME/bin:$PATH"
-export DYLD_LIBRARY_PATH="$MAGICK_HOME/lib/" 
-echo $PATH''' )
+				elif OS == 'Mac':SystemLog("sudo port install ImageMagick")
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
@@ -754,7 +747,7 @@ echo $PATH''' )
 	UtilsTable.attach(button10, 1, 2, 0, 1)
 
 	MacPortsBtn = gtk.CheckButton("MacPorts (INSTALL THIS!)")
-	if OS == 'Mac' and not os.path.exists('sudo port install ImageMagick'):
+	if OS == 'Mac' and not os.path.exists('/opt/local/bin/port'):
 		UtilsTable.attach(MacPortsBtn, 1, 2, 1, 2)
 		MacPortsBtn.set_active(True)
 
