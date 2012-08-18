@@ -679,7 +679,7 @@ def Utils():
 					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
 						print "yep"
 						HOME = os.environ['HOME']
-						MAGICK_HOME=os.path.join(HOME, "ImageMagick-6.7.8", '')
+						MAGICK_HOME=os.path.join(HOME, "ImageMagick-6.7.8")
 						msg = "#\nMAGICK_HOME=%s\nPATH=%s/bin/:$PATH\nDYLD_LIBRARY_PATH=%s/lib/" %(MAGICK_HOME, MAGICK_HOME, MAGICK_HOME)
 						SystemLog('echo "%s" >> %s' %(msg, os.path.join(Home, ".profile")))
 		if OS == 'Win':
