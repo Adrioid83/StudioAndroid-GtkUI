@@ -2656,8 +2656,10 @@ def Update():
 	if OS == "Win":
 		SystemLog("start StudioWindows.exe")
 	elif OS == "Lin":
+		os.chmod(os.path.join(Home, "StudioAndroid", "StudioLinux"), 0755)
 		SystemLog("./StudioLinux")
 	elif OS == "Mac":
+		os.chmod(os.path.join(Home, "StudioAndroid", "StudioMac"), 0755)
 		SystemLog("./StudioMac")
 
 if not os.path.exists(os.path.join(Home, ".SA", "Language")):
