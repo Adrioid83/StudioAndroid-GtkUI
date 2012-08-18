@@ -666,33 +666,17 @@ def Utils():
 		button10.set_active(Activate)
 	
 	def Install(cmd):
-		def Copy(Subdir="bin"):
-			if button1.get_active():
-				shutil.copy(adb, os.path.join(Home, Subdir))
-			if button2.get_active():
-				shutil.copy(aapt, os.path.join(Home, Subdir))
-			if button3.get_active():
-				shutil.copy(sz, os.path.join(Home, Subdir))
-			if button6.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "signapk.jar"), os.path.join(Home, Subdir))
-				shutil.copy(os.path.join(ScriptDir, "Utils", "testkey.pk8"), os.path.join(Home, Subdir))
-				shutil.copy(os.path.join(ScriptDir, "Utils", "testkey.x509.pem"), os.path.join(Home, Subdir))
-			if button7.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "smali-1.3.2.jar"), os.path.join(Home, Subdir))
-			if button8.get_active():
-				shutil.copy(os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar"), os.path.join(Home, Subdir))
-			NewDialog("Utilities", "Installed!")
 		if OS == 'Lin' or OS == 'Mac':
-			SystemLog('PATH=$PATH:%s' % UtilDir)
-			if MacPortsBtn.get_active():
-				urllib.urlretrieve('https://distfiles.macports.org/MacPorts/MacPorts-2.1.2-10.6-SnowLeopard.pkg', os.path.join(ConfDir, "MacPorts.pkg"))
-				w = NewDialog(_("MacPorts"), _("The installer will now be opened. please install MacPorts to prevent further issues!"))
-				SystemLog("open %s" % os.path.join(ConfDir, "MacPorts.pkg"))
-				w = NewDialog(_("Info"), _("After your installation has completed,\ncome back here to install the rest of your selected utilities.\n Exiting...") )
-				exit(0)
+			if not UtilDir in PATH:
+				SystemLog('echo "PATH=%s:$PATH" >> %s' %(UtilDir, os.path.join(Home, ".profile")))
 			if button10.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
-				elif OS == 'Mac':SystemLog("sudo port install ImageMagick")
+				elif OS == 'Mac':
+					urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
+					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
+					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
+						SystemLog('echo "PATH=%s:$PATH" >> %s' %(os.path.join(Home, "ImageMagick-6.7.8", "bin"), os.path.join(Home, ".profile")))
+						
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
@@ -745,11 +729,6 @@ def Utils():
 
 	button10 = gtk.CheckButton("ImageMagick")
 	UtilsTable.attach(button10, 1, 2, 0, 1)
-
-	MacPortsBtn = gtk.CheckButton("MacPorts (INSTALL THIS!)")
-	if OS == 'Mac' and not os.path.exists('/opt/local/bin/port'):
-		UtilsTable.attach(MacPortsBtn, 1, 2, 1, 2)
-		MacPortsBtn.set_active(True)
 
 	buttonInstall = gtk.Button( _("Install") )
 	buttonInstall.connect("clicked", Install)
