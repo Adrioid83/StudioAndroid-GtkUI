@@ -186,8 +186,11 @@ GovDir = os.path.join(UtilDir, "Gov")
 
 
 # MAC OSX Fix
-def ExZip(zipf, expath, members=None, pwd=None):
-	Zip = zipfile.ZipFile(zipf, "r")
+def ExZip(zipf, expath, type='zip'):
+	if type == 'zip':
+		Zip = zipfile.ZipFile(zipf, "r")
+	else:
+		Zip = tarfile.open(zipf, "r")
 	for f in Zip.namelist():
 		if f.endswith('/'):
 			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
@@ -677,12 +680,13 @@ def Utils():
 			if button8.get_active():
 				shutil.copy(os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar"), os.path.join(Home, Subdir))
 			NewDialog("Utilities", "Installed!")
-		if OS == 'Lin':
-			if not os.path.exists(os.path.join(Home, "bin")):
-				os.mkdir(os.path.join(Home, "bin"))
-			Copy()
+		if OS == 'Lin' or OS == 'Mac':
+			SystemLog('PATH=$PATH:%s' % UtilDir)
 			if button10.get_active():
-				SystemLog("sudo apt-get install imagemagick")
+				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
+				elif OS == 'Mac': 
+					urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
+					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
