@@ -690,7 +690,7 @@ def Utils():
 					if not os.path.exists(os.path.join(ConfDir, "IM.tar.gz")):
 						urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
-					SystemLog('''export MAGICK_HOME="$HOME/ImageMagick-6.7.9" 
+					SystemLog('''export MAGICK_HOME="$HOME/ImageMagick-6.7.8" 
 export PATH="$MAGICK_HOME/bin:$PATH"
 export DYLD_LIBRARY_PATH="$MAGICK_HOME/lib/" 
 echo $PATH''' )
