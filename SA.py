@@ -111,10 +111,7 @@ gettext.bindtextdomain(APP, DIR)
 gettext.bind_textdomain_codeset("default", 'UTF-8')
 locale.setlocale(locale.LC_ALL, "")
 Language = open(os.path.join(Home, ".SA", "Language"), "r").read()
-if OS == 'Mac':
-	LANG='C'
-else:
-	LANG = Language
+LANG = Language
 
 
 lang = gettext.translation(APP, DIR, languages=[LANG], fallback = True)
@@ -187,20 +184,16 @@ OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
 
-# EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 
+# MAC OSX Fix
 def ExZip(zipf, expath, members=None, pwd=None):
 	Zip = zipfile.ZipFile(zipf, "r")
 	for f in Zip.namelist():
 		if f.endswith('/'):
 			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
 		else: Zip.extract(f, path=expath)
-#UtilZip = zipfile.ZipFile(os.path.join(ScriptDir, "Utils.zip"), "r")
-#for f in UtilZip.namelist():
-#	if f.endswith('/'):
-#		if not os.path.exists(os.path.join(ScriptDir, f)):os.makedirs(os.path.join(ScriptDir, f))
-#	else: UtilZip.extract(f, path=ScriptDir)
 
+# EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
 
 for dep in [aapt, adb, ZipalignFile, sz]:
@@ -1858,7 +1851,7 @@ def OptimizeInside():
 			APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 			DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
 			print APKPath
-			zipfile.ZipFile(APKPath).extractall(path=DstDir)
+			ExZip(APKPath, DstDir)
 			
 			#Do Optimize
 			for apk_img in find_files(os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', '')), "*.png"):
@@ -1912,7 +1905,7 @@ def ExPackage():
 				APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 				DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
 				print APKPath
-				zipfile.ZipFile(APKPath).extractall(path=DstDir)
+				ExZip(APKPath, DstDir)
 				Refresh("cmd")
 		elif RepackageButton.get_active():
 			Number = len(repname)
@@ -2257,7 +2250,7 @@ def Deodex():
 		UpdateZip = MainApp.Out
 		print _("Extracting %s" % UpdateZip)
 		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
-		zipfile.ZipFile(UpdateZip).extractall(path=ExDir)
+		ExZip(UpdateZip, ExDir)
 		if os.path.exists(os.path.join(ExDir, "system", "framework")):
 			bootclass = " -d %s" % os.path.join(ExDir, "system", "framework")
 		for filea in find_files(ExDir, "*.apk"):
@@ -2340,7 +2333,7 @@ def Odex():
 		UpdateZip = MainApp.Out
 		print _("Extracting %s" % UpdateZip)
 		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
-		zipfile.ZipFile(UpdateZip).extractall(path=ExDir)
+		ExZip(UpdateZip, ExDir)
 		if os.path.exists(os.path.join(ExDir, "system", "framework")):
 			bootclass = " -d %s" % os.path.join(ExDir, "system", "framework")
 		for filea in find_files(ExDir, "*.apk"):
@@ -2504,7 +2497,6 @@ def Compile():
 		if New == True:
 			urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
 			ExZip(PyFile, PyDir)
-			#zipfile.ZipFile(PyFile).extractall(path=PyDir)
 			os.remove(PyFile)
 		DwnDir = os.path.join(PyDir, os.listdir(PyDir)[0])
 
@@ -2531,6 +2523,8 @@ def Compile():
 			print _("Python = %s" % PythonF)
 
 			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
+		elif OS == 'Mac':
+			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
 		else:
 			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
 
@@ -2630,7 +2624,7 @@ def Update():
 		print _("Removing old UpdateDir")
 		shutil.rmtree(os.path.join(Home, "StudioAndroidUpdate"))
 	print _("Extracting Update.zip")
-	zipfile.ZipFile(os.path.join(ConfDir, "Update.zip")).extractall(path=os.path.join(Home, "StudioAndroidUpdate"))
+	ExZip(os.path.join(ConfDir, "Update.zip"),os.path.join(Home, "StudioAndroidUpdate"))
 	if os.path.exists(os.path.join(Home, "StudioAndroid")):
 		print _("Removing old %s" % os.path.join(Home, "StudioAndroid"))
 		shutil.rmtree(os.path.join(Home, "StudioAndroid"))
