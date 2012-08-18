@@ -47,7 +47,7 @@ PATH = []
 if OS == "WIN": sep = ";"
 else: sep = ":"
 for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
-print PATH
+
 
 # Choose language
 
@@ -678,8 +678,7 @@ def Utils():
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
 					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
 						print "yep"
-						msg = "#\nMAGICK_HOME=$HOME/ImageMagick-6.7.8\nPATH=$MAGICK_HOME/bin:$PATH\nDYLD_LIBRARY_PATH=$MAGICK_HOME/lib/"
-						#msg = '''#\nMAGICK_HOME='$HOME/ImageMagick-6.7.9'\nPATH='$MAGICK_HOME/bin:'$PATH''\nDYLD_LIBRARY_PATH='$MAGICK_HOME/lib/''''
+						msg = "#\nMAGICK_HOME=$HOME/ImageMagick-6.7.8\n" + r"PATH=$MAGICK_HOME/bin:$PATH" + "\nDYLD_LIBRARY_PATH=$MAGICK_HOME/lib/"
 						SystemLog('echo "%s" >> %s' %(msg, os.path.join(Home, ".profile")))
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
