@@ -677,6 +677,7 @@ def Utils():
 						urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
 					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
+						print "yep"
 						msg = '#\nMAGICK_HOME="$HOME/ImageMagick-6.7.9"\nPATH="$MAGICK_HOME/bin:$PATH"\nDYLD_LIBRARY_PATH="$MAGICK_HOME/lib/"'
 						SystemLog('echo %s >> %s' %(msg, os.path.join(Home, ".profile")))
 		if OS == 'Win':
