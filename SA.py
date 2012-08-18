@@ -684,6 +684,8 @@ def Utils():
 			NewDialog("Utilities", "Installed!")
 		if OS == 'Lin' or OS == 'Mac':
 			SystemLog('PATH=$PATH:%s' % UtilDir)
+			if MacPortsBtn.get_active():
+				urllib.urlretrieve('https://distfiles.macports.org/MacPorts/MacPorts-2.1.2-10.6-SnowLeopard.pkg', os.path.join(ConfDir, "MacPorts.pkg"))
 			if button10.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
 				elif OS == 'Mac':
@@ -746,6 +748,11 @@ echo $PATH''' )
 
 	button10 = gtk.CheckButton("ImageMagick")
 	UtilsTable.attach(button10, 1, 2, 0, 1)
+
+	MacPortsBtn = gtk.CheckButton("MacPorts (INSTALL THIS!)")
+	if OS == 'Mac':
+		UtilsTable.attach(MacPortsBtn, 1, 2, 1, 2)
+		MacPortsBtn.set_active(True)
 
 	buttonInstall = gtk.Button( _("Install") )
 	buttonInstall.connect("clicked", Install)
