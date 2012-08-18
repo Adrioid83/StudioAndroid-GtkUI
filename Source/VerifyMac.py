@@ -1,5 +1,5 @@
 import sys
-from os import path,system
+import os
 import urllib
 
 if not sys.platform == 'darwin':
