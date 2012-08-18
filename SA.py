@@ -46,7 +46,8 @@ else:
 PATH = []
 if OS == "WIN": sep = ";"
 else: sep = ":"
-for x in str(os.getenv("PATH")).split(sep): PATH.append(x)
+for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
+print PATH
 
 # Choose language
 
