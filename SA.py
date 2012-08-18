@@ -189,9 +189,11 @@ GovDir = os.path.join(UtilDir, "Gov")
 def ExZip(zipf, expath, type='zip'):
 	if type == 'zip':
 		Zip = zipfile.ZipFile(zipf, "r")
+		namelist = Zip.namelist()
 	else:
 		Zip = tarfile.open(zipf, "r")
-	for f in Zip.namelist():
+		namelist = Zip.getnames()
+	for f in namelist:
 		if f.endswith('/'):
 			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
 		else: Zip.extract(f, path=expath)
