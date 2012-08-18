@@ -672,11 +672,12 @@ def Utils():
 			if button10.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
 				elif OS == 'Mac':
-					urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
+					if not os.path.exists(os.path.join(ConfDir, "IM.tar.gz")):
+						urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
 					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
-						SystemLog('echo "PATH=%s:$PATH" >> %s' %(os.path.join(Home, "ImageMagick-6.7.8", "bin"), os.path.join(Home, ".profile")))
-						
+						msg = '#\nMAGICK_HOME="$HOME/ImageMagick-6.7.9"\nPATH="$MAGICK_HOME/bin:$PATH"\nDYLD_LIBRARY_PATH="$MAGICK_HOME/lib/"'
+						SystemLog('echo %s >> %s' %(msg, os.path.join(Home, ".profile")))
 		if OS == 'Win':
 			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
 						"\n Add %s to the PATH using that site." % UtilDir) )
