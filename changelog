@@ -127,6 +127,8 @@ Updates:
 	Warning if no images inside APK/IN
 	the callback now searches if the option is defined and runs it without the if: func() syntax.
 	added Android tab with 2 functions
+	Adb FileManager defined :) 
+	ADB: push, pull, list, browse, previous, refresh
 
 
 I will switch to BETAs when every option is defined
