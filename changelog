@@ -123,6 +123,11 @@ Updates:
 	Before any output, print ### Thursday 16 Sep - 16.21.11 ### (log divider)
 	New Windows EXE
 
+==Beta8==
+	Warning if no images inside APK/IN
+	the callback now searches if the option is defined and runs it without the if: func() syntax.
+	added Android tab with 2 functions
+
 
 I will switch to BETAs when every option is defined
 Feature requests are always welcome :)

@@ -3,6 +3,7 @@ import os
 import urllib
 
 if not sys.platform == 'darwin':
+	print("Platform not Mac OS X")
 	exit(1)
 
 ScriptDir=os.path.dirname(os.path.realpath(__file__))

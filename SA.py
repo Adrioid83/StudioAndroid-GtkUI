@@ -18,6 +18,7 @@ import Source.Src
 _ = gettext.gettext
 
 
+
 # VARIABLES
 
 ScriptDir=os.path.dirname(os.path.realpath(__file__))
@@ -42,6 +43,9 @@ elif sys.platform == 'darwin':
 	OS = 'Mac'
 else:
 	OS = 'Default'
+
+if (sys.maxsize > 2**32) == True: bit = 64
+else: bit = 32
 
 PATH = []
 if OS == "WIN": sep = ";"
@@ -197,7 +201,11 @@ def ExZip(zipf, expath, type='zip'):
 	for f in namelist:
 		if f.endswith('/'):
 			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
-		else: Zip.extract(f, path=expath)
+		else: 
+			try:Zip.extract(f, path=expath)
+			except IOError: 
+				os.remove(os.path.join(expath, f))
+				Zip.extract(f, path=expath)
 
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
@@ -212,34 +220,11 @@ for dep in [aapt, adb, ZipalignFile, sz]:
 
 def callback(widget, option):
 	# REDIRECTS THE BUTTON OPTION TO A FUNCTION
-	if option == 'Cl':Clean()
-	elif option == '1':Utils()
-	elif option == '2':CopyFrom()
-	elif option == '3':Resize()
-	elif option == '4':Theme()
-	elif option == '5':OptimizeImage()
-	elif option == '6':PrepareBuilding()
-	elif option == 'BuildSource':BuildSource()
-	elif option == 'Gov':AddGovernor()
-	elif option == 'SDK':SDK()
-	elif option == 'JDK':JDK()
-	elif option == 'DeC':DeCompile()
-	elif option == 'ExP':ExPackage()
-	elif option == 'OptInside':OptimizeInside()
-	elif option == 'Sign':Sign()
-	elif option == 'Zip':Zipalign()
-	elif option == 'Inst':Install()
-	elif option == 'BakSmali':BakSmali()
-	elif option == 'Odex':Odex()
-	elif option == 'Deodex':Deodex()
-	elif option == 'BP':BinaryPort()
-	elif option == 'Compile':Compile()
-	elif option == 'Log':Log()
-	elif option == 'Bug':Bug()
-	elif option == 'change':Changelog()
-	elif option == 'help':Help()
-	elif option == 'upd':Update()
-	else : print _("%s is not defined yet, SORRY!" % option)
+	try: globals()[option]
+	except KeyError: print _("%s is not defined yet, SORRY!" % option)
+	else: 
+		#threading.Thread(None, globals()[option]).start()
+		globals()[option]()
 
 # New dialog
 
@@ -257,7 +242,7 @@ def KillPage(cmd, child):
 		page = notebook.get_n_pages() - 1
 	notebook.remove_page(page)
 	child.destroy()
-	notebook.set_current_page(0)
+	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 # Basic AddToList
 
@@ -306,6 +291,20 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 		Btn.set_label("%s : %s" %(label, Returned))
 	MainApp.Out = Returned
 
+def YesNo(Title, Text):
+	dialog = gtk.Dialog(Title,
+		           None,
+		           gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+		           (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
+		            gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+	label = gtk.Label(Text)
+	dialog.vbox.pack_start(label)
+	label.show()
+	response = dialog.run()
+	dialog.hide_all()
+	dialog.destroy()
+	return ['1', '0', 'error'][response]
+
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -349,6 +348,7 @@ def NewPage(Label, parent):
 	closebtn.set_relief(gtk.RELIEF_NONE)
 	box.pack_start(label, False, False)
 	box.pack_end(closebtn, False, False)
+	box.show_all()
 	return box
 
 for DIRS in [["APK", "IN"], ["APK", "OUT"], ["APK", "EX"], ["APK", "DEC"], ["Resize"], ["Advance", "Smali", "IN"], ["Advance", "Smali", "Smali"], ["Advance", "Smali", "OUT"], ["Advance", "ODEX", "IN"], ["Advance", "ODEX", "CURRENT"], ["Advance", "ODEX", "WORKING"], ["Advance", "ODEX", "OUT"], ["Advance", "PORT", "TO"], ["Advance", "PORT", "ROM"], ["Advance", "PORT", "WORKING"]]:
@@ -406,7 +406,7 @@ Month = Months[time.localtime()[1]]
 
 
 print("### %s %s %s - %s.%s.%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
-print _("OS = %s" %(OS))
+print _("OS = %s %s-bit" %(OS, bit))
 print _("PythonDir = %s" %(PythonDir))
 print _("Cores = %s" %(Cores))
 print _("Home = %s" %(Home))
@@ -443,15 +443,15 @@ class MainApp():
 	Options.append(LogOption)
 
 	ChangelogOption = gtk.MenuItem( _("Changelog"))
-	ChangelogOption.connect("activate", callback, "change")
+	ChangelogOption.connect("activate", callback, "Changelog")
 	Options.append(ChangelogOption)
 
 	HelpOption = gtk.MenuItem( _("Help"))
-	HelpOption.connect("activate", callback, "help")
+	HelpOption.connect("activate", callback, "Help")
 	Options.append(HelpOption)
 
 	UpdateOption = gtk.MenuItem( _("Update"))
-	UpdateOption.connect("activate", callback, "upd")
+	UpdateOption.connect("activate", callback, "Update")
 	Options.append(UpdateOption)
 
 	RestartOption = gtk.MenuItem( _("Restart"))
@@ -488,27 +488,27 @@ class MainApp():
 	UtilVBox.pack_start(image, False, False, 10)
 
 	MainOptCl = gtk.Button( _("Clean Workspace"))
-	MainOptCl.connect("clicked", callback, "Cl")
+	MainOptCl.connect("clicked", callback, "Clean")
 	UtilVBox.pack_start(MainOptCl, True, False, 10)
 
 	MainOpt1 = gtk.Button( _("Install Utilities"))
-	MainOpt1.connect("clicked", callback, "1")
+	MainOpt1.connect("clicked", callback, "Utils")
 	UtilVBox.pack_start(MainOpt1, True, False, 10)
 
 	MainOpt2 = gtk.Button( _("CopieFrom"))
-	MainOpt2.connect("clicked", callback, "2")
+	MainOpt2.connect("clicked", callback, "CopyFrom")
 	UtilVBox.pack_start(MainOpt2, True, False, 10)
 
 	MainOpt3 = gtk.Button( _("Resize"))
-	MainOpt3.connect("clicked", callback, "3")
+	MainOpt3.connect("clicked", callback, "Resize")
 	UtilVBox.pack_start(MainOpt3, True, False, 10)
 
 	MainOpt4 = gtk.Button( _("Batch Theme"))
-	MainOpt4.connect("clicked", callback, "4")
+	MainOpt4.connect("clicked", callback, "Theme")
 	UtilVBox.pack_start(MainOpt4, True, False, 10)
 
 	MainOpt5 = gtk.Button( _("Optimize Images") )
-	MainOpt5.connect("clicked", callback, "5")
+	MainOpt5.connect("clicked", callback, "OptimizeImage")
 	UtilVBox.pack_start(MainOpt5, True, False, 10)
 
 	notebook.insert_page(UtilVBox, UtilLabel, 1)
@@ -526,7 +526,7 @@ class MainApp():
 
 	if not OS == 'Win':
 		MainOpt6 = gtk.Button( _("Prepare Building") )
-		MainOpt6.connect("clicked", callback, "6")
+		MainOpt6.connect("clicked", callback, "PrepareBuilding")
 		DevelopVBox.pack_start(MainOpt6, True, False, 10)
 
 		MainOpt7 = gtk.Button( _("Build from Source") )
@@ -534,7 +534,7 @@ class MainApp():
 		DevelopVBox.pack_start(MainOpt7, True, False, 10)
 
 		MainOpt9 = gtk.Button( _("Add Governor") )
-		MainOpt9.connect("clicked", callback, "Gov")
+		MainOpt9.connect("clicked", callback, "AddGovernor")
 		DevelopVBox.pack_start(MainOpt9, True, False, 10)
 
 	MainOpt11 = gtk.Button( _("Install Android-SDK") )
@@ -546,7 +546,7 @@ class MainApp():
 	DevelopVBox.pack_start(MainOpt12, True, False, 10)
 
 	BinaryPortOpt = gtk.Button(_("Binary port a ROM"))
-	BinaryPortOpt.connect("clicked", callback, "BP")
+	BinaryPortOpt.connect("clicked", callback, "BinaryPort")
 	DevelopVBox.pack_start(BinaryPortOpt, True, False, 10)
 
 	notebook.insert_page(DevelopVBox, DevelopLabel, 2)
@@ -562,11 +562,11 @@ class MainApp():
 	APKVBox.pack_start(image, False, False, 10)
 
 	MainOpt13 = gtk.Button( _("(De)Compile"))
-	MainOpt13.connect("clicked", callback, "DeC")
+	MainOpt13.connect("clicked", callback, "DeCompile")
 	APKVBox.pack_start(MainOpt13, True, False, 10)
 
 	MainOpt14 = gtk.Button( _("Extract/Repackage") )
-	MainOpt14.connect("clicked", callback, "ExP")
+	MainOpt14.connect("clicked", callback, "ExPackage")
 	APKVBox.pack_start(MainOpt14, True, False, 10)
 
 	MainOpt15 = gtk.Button( _("Sign APK") )
@@ -574,15 +574,15 @@ class MainApp():
 	APKVBox.pack_start(MainOpt15, True, False, 10)
 
 	MainOpt16 = gtk.Button( _("Zipalign APK") )
-	MainOpt16.connect("clicked", callback, "Zip")
+	MainOpt16.connect("clicked", callback, "Zipalign")
 	APKVBox.pack_start(MainOpt16, True, False, 10)
 
 	MainOpt18 = gtk.Button( _("Install APK") )
-	MainOpt18.connect("clicked", callback, "Inst")
+	MainOpt18.connect("clicked", callback, "Install")
 	APKVBox.pack_start(MainOpt18, True, False, 10)
 	
 	MainOpt19 = gtk.Button( _("Optimize Image Inside APK") )
-	MainOpt19.connect("clicked", callback, "OptInside")
+	MainOpt19.connect("clicked", callback, "OptimizeInside")
 	APKVBox.pack_start(MainOpt19, True, False, 10)
 
 	notebook.insert_page(APKVBox, ApkLabel, 3)
@@ -623,6 +623,19 @@ class MainApp():
 
 	AndroidVBox = gtk.VBox()
 	AndroidLabel = gtk.Label( _("Android") )
+
+	BackUpBtn = gtk.Button(_("Backup / Restore"))
+	BackUpBtn.connect("clicked", callback, "BackupRestore")
+	AndroidVBox.pack_start(BackUpBtn, True, False, 10)
+
+	AdbFEBtn = gtk.Button(_("ADB File Explorer"))
+	AdbFEBtn.connect("clicked", callback, "AdbFE")
+	AndroidVBox.pack_start(AdbFEBtn, True, False, 10)
+
+
+	notebook.insert_page(AndroidVBox, AndroidLabel, 5)
+
+	
 	
 	#notebook.insert_page(AndroidVBox, AndroidLabel, 5)
 
@@ -677,7 +690,6 @@ def Utils():
 						urllib.urlretrieve('http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-apple-darwin12.0.0.tar.gz', os.path.join(ConfDir, "IM.tar.gz"))
 					ExZip(os.path.join(ConfDir, "IM.tar.gz"), Home, 'tar')
 					if not os.path.join(Home, "ImageMagick-6.7.8", "bin") in PATH:
-						print "yep"
 						HOME = os.environ['HOME']
 						MAGICK_HOME=os.path.join(HOME, "ImageMagick-6.7.8")
 						msg = "#\nMAGICK_HOME=%s\nPATH=%s/bin/:$PATH\nDYLD_LIBRARY_PATH=%s/lib/" %(MAGICK_HOME, MAGICK_HOME, MAGICK_HOME)
@@ -1374,19 +1386,23 @@ g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i3
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def SDK():
+	print _("Retrieving SDK")
 	if OS == 'Win':
 		urllib.urlretrieve('http://dl.google.com/android/installer_r18-windows.exe', os.path.join(Home, 'SDK.exe'))
 		SystemLog("start %s" % os.path.join(Home, 'SDK.exe'))
 	else:
 		if OS == 'Mac':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-macosx.zip', os.path.join(Home, 'SDK.zip'))
+			print _("Extracting SDK")
 			ExZip(os.path.join(Home, 'SDK.zip'), Home)
 		elif OS == 'Lin':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-linux.tgz', os.path.join(Home, 'SDK.tgz'))
+			print _("Extracting SDK")
 			tar = tarfile.open(os.path.join(Home, "SDK.tgz"))
 			tar.extractall(path=Home)
 		for x in os.listdir(Home): 
 			if "android-sdk-" in x: sdkdir = os.path.join(Home, x)
+		print _("Setting permissions")
 		for file in find_files(sdkdir, "*"):
 			if not os.path.isdir(file):
 				os.chmod(file, 0755)
@@ -1725,6 +1741,8 @@ def DeCompile():
 	def Start(cmd):
 		if DecompileButton.get_active():
 			Number = len(decname)
+			if Number == 0:
+				NewDialog(_("ERROR"), _("No images inside %s. exit." % os.path.join("APK", "IN")))
 			for num in range(0, Number):
 				APK = decname[num]
 				for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), '*.apk'):
@@ -1739,6 +1757,8 @@ def DeCompile():
 			Refresh("cmd")
 		if CompileButton.get_active():
 			Number = len(comname)
+			if Number == 0:
+				NewDialog(_("ERROR"), _("No images inside %s. exit." % os.path.join("APK", "IN") ))
 			for num in range(0, Number):
 				Dec = comname[num]
 				for dec in os.listdir(os.path.join(ScriptDir, "APK", "DEC")):
@@ -1761,6 +1781,10 @@ def DeCompile():
 	sw = gtk.ScrolledWindow()
 	
 	vbox = gtk.VBox()
+
+	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
+	vbox.pack_start(InfoLabel, False, False, 0)
+
 	DecompileButton = gtk.RadioButton(None, _("Decompile"))
 	CompileButton = gtk.RadioButton(DecompileButton, _("Compile"))
 	vbox.pack_start(DecompileButton, False, False, 10)
@@ -1845,6 +1869,8 @@ def OptimizeImage():
 def OptimizeInside():
 	def Start(cmd):
 		Number = len(apkname)
+		if Number == 0:
+			NewDialog(_("ERROR"), _("No images inside %s. exit." % os.path.join("APK", "IN")))
 		for num in range(0, Number):
 			#Extract APK
 			APK = apkname[num]
@@ -1925,6 +1951,9 @@ def ExPackage():
 	notebook = MainApp.notebook
 	ExPackWindow = window
 	vbox = gtk.VBox()
+
+	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
+	vbox.pack_start(InfoLabel, False, False, 0)
 	
 	ExtractButton = gtk.RadioButton(None, "Extract")
 	vbox.pack_start(ExtractButton, False, False, 10)
@@ -1966,11 +1995,6 @@ def ExPackage():
 
 def Sign():
 	def StartSign(cmd):
-		#if media.get_active(): name = 'media'
-		#elif platform.get_active(): name = 'platform'
-		#elif shared.get_active(): name = 'shared'
-		#elif superuser.get_active(): name = 'superuser'
-		#else: name = 'testkey'
 		print Std.get_group()
 		name = [r for r in Std.get_group() if r.get_active()][0].get_label()
 		key1 = os.path.join(ScriptDir, "Utils", name + ".x509.pem")
@@ -1988,6 +2012,10 @@ def Sign():
 		
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
+
+	InfoLabel = gtk.Label(_("Place APKs inside %s to select them.\n\n\n" % os.path.join("APK", "IN")))
+	vbox.pack_start(InfoLabel, False, False, 0)
+
 	label = gtk.Label(_("Choose the key you want to sign with:"))
 	vbox.pack_start(label, False, False, 10)
 	Std = gtk.RadioButton(None, "None")
@@ -2037,8 +2065,8 @@ def Zipalign():
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 
-	label = gtk.Label(_("Choose the APKs you want to zipalign"))
-	vbox.pack_start(label, False, False, 10)
+	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
+	vbox.pack_start(InfoLabel, False, False, 10)
 	
 	zipapk = []
 
@@ -2069,19 +2097,19 @@ def Install():
 		for num in range(0, Number):
 			APK = apk[num]
 			SystemLog("adb install %s" % APK)
-	SystemLog("adb version")
-	ADB = str(os.system("adb version"))
-	if not ADB == "0":
+
+	ADB = str(commands.getoutput("adb version"))
+	if not ADB.startswith("Android Debug Bridge version"):
 		print _("The Android SDK is not installed. Do you want to install it now?\n")
-		Choice = raw_input("Choose option [Y/n] :  ")
-		if not Choice == 'n' :
+		Choice = YesNo("Android SDK", _("Android SDK is not installed. \nDo you want to install it now?"))
+		if not Choice == '0' :
 			SDK()
 		return None
 	notebook = MainApp.notebook
 	
 	vbox = gtk.VBox()
-	label = gtk.Label(_("Choose the APKs you want to install"))
-	vbox.pack_start(label, False, False, 10)
+	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
+	vbox.pack_start(InfoLabel, False, False, 0)
 	
 	apk = []
 
@@ -2493,6 +2521,8 @@ def Compile():
 
 
 		Name = "StudioAndroid"
+		if not os.path.basename(ScriptFile) == "SA.py":
+			Name = str(os.path.basename(ScriptFile)).replace('.py', '')
 
 		if New == True:
 			urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
@@ -2517,6 +2547,7 @@ def Compile():
 						shutil.copy(CopySrc, CopyDst)
 
 		os.chdir(PyInstDir)
+		
 		if OS == 'Win':
 			PythonF = os.path.join(PythonDir, "python.exe")
 
@@ -2526,7 +2557,7 @@ def Compile():
 		elif OS == 'Mac':
 			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
 		else:
-			SystemLog("python pyinstaller.py -y -F %s %s -n %s" %(ScriptFile, icon, Name))
+			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
 
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
@@ -2562,6 +2593,184 @@ def Compile():
 	vbox.show_all()
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def BackupRestore():
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+	sw = gtk.ScrolledWindow()
+	vbox1 = gtk.VBox()
+	sw.add_with_viewport(vbox1)
+	vbox.pack_start(sw)
+	BackupRestoreLabel = NewPage("Backup/Restore",vbox)
+
+
+	notebook.insert_page(vbox, BackupRestoreLabel)
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+	window.show_all()
+
+def AdbFE():
+	class Data():
+		PrevDir = '/sdcard/'
+		MainPrevDir = ScriptDir
+	def Previous(cmd, type='Android'):
+		if type == 'Android':
+			Update(None, Data.PrevDir, sw, type)
+		elif type == 'PC':
+			Update(None, Data.MainPrevDir, SwPC, type)
+	def Refresh(cmd, sw, type='Android'):
+		if type == 'Android':
+			Update(None, Data.CurrentDir, sw, type)
+		elif type == 'PC':
+			Update(None, Data.MainCurrentDir, sw, type)
+	def Push(cmd, Btn):
+		print("%s -> %s" %(Btn.realname, Data.CurrentDir))
+		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, Data.CurrentDir))
+		Refresh(None, sw, 'Android')
+	def Pull(cmd, Btn):
+		print("%s -> %s" %(Btn.realname, Data.MainCurrentDir))
+		SystemLog("%s pull '%s' '%s'" %(adb, Btn.realname, Data.MainCurrentDir))
+		Refresh(None, SwPC, 'PC')		
+	def Update(cmd, Dir, sw, type='Android'):
+		NewDir = os.path.join(Dir, '')
+		child = sw.get_child()
+		if not child == None: child.destroy()
+		vbox1 = gtk.VBox()
+		sw.add_with_viewport(vbox1)
+		if type == 'Android':
+			Data.PrevDir = os.path.dirname(os.path.normpath(NewDir))
+			Data.CurrentDir = NewDir
+			for x in [["'%s' shell find '%s' -maxdepth 1 -type d | sort -d" %(adb, NewDir), True], ["'%s' shell find '%s' -maxdepth 1 -type f | sort -d" %(adb, NewDir), False]]:
+				cmd = x[0]
+				Dir = x[1]
+				for filen in str(commands.getoutput(cmd)).split('\n'):
+					FileName = str(filen).replace('\r', '')
+					BaseName = os.path.basename(os.path.normpath(FileName))
+					if FileName == NewDir:
+						continue
+					box = gtk.HBox()
+					image = gtk.Image()
+					if Dir == True and BaseName.startswith("."): imf = os.path.join(ScriptDir, "images", "folder.png")
+					elif Dir == True: imf = os.path.join(ScriptDir, "images", "folder-brown.png")
+					else: imf = os.path.join(ScriptDir, "images", "file.png")
+					image.set_from_file(imf)
+					Btn = gtk.Button(BaseName)
+					Btn.realname = FileName
+					if Dir == True:
+						Btn.connect("clicked", Update, FileName, sw, 'Android')
+					Btn.set_relief(gtk.RELIEF_NONE)
+					# Set PULL BTN
+					PullBtn = gtk.Button()
+					im = gtk.Image()
+					im.set_from_stock(gtk.STOCK_GO_FORWARD, gtk.ICON_SIZE_MENU)
+					PullBtn.set_image(im)
+					PullBtn.connect("clicked", Pull, Btn)
+					box.pack_start(PullBtn, False)
+					# 
+					box.pack_start(image, False, False, 4)
+					box.pack_start(Btn, False)
+					vbox1.pack_start(box, False, False, 0)
+			location.set_text(NewDir)
+		else:
+			Data.MainPrevDir = os.path.dirname(os.path.normpath(Data.MainPrevDir))
+			Data.MainCurrentDir = NewDir
+			dirlist = []
+			for dir in os.listdir(NewDir):
+				if os.path.isdir(os.path.join(NewDir, dir)): dirlist.append(os.path.join(NewDir, dir))
+			dirlist.sort()
+			filelist = []
+			for file in os.listdir(NewDir):
+				if not os.path.isdir(os.path.join(NewDir, file)): filelist.append(os.path.join(NewDir, file))
+			filelist.sort()
+			for files in dirlist + filelist:
+				BaseName = os.path.basename(os.path.normpath(files))
+				box = gtk.HBox()
+				image = gtk.Image()
+				if BaseName.startswith("."): imf = os.path.join(ScriptDir, "images", "folder.png")
+				elif os.path.isdir(files): imf = os.path.join(ScriptDir, "images", "folder-brown.png")
+				else: imf = os.path.join(ScriptDir, "images", "file.png")
+				image.set_from_file(imf)
+				Btn = gtk.Button(BaseName)
+				Btn.realname = files
+				if os.path.isdir(files): Btn.connect("clicked", Update, files, SwPC, 'PC')
+				Btn.set_relief(gtk.RELIEF_NONE)
+				#Set PUSH Button
+				PushBtn = gtk.Button()
+				im = gtk.Image()
+				im.set_from_stock(gtk.STOCK_GO_BACK, gtk.ICON_SIZE_MENU)
+				PushBtn.set_image(im)
+				PushBtn.connect("clicked", Push, Btn)
+				box.pack_start(PushBtn, False)
+				#
+				box.pack_start(image, False, False, 4)
+				box.pack_start(Btn, False)
+				vbox1.pack_start(box, False, False, 0)
+			if dirlist + filelist == []:
+				label = gtk.Label(_("Empty directory..."))
+				vbox1.pack_start(label)
+				
+			
+			LocationPC.set_text(NewDir)
+		sw.show_all()
+		
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+	AdbFELabel = NewPage("ADB FE",vbox)
+	AdbFELabel.show_all()
+
+	SwPC = gtk.ScrolledWindow()
+	sw = gtk.ScrolledWindow()
+
+	# Set Android frame
+	hbox = gtk.HBox()
+	location = gtk.Label('')
+	BackBtn = gtk.Button()
+	BackBtn.connect("clicked", Previous, "Android")
+	BackImage = gtk.Image()
+	BackImage.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
+	BackBtn.set_image(BackImage)
+	RefreshImage = gtk.Image()
+	RefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+	RefreshBtn = gtk.Button()
+	RefreshBtn.set_image(RefreshImage)
+	RefreshBtn.connect("clicked", Refresh, sw, 'Android')
+	hbox.pack_start(BackBtn, False, False, 0)
+	hbox.pack_start(RefreshBtn, False, False, 0)
+	hbox.pack_start(location, False, False, 4)
+	vbox.pack_start(hbox, False, False, 0)
+	
+	# Set PC frame
+	LocationPC = gtk.Label('')
+	PcBackBtn = gtk.Button()
+	PcBackBtn.connect("clicked", Previous, "PC")
+	image = gtk.Image()
+	image.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
+	PcBackBtn.set_image(image)
+	PcRefreshImage = gtk.Image()
+	PcRefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+	PcRefreshBtn = gtk.Button()
+	PcRefreshBtn.set_image(PcRefreshImage)
+	PcRefreshBtn.connect("clicked", Refresh, SwPC, 'PC')
+	hbox.pack_end(PcBackBtn, False, False, 0)
+	hbox.pack_end(PcRefreshBtn, False, False, 0)
+	hbox.pack_end(LocationPC, False, False, 4)
+
+
+	HboxFM = gtk.HBox()
+	vbox1 = gtk.VBox()
+	sw.add_with_viewport(vbox1)
+	HboxFM.pack_start(sw)
+
+	HboxFM.pack_end(SwPC)
+	Update(None, ScriptDir, SwPC, 'PC')
+
+	Update(None, '/sdcard', sw, 'Android')
+
+	vbox.pack_start(HboxFM)
+	vbox.show_all()
+
+	notebook.insert_page(vbox, AdbFELabel)
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+	window.show_all()
 	
 
 def Changelog():
@@ -2651,7 +2860,7 @@ if not os.path.exists(os.path.join(Home, ".SA", "Language")):
 	window2.show_all()
 
 if not FirstRun == False:
-	callback("cmd", "1")
+	callback("cmd", "Utils")
 
 def main():
 	try:
