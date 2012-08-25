@@ -149,6 +149,7 @@ else:
 
 def SystemLog(cmd):
 	if Debug == True:
+		print(cmd)
 		print(commands.getoutput(cmd))
 	elif Debug == False:
 		os.system(cmd)
@@ -351,7 +352,7 @@ def NewPage(Label, parent):
 	box.show_all()
 	return box
 
-for DIRS in [["APK", "IN"], ["APK", "OUT"], ["APK", "EX"], ["APK", "DEC"], ["Resize"], ["Advance", "Smali", "IN"], ["Advance", "Smali", "Smali"], ["Advance", "Smali", "OUT"], ["Advance", "ODEX", "IN"], ["Advance", "ODEX", "CURRENT"], ["Advance", "ODEX", "WORKING"], ["Advance", "ODEX", "OUT"], ["Advance", "PORT", "TO"], ["Advance", "PORT", "ROM"], ["Advance", "PORT", "WORKING"]]:
+for DIRS in [["APK", "IN"], ["APK", "OUT"], ["APK", "EX"], ["APK", "DEC"], ["Resize"], ["Advance", "Smali", "IN"], ["Advance", "Smali", "Smali"], ["Advance", "Smali", "OUT"], ["Advance", "ODEX", "IN"], ["Advance", "ODEX", "CURRENT"], ["Advance", "ODEX", "WORKING"], ["Advance", "ODEX", "OUT"], ["Advance", "PORT", "TO"], ["Advance", "PORT", "ROM"], ["Advance", "PORT", "WORKING"], ['ADB']]:
 	try:
 		subdir = ''
 		for x in DIRS:
@@ -403,6 +404,10 @@ Weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 
 Months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 Weekday = Weekdays[time.localtime()[6]]
 Month = Months[time.localtime()[1]]
+
+def date():
+	date = "%s-%s-%s--%s.%s.%s" %(time.localtime()[0], time.localtime()[1], time.localtime()[2], time.localtime()[3], time.localtime()[4], time.localtime()[5])
+	return date
 
 
 print("### %s %s %s - %s.%s.%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
@@ -624,6 +629,10 @@ class MainApp():
 	AndroidVBox = gtk.VBox()
 	AndroidLabel = gtk.Label( _("Android") )
 
+	ADBBtn = gtk.Button(_("Configure ADB"))
+	ADBBtn.connect("clicked", callback, 'ADBConfig')
+	AndroidVBox.pack_start(ADBBtn, True, False, 10)
+
 	BackUpBtn = gtk.Button(_("Backup / Restore"))
 	BackUpBtn.connect("clicked", callback, "BackupRestore")
 	AndroidVBox.pack_start(BackUpBtn, True, False, 10)
@@ -646,11 +655,14 @@ class MainApp():
 	vbox.show_all()
 	window.show_all()
 
+class GlobalData():
+	AdbOpts = ''
+
 # FROM HERE, ALL FUNCTIONS USED IN MAINAPP WILL BE DEFINED
 
 def Clean():
 	open(os.path.join(ScriptDir, "log")).close()
-	for tree in ['APK', 'Resize', 'Resized', 'Resizing', 'Advance', 'Utils', 'Theme']:
+	for tree in ['APK', 'Resize', 'Resized', 'Resizing', 'Advance', 'Utils', 'Theme', 'ADB']:
 		tree = os.path.join(ScriptDir, tree)
 		shutil.rmtree(tree, True)
 	shutil.rmtree(os.path.join(Home, ".SA"), True)
@@ -2594,19 +2606,98 @@ def Compile():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def BackupRestore():
+def ADBConfig():
+	def Configure(cmd):
+		active = [r for r in ConnectBtn.get_group() if r.get_active()][0].get_label()
+		if not active == "Connect via IP:":
+			GlobalData.AdbOpts = "-s %s" % active
+		else:
+			IPAdressPort = IP.get_text()
+			Port = IPAdressPort.split(":")[1]
+			print("%s tcpip %s" %(adb, Port))
+			SystemLog("%s tcpip %s" %(adb, Port))
+			
+			SystemLog("%s connect %s" %(adb, IPAdressPort))
+			GlobalData.AdbOpts = "-s %s" % active
+			
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
-	sw = gtk.ScrolledWindow()
-	vbox1 = gtk.VBox()
-	sw.add_with_viewport(vbox1)
-	vbox.pack_start(sw)
+	AdbConfigLabel = NewPage("Configure ADB",vbox)
+
+	label = gtk.Label("Please select your device below:")
+	vbox.pack_start(label, False, False, 15)
+
+	devices = []
+
+	adbc = commands.getoutput("%s devices" % adb).split('\n')[1:-1]
+	for line in adbc:
+		devicen = line.split('\t')[0]
+		devices.append(devicen)
+
+	NameBtn = None
+	for device in devices:
+		NameBtn = gtk.RadioButton(NameBtn, device)
+		vbox.pack_start(NameBtn)
+
+	ConnectHbox = gtk.HBox(True)
+	ConnectBtn = gtk.RadioButton(NameBtn, "Connect via IP:")
+	ConnectHbox.pack_start(ConnectBtn)
+	IP = gtk.Entry()
+	IP.set_text("IP Adress:PORT")
+	ConnectHbox.pack_start(IP)
+	vbox.pack_start(ConnectHbox)
+
+	ConfigureBtn = gtk.Button("Configure")
+	ConfigureBtn.connect("clicked", Configure)
+	vbox.pack_start(ConfigureBtn, False)
+
+	notebook.insert_page(vbox, AdbConfigLabel)
+	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def BackupRestore():
+	def Backup(cmd):
+		opts = []
+		if BackupAPKs.get_active():opts.append('-apk')
+		if Shared.get_active():opts.append('-shared')
+		if All.get_active():opts.append('-all')
+		if DecludeSystemApps.get_active(): opts.append('-nosystem')
+		options = ' '.join(opts)
+		os.chdir(os.path.join(ScriptDir, 'ADB'))
+		SystemLog("%s backup %s" %(adb, options))
+		shutil.move(os.path.join(ScriptDir, 'ADB', 'backup.ab'), os.path.join(ScriptDir, 'ADB', '%s.ab' % date()))
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
 	BackupRestoreLabel = NewPage("Backup/Restore",vbox)
 
+	BackupAPKs = gtk.CheckButton(_("Backup the APKs too"))
+	vbox.pack_start(BackupAPKs)
+	
+	Shared = gtk.CheckButton(_("Backup shared storage"))
+	vbox.pack_start(Shared)	
+	
+	All = gtk.CheckButton(_("Backup ALL applications"))
+	vbox.pack_start(All)
+	
+	DecludeSystemApps = gtk.CheckButton(_("Declude System apps"))
+	vbox.pack_start(DecludeSystemApps)
+	
+	BackupBtn = gtk.Button(_("Backup (and go get a cup of coffee)"))
+	BackupBtn.connect("clicked", Backup)
+	vbox.pack_start(BackupBtn, False)
+
+	for x in find_files(os.path.join(ScriptDir, 'ADB'), "*.ab"):
+		NameBtn = None
+		for file in find_files(os.path.join(ScriptDir, 'ADB'), "*.ab"):
+			NameBtn = gtk.RadioButton(NameBtn, file)
+			vbox.pack_start(NameBtn)
+	if not NameBtn == None:
+		RestoreBtn = gtk.Button(_("Restore (and go get a cup of coffee)"))
+		vbox.pack_start(RestoreBtn, False)
 
 	notebook.insert_page(vbox, BackupRestoreLabel)
-	notebook.set_current_page(notebook.get_n_pages() - 1)
 	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def AdbFE():
 	class Data():
@@ -2623,11 +2714,11 @@ def AdbFE():
 		elif type == 'PC':
 			Update(None, Data.MainCurrentDir, sw, type)
 	def Push(cmd, Btn):
-		print("%s -> %s" %(Btn.realname, Data.CurrentDir))
+		NewDialog("Info", ("%s -> %s" %(Btn.realname, Data.CurrentDir)))
 		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, Data.CurrentDir))
 		Refresh(None, sw, 'Android')
 	def Pull(cmd, Btn):
-		print("%s -> %s" %(Btn.realname, Data.MainCurrentDir))
+		NewDialog("Info", ("%s -> %s" %(Btn.realname, Data.MainCurrentDir)))
 		SystemLog("%s pull '%s' '%s'" %(adb, Btn.realname, Data.MainCurrentDir))
 		Refresh(None, SwPC, 'PC')		
 	def Update(cmd, Dir, sw, type='Android'):
@@ -2671,7 +2762,7 @@ def AdbFE():
 					vbox1.pack_start(box, False, False, 0)
 			location.set_text(NewDir)
 		else:
-			Data.MainPrevDir = os.path.dirname(os.path.normpath(Data.MainPrevDir))
+			Data.MainPrevDir = os.path.dirname(os.path.normpath(NewDir))
 			Data.MainCurrentDir = NewDir
 			dirlist = []
 			for dir in os.listdir(NewDir):

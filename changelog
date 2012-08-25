@@ -129,6 +129,10 @@ Updates:
 	added Android tab with 2 functions
 	Adb FileManager defined :) 
 	ADB: push, pull, list, browse, previous, refresh
+	Configure ADB:
+		Connect to device via IP
+	Added Backup/Restore functionality
+	
 
 
 I will switch to BETAs when every option is defined
