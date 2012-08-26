@@ -633,6 +633,10 @@ class MainApp():
 	ADBBtn.connect("clicked", callback, 'ADBConfig')
 	AndroidVBox.pack_start(ADBBtn, True, False, 10)
 
+	BuildPropBtn = gtk.Button(_("Build.prop ADB"))
+	BuildPropBtn.connect("clicked", callback, 'BuildProp')
+	AndroidVBox.pack_start(BuildPropBtn, True, False, 10)
+
 	BackUpBtn = gtk.Button(_("Backup / Restore"))
 	BackUpBtn.connect("clicked", callback, "BackupRestore")
 	AndroidVBox.pack_start(BackUpBtn, True, False, 10)
@@ -2614,8 +2618,8 @@ def ADBConfig():
 		else:
 			IPAdressPort = IP.get_text()
 			Port = IPAdressPort.split(":")[1]
-			print("%s tcpip %s" %(adb, Port))
-			SystemLog("%s tcpip %s" %(adb, Port))
+			#print("%s tcpip %s" %(adb, Port))
+			#SystemLog("%s tcpip %s" %(adb, Port))
 			
 			SystemLog("%s connect %s" %(adb, IPAdressPort))
 			GlobalData.AdbOpts = "-s %s" % active
@@ -2655,6 +2659,78 @@ def ADBConfig():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
+def BuildProp():
+	def Save(cmd):
+		textbuffer = TextBox.get_buffer()
+		text = textbuffer.get_text(textbuffer.get_start_iter() , textbuffer.get_end_iter())
+		NewBuildProp = os.path.join(ScriptDir, 'ADB', 'new-build.prop')
+		open(NewBuildProp, "w").write(text)
+	def Pull(cmd):
+		SystemLog("'%s' pull '/system/build.prop' '%s'" %(adb, os.path.join(ScriptDir, 'ADB', 'build.prop')))
+		textbuffer.set_text(open(os.path.join(ScriptDir, 'ADB', 'build.prop'), "r").read())
+		TextBox.set_buffer(textbuffer)
+	def Reload(cmd):
+		if os.path.exists(os.path.join(ScriptDir, 'ADB', 'new-build.prop')):
+			textbuffer.set_text(open(os.path.join(ScriptDir, 'ADB', 'new-build.prop'), "r").read())
+			TextBox.set_buffer(textbuffer)
+		elif not os.path.exists(os.path.join(ScriptDir, 'ADB', 'new-build.prop')) and os.path.exists(os.path.join(ScriptDir, 'ADB', 'build.prop')):
+			textbuffer.set_text(open(os.path.join(ScriptDir, 'ADB', 'build.prop'), "r").read())
+			TextBox.set_buffer(textbuffer)
+	def Push(cmd):
+		NewBuildProp = os.path.join(ScriptDir, 'ADB', 'new-build.prop')
+		Save(None)
+
+		SystemLog("%s root" % adb)
+		SystemLog("%s wait-for-device" % adb)
+		SystemLog("%s push %s /system/build.prop" %(adb, NewBuildProp) )
+			
+			
+		
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+	BuildPropLabel = NewPage("Build.prop",vbox)
+	sw = gtk.ScrolledWindow()
+
+	if not os.path.exists(os.path.join(ScriptDir, 'ADB', 'build.prop')):
+		SystemLog("'%s' pull '/system/build.prop' '%s'" %(adb, os.path.join(ScriptDir, 'ADB', 'build.prop')))
+
+	TextBox = gtk.TextView()
+	TextBox.set_wrap_mode(gtk.WRAP_WORD)
+	TextBox.set_editable(True)
+	TextBox.set_cursor_visible(True)
+
+	textbuffer = gtk.TextBuffer()
+	textbuffer.set_text(open(os.path.join(ScriptDir, 'ADB', 'build.prop'), "r").read())
+	TextBox.set_buffer(textbuffer)
+	
+	sw.add_with_viewport(TextBox)
+	vbox.pack_start(sw)
+
+	hbox = gtk.HBox(True)
+
+	SaveBtn = gtk.Button("Save")
+	SaveBtn.connect("clicked", Save)
+	hbox.pack_start(SaveBtn, False)
+
+	PullBtn = gtk.Button("Pull un-edited")
+	PullBtn.connect("clicked", Pull)
+	hbox.pack_start(PullBtn, False)
+
+	ReloadEdited = gtk.Button("Reload edited")
+	ReloadEdited.connect("clicked", Reload)
+	hbox.pack_start(ReloadEdited, False)
+
+	PushBtn = gtk.Button("Push saved build.prop")
+	hbox.pack_start(PushBtn, False)
+
+	vbox.pack_end(hbox, False)
+	
+
+	notebook.insert_page(vbox, BuildPropLabel)
+	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+
 def BackupRestore():
 	def Backup(cmd):
 		opts = []
@@ -2686,11 +2762,12 @@ def BackupRestore():
 	BackupBtn.connect("clicked", Backup)
 	vbox.pack_start(BackupBtn, False)
 
+	NameBtn = None
 	for x in find_files(os.path.join(ScriptDir, 'ADB'), "*.ab"):
-		NameBtn = None
 		for file in find_files(os.path.join(ScriptDir, 'ADB'), "*.ab"):
 			NameBtn = gtk.RadioButton(NameBtn, file)
 			vbox.pack_start(NameBtn)
+
 	if not NameBtn == None:
 		RestoreBtn = gtk.Button(_("Restore (and go get a cup of coffee)"))
 		vbox.pack_start(RestoreBtn, False)
@@ -2714,11 +2791,11 @@ def AdbFE():
 		elif type == 'PC':
 			Update(None, Data.MainCurrentDir, sw, type)
 	def Push(cmd, Btn):
-		NewDialog("Info", ("%s -> %s" %(Btn.realname, Data.CurrentDir)))
+		print("%s -> %s" %(Btn.realname, Data.CurrentDir))
 		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, Data.CurrentDir))
 		Refresh(None, sw, 'Android')
 	def Pull(cmd, Btn):
-		NewDialog("Info", ("%s -> %s" %(Btn.realname, Data.MainCurrentDir)))
+		print("%s -> %s" %(Btn.realname, Data.MainCurrentDir))
 		SystemLog("%s pull '%s' '%s'" %(adb, Btn.realname, Data.MainCurrentDir))
 		Refresh(None, SwPC, 'PC')		
 	def Update(cmd, Dir, sw, type='Android'):
