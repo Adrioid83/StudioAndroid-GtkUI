@@ -633,6 +633,10 @@ class MainApp():
 	ADBBtn.connect("clicked", callback, 'ADBConfig')
 	AndroidVBox.pack_start(ADBBtn, True, False, 10)
 
+	LogcatBtn = gtk.Button(_("Logcat"))
+	LogcatBtn.connect("clicked", callback, 'LogCat')
+	AndroidVBox.pack_start(LogcatBtn, True, False, 10)
+
 	BuildPropBtn = gtk.Button(_("Build.prop ADB"))
 	BuildPropBtn.connect("clicked", callback, 'BuildProp')
 	AndroidVBox.pack_start(BuildPropBtn, True, False, 10)
@@ -2633,6 +2637,7 @@ def ADBConfig():
 
 	devices = []
 
+	SystemLog("%s start-server" % adb)
 	adbc = commands.getoutput("%s devices" % adb).split('\n')[1:-1]
 	for line in adbc:
 		devicen = line.split('\t')[0]
@@ -2658,6 +2663,52 @@ def ADBConfig():
 	notebook.insert_page(vbox, AdbConfigLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def LogCat():
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+	sw = gtk.ScrolledWindow()
+
+	LogCatLabel = NewPage("Logcat",vbox)
+
+	class Update(threading.Thread):
+		def __init__():
+			while 1:
+				i = 0
+				text = open(os.path.join(ScriptDir, 'cat'), "r")
+				for line in text.readlines(): i = i+1
+				textbuffer = gtk.TextBuffer()
+				j = 0
+				lines = []
+
+				for line in text.readlines():
+					if i << 20:
+						lines.append(line)
+					elif i >> 20 and j >> i - 20:
+						lines.append(line)
+					j = j+1
+				texts = '\n'.join(lines)
+				textbuffer.set_text(texts)
+				TextBox.set_buffer(textbuffer)
+				text.close()
+				TextBox.show_all()
+				window.show_all()
+				time.sleep(1)
+
+	TextBox = gtk.TextView()
+	TextBox.set_wrap_mode(gtk.WRAP_WORD)
+	TextBox.set_editable(False)
+	TextBox.set_cursor_visible(True)
+	
+	sw.add_with_viewport(TextBox)
+	vbox.pack_start(sw)
+
+	notebook.insert_page(vbox, LogCatLabel)
+	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+	subprocess.Popen(['%s' % adb, 'logcat'], stdout=open(os.path.join(ScriptDir, 'cat'), "w"))
+	Update.run()
 
 def BuildProp():
 	def Save(cmd):
@@ -2742,6 +2793,10 @@ def BackupRestore():
 		os.chdir(os.path.join(ScriptDir, 'ADB'))
 		SystemLog("%s backup %s" %(adb, options))
 		shutil.move(os.path.join(ScriptDir, 'ADB', 'backup.ab'), os.path.join(ScriptDir, 'ADB', '%s.ab' % date()))
+		NewDialog(_("Warning!"), _("Please copy your backups from the ADB directory to a safe place elsewhere"))
+	def Restore(cmd):
+		file = [r for r in NameBtn.get_group() if r.get_active()][0].get_label()
+		SystemLog("%s restore %s" %(adb, file))
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 	BackupRestoreLabel = NewPage("Backup/Restore",vbox)
@@ -2770,6 +2825,7 @@ def BackupRestore():
 
 	if not NameBtn == None:
 		RestoreBtn = gtk.Button(_("Restore (and go get a cup of coffee)"))
+		RestoreBtn.connect("clicked", Restore)
 		vbox.pack_start(RestoreBtn, False)
 
 	notebook.insert_page(vbox, BackupRestoreLabel)
@@ -3006,7 +3062,7 @@ def Update():
 		print _("Removing old %s" % os.path.join(Home, "StudioAndroid"))
 		shutil.rmtree(os.path.join(Home, "StudioAndroid"))
 	else:
-		shutl.rmtree(ScriptDir)
+		shutil.rmtree(ScriptDir)
 	UpdDir = os.path.join(Home, "StudioAndroidUpdate")
 	UpdCont = os.listdir(UpdDir)[0]
 	FullUpdDir = os.path.join(UpdDir, UpdCont)

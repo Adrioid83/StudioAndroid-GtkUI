@@ -132,6 +132,14 @@ Updates:
 	Configure ADB:
 		Connect to device via IP
 	Added Backup/Restore functionality
+
+==Beta9==
+	Added Build.prop editor
+	Fixed bug in ADB Configure were ADB server was not started yet
+	Added restore backup (whoops)
+	Added message after backup wich tells you to safely copy your backups to an other directory
+	Fixed Update option, typo again >:(
+	Still working on LiveLogcat
 	
 
 
