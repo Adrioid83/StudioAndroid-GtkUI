@@ -144,9 +144,6 @@ Updates:
 ==Beta10==
 	Fixed bug where closing Install Utilities wasn't working perfectly
 	Resize now has 9patch dependencies
-	Updated backup/Restore
-	-Now has frames for usability
-	-Now contains backup/restore contacts, WiFi and SMS/MMS only too
 	
 	
 

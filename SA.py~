@@ -2720,7 +2720,7 @@ def LogCat():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-	stdin, stdouterr = os.popen4("%s logcat" % adb)
+	stdin, stdouterr = os.popen4('%s logcat' % adb)
 	Update(stdouterr)
 
 def BuildProp():
