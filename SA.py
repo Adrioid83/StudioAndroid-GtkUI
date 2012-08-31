@@ -3,7 +3,7 @@
 from __future__ import division
 import os, sys, platform, commands
 from distutils.sysconfig import get_python_lib
-import gtk, pygtk
+import gtk, pygtk, gobject
 pygtk.require('2.0')
 import shutil
 import fnmatch
@@ -2672,56 +2672,47 @@ def LogCat():
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 	sw = gtk.ScrolledWindow()
+	sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+
+	encoding = locale.getpreferredencoding()
+	utf8conv = lambda x : unicode(x, encoding).encode('utf8')
+
+
+	gobject.threads_init()
+	gtk.gdk.threads_init()
 
 	LogCatLabel = NewPage("Logcat",vbox)
 
-
-	def Update(stdouterr):
+	def read_output(view, buffer, command):
+		stdin, stdouterr = os.popen4(command)
 		while 1:
-			newline = stdouterr.readline()
-			buff = TextBox.get_buffer()
-			end_iter = buff.get_end_iter()
-			buff.insert(end_iter, "%s" % newline)
-			TextBox.scroll_to_iter(buff.get_end_iter(), 0.0, True, 0.0, 0.0)
-			
-	class Updates(threading.Thread):
-		def __init__():
-			while 1:
-				i = 0
-				text = open(os.path.join(ScriptDir, 'cat'), "r")
-				for line in text.readlines(): i = i+1
-				textbuffer = gtk.TextBuffer()
-				j = 0
-				lines = []
+			line = stdouterr.readline()
+			if not line:
+				break
+			gtk.gdk.threads_enter()
+			iter = buffer.get_end_iter()
+			buffer.place_cursor(iter)
+			buffer.insert(iter, utf8conv(line))
+			view.scroll_to_mark(buffer.get_insert(), 0.1)
+			gtk.gdk.threads_leave()
 
-				for line in text.readlines():
-					if i << 20:
-						lines.append(line)
-					elif i >> 20 and j >> i - 20:
-						lines.append(line)
-					j = j+1
-				texts = '\n'.join(lines)
-				textbuffer.set_text(texts)
-				TextBox.set_buffer(textbuffer)
-				text.close()
-				TextBox.show_all()
-				window.show_all()
-				time.sleep(1)
 
 	TextBox = gtk.TextView()
+	buff = TextBox.get_buffer()
 	TextBox.set_wrap_mode(gtk.WRAP_WORD)
 	TextBox.set_editable(False)
 	TextBox.set_cursor_visible(True)
 	
-	sw.add_with_viewport(TextBox)
+	sw.add(TextBox)
 	vbox.pack_start(sw)
 
 	notebook.insert_page(vbox, LogCatLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-	stdin, stdouterr = os.popen4("%s logcat" % adb)
-	Update(stdouterr)
+	command = "%s logcat" % adb
+	thr = threading.Thread(target= read_output, args=(TextBox, buff, command))
+	thr.start()
 
 def BuildProp():
 	def Save(cmd):
