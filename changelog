@@ -142,12 +142,14 @@ Updates:
 	Still working on LiveLogcat
 
 ==Beta10==
+	UPDATED WINDOWS EXE
 	Fixed bug where closing Install Utilities wasn't working perfectly
 	Resize now has 9patch dependencies
 	Updated backup/Restore
 	-Now has frames for usability
 	-Now contains backup/restore contacts, WiFi and SMS/MMS only too
 	Fixed Logcat
+	
 	
 	
 
