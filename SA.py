@@ -297,19 +297,16 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 		Btn.set_label("%s : %s" %(label, Returned))
 	MainApp.Out = Returned
 
-def YesNo(Title, Text):
-	dialog = gtk.Dialog(Title,
-		           None,
-		           gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-		           (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-		            gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+def YesNo(Title, Text, NoBtn="CANCEL", YesBtn="OK"):
+	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+		           (NoBtn, 0, YesBtn, 1))
 	label = gtk.Label(Text)
 	dialog.vbox.pack_start(label)
 	label.show()
 	response = dialog.run()
 	dialog.hide_all()
 	dialog.destroy()
-	return ['1', '0', 'error'][response]
+	return response
 
 
 class MLStripper(HTMLParser):
@@ -3080,11 +3077,15 @@ def Help():
 	Web.open("http://forum.xda-developers.com/showpost.php?p=23546408&postcount=9")
 
 def Update():
+	stablechoose =  YesNo("Update", "What branch do you want?", "Stable", "Nightly")
+	if stablechoose == 0:
+		branch = "master"
+	elif stablechoose == 1:
+		branch = "Nightly"
 	if os.path.exists(os.path.join(ConfDir, "Update.zip")):
 		print _("Removing old update.zip")
 		os.remove(os.path.join(ConfDir, "Update.zip"))
 	print _("Retrieving new Update.zip")
-	branch = "master"
 	urllib.urlretrieve("https://github.com/mDroidd/StudioAndroid-GtkUI/zipball/%s" % branch, os.path.join(ConfDir, "Update.zip"))
 	if os.path.exists(os.path.join(Home, "StudioAndroidUpdate")):
 		print _("Removing old UpdateDir")
