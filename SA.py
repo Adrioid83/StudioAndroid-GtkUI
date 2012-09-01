@@ -17,6 +17,9 @@ import gettext, locale
 import Source.Src
 _ = gettext.gettext
 
+try: from PIL import ImageOps, Image
+except: pass
+
 
 
 # VARIABLES
@@ -209,14 +212,16 @@ def ExZip(zipf, expath, type='zip'):
 				Zip.extract(f, path=expath)
 
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
-ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
+#ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
 
 for dep in [aapt, adb, ZipalignFile, sz]:
 	if OS == "Win":
-		os.remove(dep)
+		if os.path.exists(dep):
+			os.remove(dep)
 		dep = dep + ".exe"
 	else:
-		os.remove(dep + ".exe")
+		if os.path.exists(dep + ".exe"):
+			os.remove(dep + ".exe")
 
 
 def callback(widget, option):
@@ -443,33 +448,40 @@ class MainApp():
 	menu.append(OptionsMenu)
 	OptionsMenu.set_submenu(Options)
 
-	LogOption = gtk.MenuItem( _("Check the log") )
-	LogOption.connect("activate", callback, "Log")
-	Options.append(LogOption)
-
-	ChangelogOption = gtk.MenuItem( _("Changelog"))
-	ChangelogOption.connect("activate", callback, "Changelog")
-	Options.append(ChangelogOption)
-
-	HelpOption = gtk.MenuItem( _("Help"))
-	HelpOption.connect("activate", callback, "Help")
-	Options.append(HelpOption)
-
-	UpdateOption = gtk.MenuItem( _("Update"))
-	UpdateOption.connect("activate", callback, "Update")
-	Options.append(UpdateOption)
-
-	RestartOption = gtk.MenuItem( _("Restart"))
-	RestartOption.connect("activate", Restart)
-	Options.append(RestartOption)
+	MainOptCl = gtk.MenuItem( _("Clean Workspace"))
+	MainOptCl.connect("activate", callback, "Clean")
+	Options.append(MainOptCl)
 
 	DebugOption = gtk.MenuItem( _("Debug") )
 	DebugOption.connect("activate", DebugOn)
 	Options.append(DebugOption)
 
+	LogOption = gtk.MenuItem( _("Check the log") )
+	LogOption.connect("activate", callback, "Log")
+	Options.append(LogOption)
+
 	ReportBug = gtk.MenuItem( _("Report a bug") )
 	ReportBug.connect("activate", callback, "Bug")
 	Options.append(ReportBug)
+
+	sep = gtk.SeparatorMenuItem()
+	Options.append(sep)
+
+
+	ChangelogOption = gtk.MenuItem( _("Changelog"))
+	ChangelogOption.connect("activate", callback, "Changelog")
+	Options.append(ChangelogOption)
+
+	UpdateOption = gtk.MenuItem( _("Update"))
+	UpdateOption.connect("activate", callback, "Update")
+	Options.append(UpdateOption)
+
+
+	RestartOption = gtk.MenuItem( _("Restart"))
+	RestartOption.connect("activate", Restart)
+	Options.append(RestartOption)
+
+
 
 	menu.show_all()
 	
@@ -485,18 +497,14 @@ class MainApp():
 	# UTIL TABLE
 	UtilVBox = gtk.VBox()
 
-	UtilLabel = gtk.Label( _("Utilities"))
+	UtilLabel = gtk.Label( _("Images"))
 
 	image = gtk.Image()
 	image.set_from_file(os.path.join(ScriptDir, "images", "Utils.png"))
 	image.show()
 	UtilVBox.pack_start(image, False, False, 10)
 
-	MainOptCl = gtk.Button( _("Clean Workspace"))
-	MainOptCl.connect("clicked", callback, "Clean")
-	UtilVBox.pack_start(MainOptCl, True, False, 10)
-
-	MainOpt1 = gtk.Button( _("Install Utilities"))
+	MainOpt1 = gtk.Button( _("Install Image Tools"))
 	MainOpt1.connect("clicked", callback, "Utils")
 	UtilVBox.pack_start(MainOpt1, True, False, 10)
 
@@ -686,24 +694,11 @@ def Clean():
 
 
 def Utils():
-	def SetAll(cmd, AllBtn):
-		if AllBtn.get_active():
-			Activate = True
-		else:
-			Activate = False
-		button1.set_active(Activate)
-		button2.set_active(Activate)
-		button3.set_active(Activate)
-		button6.set_active(Activate)
-		button7.set_active(Activate)
-		button8.set_active(Activate)
-		button10.set_active(Activate)
-	
 	def Install(cmd):
-		if OS == 'Lin' or OS == 'Mac':
+		if not OS == 'Lin' or OS == 'Mac':
 			if not UtilDir in PATH:
 				SystemLog('echo "PATH=%s:$PATH" >> %s' %(UtilDir, os.path.join(Home, ".profile")))
-			if button10.get_active():
+			if ImageBtn.get_active():
 				if OS == 'Lin': SystemLog("sudo apt-get install imagemagick")
 				elif OS == 'Mac':
 					if not os.path.exists(os.path.join(ConfDir, "IM.tar.gz")):
@@ -714,69 +709,56 @@ def Utils():
 						MAGICK_HOME=os.path.join(HOME, "ImageMagick-6.7.8")
 						msg = "#\nMAGICK_HOME=%s\nPATH=%s/bin/:$PATH\nDYLD_LIBRARY_PATH=%s/lib/" %(MAGICK_HOME, MAGICK_HOME, MAGICK_HOME)
 						SystemLog('echo "%s" >> %s' %(msg, os.path.join(Home, ".profile")))
+			if PILBtn.get_active():
+				SystemLog("sudo easy_install pip")
+				SystemLog("sudo sh %s 1")
 		if OS == 'Win':
-			wait = NewDialog(_(":("),  _("Sorry, windows does not support PATH modifications from cmd...\nInstead, I will open up a site for you"
-						"\n Add %s to the PATH using that site." % UtilDir) )
-			Web.open("http://www.computerhope.com/issues/ch000549.htm")
-			if button10.get_active():
+			if ImageBtn.get_active():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
 				f = open(os.path.join(ConfDir, "index.html"), "r").readlines()
 				ln = f[10]
 				version = str(str(remove_tags(ln)).split('.exe')[0]).replace('Q8', 'Q16') + ".exe"
 			
-				wait = NewDialog(_("ImageMagick"), _("To install imagemagick, you will download a file. run it to install ImageMagick"))
-				Web.open("http://www.imagemagick.org/download/binaries/%s" % version)
+				wait = NewDialog(_("ImageMagick"), _("You will now download and run ImageMagick. Proceed the installation."))
+				if os.path.exists(os.path.join(ConfDir, "IM.exe")):
+					os.remove(os.path.join(ConfDir, "IM.exe"))
+				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/%s" % version, os.path.join(ConfDir, "IM.exe"))
+				SystemLog("start %s" % os.path.join(ConfDir, "IM.exe"))
+			if PILBtn.get_active():
+				urllib.urlretrieve("http://effbot.org/downloads/PIL-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
+				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
+
+				
 
 		KillPage("cmd", vbox)
 
 	notebook = MainApp.notebook
-	InstUtilsTable = gtk.Table(1, 1, False)
 	vbox = gtk.VBox()
-	InstUtilsTable.attach(vbox, 0, 1, 0, 1)
+	hbox = gtk.HBox()
+	vbox1 = gtk.VBox()
+	vbox2 = gtk.VBox()
+	hbox.pack_start(vbox1)
+	hbox.pack_start(vbox2)
 
-	OptionsTable = gtk.Table(1, 3, True)
-	UtilsTable = gtk.Table(11, 2, True)
-
-        label = gtk.Label( _("Hey there!\n Please select the tools you want to install.\nImageMagick is needed for all image tools I included!") )
+        label = gtk.Label( _("ImageMagick is needed for all image tools I included.\nIn future releases I will use PIL more. So install PIL too!") )
 	label.set_justify(gtk.JUSTIFY_CENTER)
 	vbox.pack_start(label, False, False, 0)
 
-	button1 = gtk.CheckButton("ADB")
-	UtilsTable.attach(button1, 0, 1, 0, 1)
+	ImageBtn = gtk.CheckButton("ImageMagick")
+	vbox1.pack_start(ImageBtn)
 
-	button2 = gtk.CheckButton("AAPT")
-	UtilsTable.attach(button2, 0, 1, 1, 2)
-	
-	button3 = gtk.CheckButton("7z")
-	UtilsTable.attach(button3, 0, 1, 2, 3)
-	
-	button6 = gtk.CheckButton("SignAPK")
-	UtilsTable.attach(button6, 0, 1, 5, 6)
-	
-	button7 = gtk.CheckButton("Smali")
-	UtilsTable.attach(button7, 0, 1, 6, 7)
-	
-	button8 = gtk.CheckButton("BakSmali")
-	UtilsTable.attach(button8, 0, 1, 7, 8)
-
-	button9 = gtk.CheckButton( _("ALL!") )
-	button9.connect("toggled", SetAll, button9)
-	UtilsTable.attach(button9, 0, 1, 9, 10)
-
-	button10 = gtk.CheckButton("ImageMagick")
-	UtilsTable.attach(button10, 1, 2, 0, 1)
+	PILBtn = gtk.CheckBtn = gtk.CheckButton("Python Image Library")
+	vbox2.pack_start(PILBtn)
 
 	buttonInstall = gtk.Button( _("Install") )
 	buttonInstall.connect("clicked", Install)
-	UtilsTable.attach(buttonInstall, 0, 2, 10, 11)
-	
-	
-	vbox.pack_start(UtilsTable, False, False, 0)
 
-	UtilsLabel = NewPage( _("Install Utils") , InstUtilsTable)
+	UtilsLabel = NewPage( _("Install Image Tools") , vbox)
 	UtilsLabel.show_all()
 
-	notebook.insert_page(InstUtilsTable, UtilsLabel)
+	vbox.pack_start(hbox)
+	vbox.pack_start(buttonInstall, False, False, 0)
+	notebook.insert_page(vbox, UtilsLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 	
@@ -1131,10 +1113,11 @@ def Theme():
 		SrcDir = os.path.join(ScriptDir, "Theme")
 		SystemLog("mkdir -p " + SrcDir)
 		print(Clr)
-		for Image in find_files(SrcDir, "*.png"):
-			Image1 = str(Image)
+		for image in find_files(SrcDir, "*.png"):
+			Image1 = str(image)
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
-			SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
+			if 'ImageOps' in globals(): Image.open('%s' % Image1).convert('LA').save('%s' % Image1)
+			else: SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 			SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
 	ThemeWindow = window	
