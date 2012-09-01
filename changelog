@@ -149,6 +149,20 @@ Updates:
 	-Now has frames for usability
 	-Now contains backup/restore contacts, WiFi and SMS/MMS only too
 	Fixed Logcat
+
+==Beta11==
+	Updated Windows EXE
+	Moved CleanWorkspace to the Options menu
+	Added divider in Options menu
+	Renamed Utilities to Images
+	Install Utilities now installs only ImageMagick and PIL
+	Added PIL Grayscale, more PIL on the horizon!
+	PIL is a Python Image Library, written in (DUH) python. So no need to install external trash anymore
+	PIL Will be used as a replacement for ImageMagick in the future...
+
+	Added the Beta branch, nightly builds available.
+	WOW!
+	Have fun!
 	
 	
 	
