@@ -3084,7 +3084,8 @@ def Update():
 		print _("Removing old update.zip")
 		os.remove(os.path.join(ConfDir, "Update.zip"))
 	print _("Retrieving new Update.zip")
-	urllib.urlretrieve("https://github.com/mDroidd/StudioAndroid-GtkUI/zipball/master", os.path.join(ConfDir, "Update.zip"))
+	branch = "master"
+	urllib.urlretrieve("https://github.com/mDroidd/StudioAndroid-GtkUI/zipball/%s" % branch, os.path.join(ConfDir, "Update.zip"))
 	if os.path.exists(os.path.join(Home, "StudioAndroidUpdate")):
 		print _("Removing old UpdateDir")
 		shutil.rmtree(os.path.join(Home, "StudioAndroidUpdate"))
