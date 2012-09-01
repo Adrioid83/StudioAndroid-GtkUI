@@ -212,7 +212,7 @@ def ExZip(zipf, expath, type='zip'):
 				Zip.extract(f, path=expath)
 
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
-#ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
+ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
 
 for dep in [aapt, adb, ZipalignFile, sz]:
 	if OS == "Win":
@@ -2606,11 +2606,26 @@ def ADBConfig():
 		else:
 			IPAdressPort = IP.get_text()
 			Port = IPAdressPort.split(":")[1]
-			#print("%s tcpip %s" %(adb, Port))
-			#SystemLog("%s tcpip %s" %(adb, Port))
 			
 			SystemLog("%s connect %s" %(adb, IPAdressPort))
 			GlobalData.AdbOpts = "-s %s" % active
+
+	def WirelessADB(cmd, wire=False):
+		if wire == True:
+			SystemLog("adb usb")
+		else:
+			active = [r for r in ConnectBtn.get_group() if r.get_active()][0].get_label()
+			if not active == "Connect via IP:":
+				IPLine = commands.getoutput("""%s shell 'netcfg | grep -e "wlan0"'""" %(adb)).split(' ')
+				for x in IPLine:
+					if '.' in x:
+						IPAdress = x.split('/')[0]
+						break
+				print IPAdress
+				SystemLog("%s -s %s tcpip 5555" %(adb, active))
+				SystemLog("%s connect %s:5555" %(adb, IPAdress))
+				NewDialog(_("ADB"), _("ADB traffic now goes through WiFi"))
+			
 			
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
@@ -2640,9 +2655,22 @@ def ADBConfig():
 	ConnectHbox.pack_start(IP)
 	vbox.pack_start(ConnectHbox)
 
+	hbox = gtk.HBox(True)
+
 	ConfigureBtn = gtk.Button("Configure")
 	ConfigureBtn.connect("clicked", Configure)
-	vbox.pack_start(ConfigureBtn, False)
+	hbox.pack_start(ConfigureBtn, False)
+
+	WirelessBtn = gtk.Button("Enable wireless ADB")
+	WirelessBtn.connect("clicked", WirelessADB, False)
+	hbox.pack_start(WirelessBtn, False)
+
+	WireBtn = gtk.Button("Disable wireless ADB")
+	WireBtn.connect("clicked", WirelessADB, True)
+	hbox.pack_start(WireBtn, False)
+
+	vbox.pack_end(hbox, False)
+
 
 	notebook.insert_page(vbox, AdbConfigLabel)
 	window.show_all()
