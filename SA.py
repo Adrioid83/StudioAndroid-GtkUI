@@ -1113,7 +1113,7 @@ def Theme():
 		for image in find_files(SrcDir, "*.png"):
 			Image1 = str(image)
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
-			if 'ImageOps' in globals(): Image.open('%s' % Image1).convert('LA').save('%s' % Image1)
+			if 'Image' in globals(): Image.open('%s' % Image1).convert('LA').save('%s' % Image1)
 			else: SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 			SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
@@ -1135,7 +1135,6 @@ def Theme():
         RedScale = gtk.HScale(adj1)
 	RedScale.set_digits(0)
 	RedScale.set_value(12)
-	#RedScale.set_range(0,
 	RedScale.connect("value-changed", ShowColor)
 	ColorTable.attach(RedScale, 0, 1, 0, 1)
 
@@ -1161,12 +1160,6 @@ def Theme():
 
 	BlueLabel = gtk.Label( _("Enter the BLUE value (0-100)") )
 	ColorTable.attach(BlueLabel, 1, 2, 2, 3)
-	
-
-
-	ColorButton = gtk.Button( _("Show Color") )
-	ColorButton.connect("clicked", ShowColor)
-
 
 
 	vbox.pack_start(ColorButton, False, False, 15)
@@ -1429,7 +1422,14 @@ def BuildSource():
 	global vbox
 	vbox = gtk.VBox()
 	sw = gtk.ScrolledWindow()
-	BuildData.Sources, BuildData.URL = Source.Src.MakeVal("SourceStock")
+
+	if os.path.exists(os.path.join(Home, ".SA", "Device")):
+		Text = open(os.path.join(Home, ".SA", "Device"), "r")
+		Text = Text.readline()
+		Device = str(Text.replace('.py', '')).replace('\n', '')
+	else:	Device = "SourceStock"
+
+	BuildData.Sources, BuildData.URL = Source.Src.MakeVal(Device)
 
 	def StartSync(cmd):
 		switches = ''
@@ -1511,7 +1511,6 @@ def BuildSource():
 		SourceFile = SourceFile.replace('.py', '')
 		SourceFile = SourceFile.replace('\n', '')
 		BuildData.Sources, BuildData.URL = Source.Src.MakeVal(SourceFile)
-        	notebook.remove_page(6)
 		vbox3.destroy()
         	notebook.queue_draw_area(0,0,-1,-1)
 		f.close()
@@ -1544,9 +1543,13 @@ def BuildSource():
 		Number = len(BuildData.Sources)
 		for num in range(0, Number):
 			Name = BuildData.Sources[num]
-			NameBtn = gtk.RadioButton(Std, Name)
-			NameBtn.connect("clicked", SetURL, num, NameBtn)
-			vbox3.pack_start(NameBtn, False, False, 0)
+			if Name == 'divide':
+				sep = gtk.HSeparator()
+				vbox3.pack_start(sep, False)
+			else:
+				NameBtn = gtk.RadioButton(Std, Name)
+				NameBtn.connect("clicked", SetURL, num, NameBtn)
+				vbox3.pack_start(NameBtn, False, False, 0)
 		window.show_all()
 	SetPage()
 
@@ -1617,11 +1620,7 @@ def BuildSource():
 		MenuItem.show()
 	menu.show_all()
 
-	if os.path.exists(os.path.join(Home, ".SA", "Device")):
-		Text = open(os.path.join(Home, ".SA", "Device"), "r")
-		Text = Text.readlines()[0]
-		NewSources("cmd", Text)
-	else:
+	if not os.path.exists(os.path.join(Home, ".SA", "Device")):
 		NewDialog(_("Device"), _("You can choose the device you want to build for in the top bar."))
 
 
@@ -2557,11 +2556,11 @@ def Compile():
 
 			print _("Python = %s" % PythonF)
 
-			SystemLog("%s pyinstaller.py -y -F %s %s -n %s" %(PythonF, ScriptFile, icon, Name))
+			SystemLog("%s pyinstaller.py -y -w -F %s -i %s -n %s" %(PythonF, ScriptFile, icon, Name))
+		elif OS == 'Lin':
+			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
 		elif OS == 'Mac':
-			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
-		else:
-			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
+			SystemLog("python pyinstaller.py -y -w -F %s -n %s" %(ScriptFile, Name))
 
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
@@ -2718,7 +2717,7 @@ def LogCat():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-	command = "%s logcat" % adb
+	command = "'%s' logcat" % adb
 	thr = threading.Thread(target= read_output, args=(TextBox, buff, command))
 	thr.start()
 
@@ -2893,6 +2892,7 @@ def AdbFE():
 	class Data():
 		PrevDir = '/sdcard/'
 		MainPrevDir = ScriptDir
+		FromFile = None
 	def Previous(cmd, type='Android'):
 		if type == 'Android':
 			Update(None, Data.PrevDir, sw, type)
@@ -2905,12 +2905,52 @@ def AdbFE():
 			Update(None, Data.MainCurrentDir, sw, type)
 	def Push(cmd, Btn):
 		print("%s -> %s" %(Btn.realname, Data.CurrentDir))
-		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, Data.CurrentDir))
+		if os.path.isdir(Btn.realname):
+			ToDir = os.path.join(Data.CurrentDir, os.path.basename(os.path.normpath(Btn.realname)))
+			SystemLog("%s shell mkdir -p %s" %(adb, ToDir))
+		else: ToDir = Data.CurrentDir
+		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, ToDir))
 		Refresh(None, sw, 'Android')
 	def Pull(cmd, Btn):
 		print("%s -> %s" %(Btn.realname, Data.MainCurrentDir))
 		SystemLog("%s pull '%s' '%s'" %(adb, Btn.realname, Data.MainCurrentDir))
-		Refresh(None, SwPC, 'PC')		
+		Refresh(None, SwPC, 'PC')
+	def Delete(cmd):
+		File = frame.CurrentFile
+		SystemLog("%s shell rm %s" %(adb, File))
+		Refresh("cmd", sw, "Android")
+	def Copy(cmd):
+		Data.FromFile = frame.CurrentFile
+		Data.DeleteFile = False
+	def Paste(cmd):
+		if not Data.FromFile == None:
+			SystemLog("%s shell cp %s %s" %(adb, Data.FromFile, Data.CurrentDir))
+			if Data.DeleteFile == True:
+				SystemLog("%s shell rm %s" %(adb, Data.FromFile))
+		Refresh("cmd", sw, "Android")
+	def Cut(cmd):
+		Data.FromFile = frame.CurrentFile
+		Data.DeleteFile = True
+	def SetPerm(cmd):
+		file = frame.CurrentFile
+		perm = ''
+		curvalue = 0
+		for btn in permissions:
+			txt = btn.pos
+			row = txt.split(',')[0]
+			col = txt.split(',')[-1]
+			value = [1, 2, 4][int(col)]
+
+			if btn.get_active():
+				curvalue = curvalue + value
+			if col == "2":
+				perm = perm + str(curvalue)
+				curvalue = 0
+		SystemLog("%s shell chmod %s %s" %(adb, perm, file))
+	def EditFile(cmd, file):
+		frame.set_label(os.path.basename(file))
+		frame.CurrentFile = file
+		frame.show_all()	
 	def Update(cmd, Dir, sw, type='Android'):
 		NewDir = os.path.join(Dir, '')
 		child = sw.get_child()
@@ -2938,6 +2978,9 @@ def AdbFE():
 					Btn.realname = FileName
 					if Dir == True:
 						Btn.connect("clicked", Update, FileName, sw, 'Android')
+					else:
+						Btn.connect("clicked", EditFile, FileName)
+						
 					Btn.set_relief(gtk.RELIEF_NONE)
 					# Set PULL BTN
 					PullBtn = gtk.Button()
@@ -3036,22 +3079,72 @@ def AdbFE():
 	hbox.pack_end(LocationPC, False, False, 4)
 
 
-	HboxFM = gtk.HBox()
+	HboxFM = gtk.HBox(True)
+	VboxAFM = gtk.VBox()
 	vbox1 = gtk.VBox()
 	sw.add_with_viewport(vbox1)
-	HboxFM.pack_start(sw)
+	VboxAFM.pack_start(sw)
+	HboxFM.pack_start(VboxAFM)
 
 	HboxFM.pack_end(SwPC)
 	Update(None, ScriptDir, SwPC, 'PC')
 
 	Update(None, '/sdcard', sw, 'Android')
-
 	vbox.pack_start(HboxFM)
+
+
+	# SET THE EDIT PART
+	vbox2 = gtk.VBox()
+	hboxx = gtk.HBox(True)
+	hboxx.pack_start(vbox2)
+	frame = gtk.Frame("Edit")
+	frame.add(hboxx)
+	permissions = []
+	for x in range(0,4):
+		hbox2 = gtk.HBox(True)
+		if not int(x) == 0:
+			x = x - 1
+			label = gtk.Label(["owner", "group", "others"][x])
+			hbox2.pack_start(label)
+			for y in range(0,3):
+				CheckButton = gtk.CheckButton()
+				CheckButton.pos = "%s,%s" %(x, y)
+				permissions.append(CheckButton)
+				hbox2.pack_start(CheckButton, False)
+		else:
+			for y in range(0,4):
+				label = gtk.Label(["", "read", "write", "execute"][y])
+				hbox2.pack_start(label, False)
+
+
+			
+		vbox2.pack_start(hbox2, False, False, 0)
+	PermBtn = gtk.Button(_("Set permissions"))
+	PermBtn.connect("clicked", SetPerm)
+	vbox2.pack_start(PermBtn, False, False, 0)
+
+	sep = gtk.HSeparator()
+	vbox2.pack_start(sep, False, False, 2)
+
+	vbox3 = gtk.VBox()
+	ToolHBox = gtk.HBox(True)
+	for x in [[gtk.STOCK_DELETE, Delete], [gtk.STOCK_COPY, Copy], [gtk.STOCK_CUT, Cut], [gtk.STOCK_PASTE, Paste]]:
+		im = gtk.Image()
+		im.set_from_stock(x[0], gtk.ICON_SIZE_MENU)
+		Btn = gtk.Button()
+		Btn.connect("clicked", x[1])
+		Btn.set_image(im)
+		ToolHBox.pack_start(Btn)
+	vbox2.pack_start(ToolHBox, False, False, 0)
+
+	VboxAFM.pack_end(frame, False)
+	frame.show_all()
 	vbox.show_all()
 
 	notebook.insert_page(vbox, AdbFELabel)
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 	window.show_all()
+	frame.hide()
 	
 
 def Changelog():

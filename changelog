@@ -164,6 +164,10 @@ Updates:
 	WOW!
 	When updating via Options > Update, you can now choose branch :)
 	Added ADB over Network
+	
+==Beta12==
+	Branching updated
+	ADB FileManager now has tools as set permissions, delete, copy, cut, paste
 
 	
 

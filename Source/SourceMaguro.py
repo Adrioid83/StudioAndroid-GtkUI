@@ -1,5 +1,5 @@
-Sources = ['GB-AOSP', 'CM7']
-URL = ['', '']
+Sources = ['GB-AOSP', 'CM7', 'Oxygen']
+URL = ['', '', '']
 # Remove GB
 
 # To add a new source, use this: (w/o the # )

@@ -6,6 +6,7 @@ def MakeVal(DeviceFile):
 	if not DeviceFile == "SourceStock":
 		exec("import %s as DeviceSrc" % DeviceFile)
 		NewSource, NewURL = DeviceSrc.Sources, DeviceSrc.URL
+		Newest = True
 		for x in NewSource:
 			i = NewSource.index(x)
 			
@@ -17,6 +18,10 @@ def MakeVal(DeviceFile):
 
 			# append if URL isn't empty
 			if not NewURL[i] == '':
+				if Newest == True:
+					Sources.append('divide')
+					URL.append('placeholder ;)')
+					Newest = False
 				Sources.append(x)
 				URL.append(NewURL[i])
 
