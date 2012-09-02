@@ -477,6 +477,13 @@ class MainApp():
 	RestartOption.connect("activate", Restart)
 	Options.append(RestartOption)
 
+	sep = gtk.SeparatorMenuItem()
+	Options.append(sep)
+
+	AboutOption = gtk.MenuItem("About")
+	Options.append(AboutOption)
+	AboutOption.connect("activate", callback, "About")
+
 
 
 	menu.show_all()
@@ -496,7 +503,7 @@ class MainApp():
 	UtilLabel = gtk.Label( _("Images"))
 
 	image = gtk.Image()
-	image.set_from_file(os.path.join(ScriptDir, "images", "Utils.png"))
+	image.set_from_file(os.path.join(ScriptDir, "images", "Images.png"))
 	image.show()
 	UtilVBox.pack_start(image, False, False, 10)
 
@@ -632,6 +639,11 @@ class MainApp():
 
 	AndroidVBox = gtk.VBox()
 	AndroidLabel = gtk.Label( _("Android") )
+
+	image = gtk.Image()
+	image.set_from_file(os.path.join(ScriptDir, "images", "Android.png"))
+	image.show()
+	AndroidVBox.pack_start(image, False, False, 10)
 
 	ADBBtn = gtk.Button(_("Configure ADB"))
 	ADBBtn.connect("clicked", callback, 'ADBConfig')
@@ -3193,8 +3205,35 @@ def Bug(cmd=''):
 
 	webbrowser.open("http://forum.xda-developers.com/newreply.php?do=newreply&noquote=1&p=22414621")
 
-def Help():
-	Web.open("http://forum.xda-developers.com/showpost.php?p=23546408&postcount=9")
+def About():
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+
+	image = gtk.Image()
+	image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
+	image.show()
+	vbox.pack_start(image, False)
+
+	hbox = gtk.HBox()
+
+	me = gtk.Image()
+	me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
+	me.show()
+	hbox.pack_start(me, False, False, 30)
+
+	label = gtk.Label()
+	label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n<a href="https://twitter.com/StudioAndroid">Follow @StudioAndroid!</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>')
+	hbox.pack_start(label)
+
+	vbox.pack_start(hbox)
+	
+	AboutLabel = NewPage("About", vbox)
+	AboutLabel.show_all()
+	
+	notebook.insert_page(vbox, AboutLabel)
+	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+	
 
 def Update():
 	stablechoose =  YesNo("Update", "What branch do you want?", "Stable", "Nightly")
