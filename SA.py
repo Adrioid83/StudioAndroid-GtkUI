@@ -380,7 +380,6 @@ else:
 
 if not os.path.exists(os.path.join(Home, ".SA", "ran")):
 	FirstRun = True
-	NewDialog( _("First Run"), _("Hi there! It seems this is your first time to run StudioAndroid!\nPlease note this tool still has a long way to go,\n and I need testers and reporters...\n So please publish your LOG!") )
 	open(os.path.join(Home, ".SA", "ran"), "w").flush()
 else:
 	FirstRun = False
@@ -413,7 +412,7 @@ def date():
 
 
 print("### %s %s %s - %s.%s.%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
-print _("OS = %s %s-bit" %(OS, bit))
+print ("OS = %s %s-bit" %(OS, bit))
 print _("PythonDir = %s" %(PythonDir))
 print _("Cores = %s" %(Cores))
 print _("Home = %s" %(Home))
@@ -2866,7 +2865,7 @@ def BackupRestore():
 	frame3 = gtk.Frame(_("Backup Contacts, SMS, WiFi"))
 	frame3.add(vbox3)
 
-	BackupDataBtn = gtk.Button(_("Backup Contacts, Wifi, SMS"))
+	BackupDataBtn = gtk.Button(_("Backup Contacts, SMS, WiFi"))
 	BackupDataBtn.connect("clicked", BackupData)
 	vbox3.pack_start(BackupDataBtn, False)
 
