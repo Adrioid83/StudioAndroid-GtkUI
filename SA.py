@@ -17,8 +17,12 @@ import gettext, locale
 import Source.Src
 _ = gettext.gettext
 
-try: from PIL import ImageOps, Image
-except: pass
+# TRY TO IMPORT PIL FOR INTERNAL IMAGE TOOLS
+try: import Image as PILImage, ImageOps as PILImageOps, ImageEnhance as PILImageEnhance
+except: Pil = False
+else:	Pil = True
+
+Pil = False
 
 
 
@@ -82,7 +86,7 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 	window2.set_position(gtk.WIN_POS_MOUSE)
 	window2.set_resizable(False)
 	window2.connect("delete_event", delete_event, 0)
-	window2.set_title("Choose language")
+	window2.set_title("Lang")
 	vbox = gtk.VBox(False, 0)
 	window2.add(vbox)
 	EnBtn = gtk.RadioButton(None, "English")
@@ -101,7 +105,7 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 	vbox.pack_start(ItBtn)
 	vbox.pack_start(NlBtn)
 	
-	ChooseBtn = gtk.Button("")
+	ChooseBtn = gtk.Button("Choose Language")
 	vbox.pack_start(ChooseBtn)
 	ChooseBtn.connect("clicked", PickLanguage)
 	window2.show_all()
@@ -703,7 +707,7 @@ def Clean():
 
 def Utils():
 	def Install(cmd):
-		if not OS == 'Lin' or OS == 'Mac':
+		if OS == 'Lin' or OS == 'Mac':
 			if not UtilDir in PATH:
 				SystemLog('echo "PATH=%s:$PATH" >> %s' %(UtilDir, os.path.join(Home, ".profile")))
 			if ImageBtn.get_active():
@@ -854,10 +858,7 @@ def Resize():
 	def GetDir(cmd, DirChooser, Btn):
 		try: In
 		except:
-			ResizeStartButton = gtk.Button(_("Start resizing"))
-			ResizeStartButton.connect("clicked", StartResize)
-			vbox.pack_start(ResizeStartButton, False, False, 15)
-			window.show_all()
+			ResizeStartButton.show()
 		MainApp.In = DirChoose(DirChooser)
 		Btn.set_label(MainApp.In)
 		Btn.show()
@@ -865,10 +866,7 @@ def Resize():
 	def GetFile(cmd, FileChooser, Btn, label, filtern=None):
 		try: In
 		except:
-			ResizeStartButton = gtk.Button(_("Start resizing"))
-			ResizeStartButton.connect("clicked", StartResize)
-			vbox.pack_start(ResizeStartButton, False, False, 15)
-			window.show_all()
+			ResizeStartButton.show()
 		MainApp.In = FileChoose(FileChooser, filtern)
 		Btn.set_label(MainApp.In)
 		Btn.show()
@@ -960,20 +958,29 @@ def Resize():
 			print("SrcDir = %s\nDstDir = %s" %(SrcDir, DstDir))
 
 			for x in find_files(SrcDir, ".png"): print x
-			for Image in find_files(SrcDir, "*.png"):
-				DstFile = Image.replace(SrcDir, DstDir)
-				Name = os.path.basename(Image)
-				Sub = Image.replace(SrcDir, '')
+			for image in find_files(SrcDir, "*.png"):
+				DstFile = image.replace(SrcDir, DstDir)
+				Name = os.path.basename(image)
+				Sub = image.replace(SrcDir, '')
 				Sub = Sub.replace(Name, '')
 				if not os.path.exists(os.path.join(DstDir, Sub)):
 					os.makedirs(os.path.join(DstDir, Sub))
-				print("%s -> %s" %(Image, DstFile))
-				if Image.endswith("9.png"):
-					print("%s has 9patch" % Image)
-					shutil.copy(Image, DstFile)
+				print("%s -> %s" %(image, DstFile))
+				if image.endswith("9.png"):
+					print("%s has 9patch" % image)
+					shutil.copy(image, DstFile)
 					continue
-				if Debug == True: print("convert %s -resize %s %s" % (Image, Perc, DstFile))
-				SystemLog("convert %s -resize %s %s" % (Image, Perc, DstFile))
+				if Pil == True:
+					Perc = int(str(Perc).replace(r'%', '')) 
+					im = PILImage.open(image)
+					width, height = im.size
+					neww = int(int(Perc * width) / 100)
+					newh = int(int(Perc * height)  / 100)
+					img = im.resize((neww, newh), PILImage.ANTIALIAS)
+					img.save(DstFile)
+				else:
+					if Debug == True: print("convert %s -resize %s %s" % (image, Perc, DstFile))
+					SystemLog("convert %s -resize %s %s" % (image, Perc, DstFile))
 			if ApkResize.get_active():
 				FinDstDir = os.path.join(ScriptDir, "Resized")
 				if os.path.exists(FinDstDir):
@@ -1084,39 +1091,34 @@ def Resize():
 
 	vbox.pack_start(APKResizeTable, False, False, 0)
 
+	ResizeStartButton = gtk.Button(_("Start resizing"))
+	ResizeStartButton.connect("clicked", StartResize)
+	vbox.pack_end(ResizeStartButton, False, False, 15)
+
 	ResizeLabel = NewPage("Resize", vbox)
 	ResizeLabel.show_all()
 
 	notebook.insert_page(vbox, ResizeLabel)
-
 	ResizeWindow.show_all()
+	ResizeStartButton.hide()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Theme():
-	def ShowColor(cmd):
-		Red = int(int(RedScale.get_value()) * 65535 / 100)
-		if str(Red).startswith("-"):
-			Red = int(0)
-		Green = int(int(GreenScale.get_value()) * 65535 / 100)
-		if str(Green).startswith("-"):
-			Green = int(0)
-		Blue = int(int(BlueScale.get_value()) * 65535 / 100)
-		if str(Blue).startswith("-"):
-			Blue = int(0)
-		color = gtk.gdk.Color(red=Red, green=Green, blue=Blue)
-		Draw.modify_bg(gtk.STATE_NORMAL, color)
-		Red = int(str(RedScale.get_value()).split('.')[0])
-		Green = int(str(GreenScale.get_value()).split('.')[0])
-		Blue = int(str(BlueScale.get_value()).split('.')[0])
-		Clr = RGBToHTMLColor((Red, Green, Blue))
 	def StartTheming(cmd):
-		StockRed = RedScale.get_value()
-		StockBlue = BlueScale.get_value()
-		StockGreen = BlueScale.get_value()
-		
-		Red = int(str(RedScale.get_value()).split('.')[0])
-		Green = int(str(GreenScale.get_value()).split('.')[0])
-		Blue = int(str(BlueScale.get_value()).split('.')[0])
+		CurCol = str(colorsel.get_current_color())
+		ColCode = CurCol.replace("#", '')
+		PerLen = int(len(ColCode) / 3)
+		hexc = []
+		for x in ColCode: hexc.append(x)
+		Red = int(''.join(hexc[0:PerLen]), 16)
+		Green = int(''.join(hexc[PerLen:PerLen*2]), 16)
+		Blue = int(''.join(hexc[PerLen*2:]), 16)
+
+
+		Red = int(Red * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+		Green = int(Green * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+		Blue = int(Blue * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+
 		Clr = RGBToHTMLColor((Red, Green, Blue))
 		SrcDir = os.path.join(ScriptDir, "Theme")
 		SystemLog("mkdir -p " + SrcDir)
@@ -1124,14 +1126,33 @@ def Theme():
 		for image in find_files(SrcDir, "*.png"):
 			Image1 = str(image)
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
-			if 'Image' in globals(): Image.open('%s' % Image1).convert('LA').save('%s' % Image1)
-			else: SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
-			SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
+			if Pil == True:
+
+
+				alpha = 0.5
+				im = PILImage.open('%s' % Image1)#.convert('LA')
+				inf = im.info
+				mask= PILImage.new('L', im.size, color=255)
+				
+				overlay = PILImage.new(im.mode, im.size, Clr)
+				bw_src = PILImageEnhance.Color(im).enhance(0.0)
+				img = PILImage.paste(bw_src, overlay, im).show()
+				#img.save("%s" % Image1, **inf)
+				raw_input('')
+
+
+
+			else: 
+				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
+				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
 	ThemeWindow = window	
 	SrcDir = os.path.join(ScriptDir, "Theme")
 	ThemeLabel = gtk.Label( _("Place the images you want to theme inside " + SrcDir))
 	notebook = MainApp.notebook
+	
+	colorsel = gtk.ColorSelection()
+	colorsel.set_current_color(gtk.gdk.Color("#33b5e5"))
 	
 	if not os.path.exists(SrcDir):
 		os.makedirs(SrcDir)
@@ -1139,51 +1160,11 @@ def Theme():
 	vbox = gtk.VBox()
 	vbox.pack_start(ThemeLabel, False, False, 10)
 
-	ColorTable = gtk.Table(3, 2, True)
-	vbox.pack_start(ColorTable, False, False, 0)
-
-        adj1 = gtk.Adjustment(0.0, 0.0, 101.0, 0.1, 1.0, 1.0)
-        RedScale = gtk.HScale(adj1)
-	RedScale.set_digits(0)
-	RedScale.set_value(12)
-	RedScale.connect("value-changed", ShowColor)
-	ColorTable.attach(RedScale, 0, 1, 0, 1)
-
-	RedLabel = gtk.Label( _("Enter the RED value (0-100)") )
-	ColorTable.attach(RedLabel, 1, 2, 0, 1)
-
-        adj2 = gtk.Adjustment(0.0, 0.0, 101.0, 0.1, 1.0, 1.0)
-        GreenScale = gtk.HScale(adj2)
-	GreenScale.set_digits(0)
-	GreenScale.set_value(66)
-	GreenScale.connect("value-changed", ShowColor)
-	ColorTable.attach(GreenScale, 0, 1, 1, 2)
-
-	GreenLabel = gtk.Label( _("Enter the GREEN value (0-100)") )
-	ColorTable.attach(GreenLabel, 1, 2, 1, 2)
-
-        adj3 = gtk.Adjustment(0.0, 10.0, 101.0, 0.0, 1.0, 1.0)
-        BlueScale = gtk.HScale(adj3)
-	BlueScale.set_digits(0)
-	BlueScale.set_value(77)
-	BlueScale.connect("value-changed", ShowColor)
-	ColorTable.attach(BlueScale, 0, 1, 2, 3)
-
-	BlueLabel = gtk.Label( _("Enter the BLUE value (0-100)") )
-	ColorTable.attach(BlueLabel, 1, 2, 2, 3)
-
-
-	vbox.pack_start(ColorButton, False, False, 15)
-
-	Draw = gtk.DrawingArea()
-	Color = Draw.get_colormap().alloc_color(0, 65535, 0)
-	Draw.set_size_request(100, 50)
-	Draw.show()
-	vbox.pack_start(Draw, False, False, 0)
-
 	StartButton = gtk.Button( _("Start theming!") )
 	StartButton.connect("clicked", StartTheming)
 	vbox.pack_start(StartButton, False, False, 15)
+
+	vbox.pack_start(colorsel, False, False, 0)
 
 	ThemeLabel = NewPage("Theme", vbox)
 	ThemeLabel.show_all()
@@ -1191,7 +1172,6 @@ def Theme():
 	notebook.insert_page(vbox, ThemeLabel)
 
 	ThemeWindow.show_all()
-	ShowColor(None)
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 	
 
