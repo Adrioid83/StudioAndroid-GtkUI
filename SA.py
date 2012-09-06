@@ -21,8 +21,8 @@ _ = gettext.gettext
 try: import Image as PILImage, ImageOps as PILImageOps, ImageEnhance as PILImageEnhance
 except: Pil = False
 else:	Pil = True
-
 Pil = False
+
 
 
 
@@ -435,7 +435,7 @@ class MainApp():
 	window.set_icon(placeIcon)
 
 	#
-	# MAIN TABLE
+	# OPTION BAR
 	#
 
 	global menu
@@ -501,7 +501,8 @@ class MainApp():
 
         notebook.show()
 
-	# UTIL TABLE
+	# IMAGE TAB
+
 	UtilVBox = gtk.VBox()
 
 	UtilLabel = gtk.Label( _("Images"))
@@ -511,29 +512,14 @@ class MainApp():
 	image.show()
 	UtilVBox.pack_start(image, False, False, 10)
 
-	MainOpt1 = gtk.Button( _("Install Image Tools"))
-	MainOpt1.connect("clicked", callback, "Utils")
-	UtilVBox.pack_start(MainOpt1, True, False, 10)
-
-	MainOpt2 = gtk.Button( _("CopieFrom"))
-	MainOpt2.connect("clicked", callback, "CopyFrom")
-	UtilVBox.pack_start(MainOpt2, True, False, 10)
-
-	MainOpt3 = gtk.Button( _("Resize"))
-	MainOpt3.connect("clicked", callback, "Resize")
-	UtilVBox.pack_start(MainOpt3, True, False, 10)
-
-	MainOpt4 = gtk.Button( _("Batch Theme"))
-	MainOpt4.connect("clicked", callback, "Theme")
-	UtilVBox.pack_start(MainOpt4, True, False, 10)
-
-	MainOpt5 = gtk.Button( _("Optimize Images") )
-	MainOpt5.connect("clicked", callback, "OptimizeImage")
-	UtilVBox.pack_start(MainOpt5, True, False, 10)
+	for Opt in [[_("Install Image Tools"), "Utils"], [_("Resize"), "Resize"], [_("Batch Theme"), "Theme"], [_("Batch Rename"), "Rename"], [_("CopieFrom"), "CopyFrom"], [_("Optimize Images"), "OptimizeImage"]]:
+		Btn = gtk.Button(Opt[0])
+		Btn.connect("clicked", callback, Opt[1])
+		UtilVBox.pack_start(Btn, True, False, 10)
 
 	notebook.insert_page(UtilVBox, UtilLabel, 1)
 
-	# DEVELOP TABLE
+	# DEVELOP TAB
 
 	DevelopTable = gtk.Table(8, 1, False)
 	DevelopLabel = gtk.Label( _("Development") )
@@ -571,7 +557,7 @@ class MainApp():
 
 	notebook.insert_page(DevelopVBox, DevelopLabel, 2)
 
-	# APK TABLE
+	# APK TAB
 
 	ApkLabel = gtk.Label("APK")
 	APKVBox = gtk.VBox(False, 10)
@@ -607,7 +593,7 @@ class MainApp():
 
 	notebook.insert_page(APKVBox, ApkLabel, 3)
 
-	# ADVANCE TABLE
+	# ADVANCE TAB
 
 	AdvanceVBox = gtk.VBox()
 	AdvanceLabel = gtk.Label( _("Advanced") )
@@ -639,7 +625,7 @@ class MainApp():
 
 	notebook.insert_page(AdvanceVBox, AdvanceLabel, 4)
 
-	# ANDROID TABLE
+	# ANDROID TAB
 
 	AndroidVBox = gtk.VBox()
 	AndroidLabel = gtk.Label( _("Android") )
@@ -723,7 +709,7 @@ def Utils():
 						SystemLog('echo "%s" >> %s' %(msg, os.path.join(Home, ".profile")))
 			if PILBtn.get_active():
 				SystemLog("sudo easy_install pip")
-				SystemLog("sudo sh %s 1")
+				SystemLog("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
 		if OS == 'Win':
 			if ImageBtn.get_active():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
@@ -739,10 +725,6 @@ def Utils():
 			if PILBtn.get_active():
 				urllib.urlretrieve("http://effbot.org/downloads/PIL-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
-
-				
-
-		KillPage("cmd", vbox)
 
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
@@ -1105,6 +1087,16 @@ def Resize():
 
 def Theme():
 	def StartTheming(cmd):
+		def tint_image(img, color="#FFFFFF"):
+			src = PILImage.open("%s" % Image1)
+			src.load()
+			if not len(src.split()) <= 3: r, g, b, alpha = src.split()
+			gray = PILImageOps.grayscale(src)
+			gray = PILImageOps.autocontrast(gray)
+			result = PILImageOps.colorize(gray, (0, 0, 0, 0), color)
+			if not len(src.split()) <= 3: result.putalpha(alpha)
+			return result
+
 		CurCol = str(colorsel.get_current_color())
 		ColCode = CurCol.replace("#", '')
 		PerLen = int(len(ColCode) / 3)
@@ -1127,21 +1119,9 @@ def Theme():
 			Image1 = str(image)
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 			if Pil == True:
-
-
-				alpha = 0.5
-				im = PILImage.open('%s' % Image1)#.convert('LA')
-				inf = im.info
-				mask= PILImage.new('L', im.size, color=255)
-				
-				overlay = PILImage.new(im.mode, im.size, Clr)
-				bw_src = PILImageEnhance.Color(im).enhance(0.0)
-				img = PILImage.paste(bw_src, overlay, im).show()
-				#img.save("%s" % Image1, **inf)
-				raw_input('')
-
-
-
+				#im = PILImage.open('%s' % Image1)
+				img = tint_image(Image1, Clr)
+				img.save("%s" % Image1)
 			else: 
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
@@ -1172,6 +1152,40 @@ def Theme():
 	notebook.insert_page(vbox, ThemeLabel)
 
 	ThemeWindow.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def Rename():
+	notebook = MainApp.notebook
+	vbox = gtk.VBox()
+	RenameLabel = NewPage("Rename", vbox)
+
+	label = gtk.Label(_("This tool is used to batch-rename files found in a directory\nusing a pattern to find them"))
+	label.set_justify(gtk.JUSTIFY_CENTER)
+	vbox.pack_start(label, False, False, 10)
+
+	hbox = gtk.HBox()
+	Pattern = gtk.Entry()
+	label = gtk.Label("Enter a pattern (e.g. '*.xml' or 'btn*.png') to find files with")
+	hbox.pack_start(Pattern, False, True, 10)
+	hbox.pack_start(label)
+
+	vbox.pack_start(hbox)
+
+	hbox2 = gtk.HBox()
+
+	AddFront = gtk.Entry()
+	AddFront.set_text("[Add to beginning]")
+	AddBack = gtk.Entry()
+	AddBack.set_text("[Add to the end]")
+	AddExt = gtk.Entry()
+	AddExt.set_text("[Add to ext]")
+	FileName = gtk.Label("[FILENAME]")
+	for widg in [AddFront, FileName, AddBack, AddExt]: hbox2.pack_start(widg)
+	vbox.pack_start(hbox2)
+
+
+	notebook.insert_page(vbox, RenameLabel)
+	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 	
 
@@ -2908,14 +2922,15 @@ def AdbFE():
 		Refresh(None, SwPC, 'PC')
 	def Delete(cmd):
 		File = frame.CurrentFile
-		SystemLog("%s shell rm %s" %(adb, File))
+		print _("Deleting %s" % File)
+		SystemLog("%s shell rm '%s'" %(adb, File))
 		Refresh("cmd", sw, "Android")
 	def Copy(cmd):
 		Data.FromFile = frame.CurrentFile
 		Data.DeleteFile = False
 	def Paste(cmd):
 		if not Data.FromFile == None:
-			SystemLog("%s shell cp %s %s" %(adb, Data.FromFile, Data.CurrentDir))
+			SystemLog('%s shell cp "%s" "%s"' %(adb, Data.FromFile, Data.CurrentDir))
 			if Data.DeleteFile == True:
 				SystemLog("%s shell rm %s" %(adb, Data.FromFile))
 		Refresh("cmd", sw, "Android")
