@@ -21,7 +21,6 @@ _ = gettext.gettext
 try: import Image as PILImage, ImageOps as PILImageOps, ImageEnhance as PILImageEnhance
 except: Pil = False
 else:	Pil = True
-Pil = False
 
 
 
@@ -1087,14 +1086,22 @@ def Resize():
 
 def Theme():
 	def StartTheming(cmd):
-		def tint_image(img, color="#FFFFFF"):
-			src = PILImage.open("%s" % Image1)
+		def image_tint(im, tint_color=(255,255,255)):
+			src = PILImage.open(im)
 			src.load()
-			if not len(src.split()) <= 3: r, g, b, alpha = src.split()
-			gray = PILImageOps.grayscale(src)
-			gray = PILImageOps.autocontrast(gray)
-			result = PILImageOps.colorize(gray, (0, 0, 0, 0), color)
-			if not len(src.split()) <= 3: result.putalpha(alpha)
+			pixels = src.getdata()
+			result = PILImage.new(src.mode, src.size)
+			tr, tg, tb = tint_color
+			tinted = []
+			try:
+				for r, g, b, a in pixels:
+					l = (r*0.299 + g*0.587 + b*0.114)/255.0  # luminosity of the original color (0-1)
+					nr, ng, nb = l*tr, l*tg, l*tb  # new color
+					nl = (nr*0.299 + ng*0.587 + nb*0.114)/255.0  # luminosity of the new color
+					s = l/nl if nl > 0 else 1  # ratio between old and new luninosities
+					tinted.append((int(s*nr), int(s*ng), int(s*nb), a)) # scaled new color
+				result.putdata(tinted)
+			except: pass
 			return result
 
 		CurCol = str(colorsel.get_current_color())
@@ -1107,9 +1114,9 @@ def Theme():
 		Blue = int(''.join(hexc[PerLen*2:]), 16)
 
 
-		Red = int(Red * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
-		Green = int(Green * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
-		Blue = int(Blue * 100 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+		Red = int(Red * 255 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+		Green = int(Green * 255 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
+		Blue = int(Blue * 255 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
 
 		Clr = RGBToHTMLColor((Red, Green, Blue))
 		SrcDir = os.path.join(ScriptDir, "Theme")
@@ -1119,8 +1126,7 @@ def Theme():
 			Image1 = str(image)
 			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 			if Pil == True:
-				#im = PILImage.open('%s' % Image1)
-				img = tint_image(Image1, Clr)
+				img = image_tint(Image1, (Red, Green, Blue))
 				img.save("%s" % Image1)
 			else: 
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
@@ -1140,11 +1146,11 @@ def Theme():
 	vbox = gtk.VBox()
 	vbox.pack_start(ThemeLabel, False, False, 10)
 
+	vbox.pack_start(colorsel, False, False, 0)
+
 	StartButton = gtk.Button( _("Start theming!") )
 	StartButton.connect("clicked", StartTheming)
 	vbox.pack_start(StartButton, False, False, 15)
-
-	vbox.pack_start(colorsel, False, False, 0)
 
 	ThemeLabel = NewPage("Theme", vbox)
 	ThemeLabel.show_all()
@@ -1155,6 +1161,18 @@ def Theme():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Rename():
+	def UpdateLabel(cmd, cmd1, cmd2, cmd3):
+		fr = AddFront.get_text()
+		ba = AddBack.get_text()
+		ex = AddExt.get_text()
+		text = "btn_checked.png"
+		if not fr.startswith("[") or not fr.endswith("]"):text = fr + text
+		if not ba.startswith("[") or not ba.endswith("]"):text = str(ba + ".").join(text.split(".png"))
+		if not ex.startswith("[") or not ex.endswith("]"):text = text + ex
+		reviewLabel.set_text(text)
+		reviewLabel.show()
+		
+		
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 	RenameLabel = NewPage("Rename", vbox)
@@ -1175,6 +1193,7 @@ def Rename():
 
 	AddFront = gtk.Entry()
 	AddFront.set_text("[Add to beginning]")
+	AddFront.connect("changed", UpdateLabel)
 	AddBack = gtk.Entry()
 	AddBack.set_text("[Add to the end]")
 	AddExt = gtk.Entry()
@@ -1182,6 +1201,9 @@ def Rename():
 	FileName = gtk.Label("[FILENAME]")
 	for widg in [AddFront, FileName, AddBack, AddExt]: hbox2.pack_start(widg)
 	vbox.pack_start(hbox2)
+
+	reviewLabel = gtk.Label("btn_checked.png")
+	vbox.pack_start(reviewLabel)
 
 
 	notebook.insert_page(vbox, RenameLabel)
