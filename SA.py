@@ -18,7 +18,9 @@ import Source.Src
 _ = gettext.gettext
 
 # TRY TO IMPORT PIL FOR INTERNAL IMAGE TOOLS
-try: import Image as PILImage, ImageOps as PILImageOps, ImageEnhance as PILImageEnhance
+try: 
+	import Image as PILImage, ImageOps as PILImageOps, ImageEnhance as PILImageEnhance
+	from itertools import izip
 except: Pil = False
 else:	Pil = True
 
@@ -1104,6 +1106,29 @@ def Theme():
 			except: pass
 			return result
 
+		if Debug == True:
+			# (C) MARTINEAU @ StackOverflow
+			def image_tint(im, tint=(51, 181, 229)):
+				_R, _G, _B, _A = range(4)
+				src = PILImage.open(im)
+				src.load()
+				bands = [band.getdata() for band in src.split()]
+				alpha = len(bands) > 3
+				result = PILImage.new(src.mode, src.size)
+				#tint = getrgb(tint)
+				tinted = []
+				for c in izip(*bands):  # for each tuple of color components
+					l = (c[_R]*0.299 + c[_G]*0.587 + c[_B]*0.114)/255.0   # luminosity of the original color (0-1)
+					n = l*tint[_R], l*tint[_G], l*tint[_B]                # new color
+					nl = (n[_R]*0.299 + n[_G]*0.587 + n[_B]*0.114)/255.0  # luminosity of the new color
+					s = l/nl if nl > 0 else 1                             # scale by ratio of two luninosities
+					# scaled new color (with any copied alpha)
+					ns = (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]), c[_A]) if alpha else \
+					     (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]))
+					tinted.append(ns)
+				result.putdata(tinted)
+				return result
+
 		CurCol = str(colorsel.get_current_color())
 		ColCode = CurCol.replace("#", '')
 		PerLen = int(len(ColCode) / 3)
@@ -1124,11 +1149,11 @@ def Theme():
 		print(Clr)
 		for image in find_files(SrcDir, "*.png"):
 			Image1 = str(image)
-			if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 			if Pil == True:
 				img = image_tint(Image1, (Red, Green, Blue))
 				img.save("%s" % Image1)
 			else: 
+				if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
@@ -3254,10 +3279,11 @@ def About():
 
 def Update():
 	stablechoose =  YesNo("Update", "What branch do you want?", "Stable", "Nightly")
-	if stablechoose == 0:
-		branch = "master"
-	elif stablechoose == 1:
+	if stablechoose == 1:
 		branch = "Nightly"
+	else:
+		branch = "master"
+
 	if os.path.exists(os.path.join(ConfDir, "Update.zip")):
 		print _("Removing old update.zip")
 		os.remove(os.path.join(ConfDir, "Update.zip"))
@@ -3288,6 +3314,7 @@ def Update():
 	elif OS == "Mac":
 		os.chmod(os.path.join(Home, "StudioAndroid", "StudioMac"), 0755)
 		SystemLog("./StudioMac")
+	exit()
 
 if not os.path.exists(os.path.join(Home, ".SA", "Language")):
 	window.destroy()
