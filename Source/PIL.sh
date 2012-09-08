@@ -10,4 +10,4 @@ then
 	ARCHFLAGS="-arch i386 -arch x86_64" pip install PIL
 fi
 
-return "$?"
+echo $?

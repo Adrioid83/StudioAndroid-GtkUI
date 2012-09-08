@@ -198,6 +198,16 @@ OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
 
+if OS == "Win": plus + "-w.exe"
+elif OS == "Lin": plus = "-l"
+elif OS == Mac: plus = "-m"
+
+OptPng = OptPng + plus
+aapt = aapt + plus
+adb = adb + plus
+ZipalignFile = ZipalignFile + plus
+sz = sz + plus
+
 
 # MAC OSX Fix
 def ExZip(zipf, expath, type='zip'):
@@ -218,15 +228,6 @@ def ExZip(zipf, expath, type='zip'):
 
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
-
-for dep in [aapt, adb, ZipalignFile, sz]:
-	if OS == "Win":
-		if os.path.exists(dep):
-			os.remove(dep)
-		dep = dep + ".exe"
-	else:
-		if os.path.exists(dep + ".exe"):
-			os.remove(dep + ".exe")
 
 
 def callback(widget, option):
@@ -416,7 +417,7 @@ def date():
 	return date
 
 
-print("### %s %s %s - %s.%s.%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
+print("### %s %s %s - %s:%s:%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
 print ("OS = %s %s-bit" %(OS, bit))
 print _("PythonDir = %s" %(PythonDir))
 print _("Cores = %s" %(Cores))
@@ -425,6 +426,8 @@ print _("ScriptDir = %s" %(ScriptDir))
 print _("File = %s" %(MyFile))
 print ("Debug = %s" %(bug))
 print _("Language = %s" %(Language))
+if Pil == True:
+	print("PIL = Enabled")
 
 
 
@@ -1898,7 +1901,7 @@ def OptimizeImage():
 			dialog.hide_all()
 			for file in dialog.get_filenames():
 				if Debug == True: print ("%s -o99 %s" %(OptPng, file))				
-				SystemLog("%s -o99 %s &" %(OptPng, file))
+				SystemLog('"%s" -o99 %s &' %(OptPng, file))
 			NewDialog(_("Optimize Images"),  _("Successfully optimized images"))
 		elif response == gtk.RESPONSE_CANCEL:
 			print _('Closed, no files selected')
@@ -2793,8 +2796,8 @@ def BuildProp():
 	def Push(cmd):
 		NewBuildProp = os.path.join(ScriptDir, 'ADB', 'new-build.prop')
 		Save(None)
-
 		SystemLog("%s root" % adb)
+		SystemLog("%s remount" % adb)
 		SystemLog("%s wait-for-device" % adb)
 		SystemLog("%s push %s /system/build.prop" %(adb, NewBuildProp) )
 			
@@ -2835,6 +2838,7 @@ def BuildProp():
 	hbox.pack_start(ReloadEdited, False)
 
 	PushBtn = gtk.Button("Push saved build.prop")
+	PushBtn.connect("clicked", Push)
 	hbox.pack_start(PushBtn, False)
 
 	vbox.pack_end(hbox, False)
@@ -3322,6 +3326,7 @@ if not os.path.exists(os.path.join(Home, ".SA", "Language")):
 
 if not FirstRun == False:
 	callback("cmd", "Utils")
+	callback("cmd", "About")
 
 def main():
 	try:
