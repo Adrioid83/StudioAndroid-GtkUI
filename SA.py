@@ -280,6 +280,7 @@ def DirChoose(DirChooser, filtern=None):
 	DirChooser.hide()
 	return Chosen
 
+
 def FileChoose(FileChooser, filtern=None, multiple=False):
 	if not filtern == None:
 		filter = gtk.FileFilter()
@@ -302,6 +303,31 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 		label = str(Btn.get_label()).split(" :")[0]
 		Btn.set_label("%s : %s" %(label, Returned))
 	MainApp.Out = Returned
+
+class FileChooserD:
+	def __init__(self, cmd, FileChooser, filtern=None, multiple=False, Btn=False):
+		self.out = self.run(FileChooser, filtern, multiple)
+		if not multiple == True and not Btn == False:
+			Btn.set_label(self.out)
+		
+
+	def run(self, FileChooser, filtern=None, multiple=False):
+		if not filtern == None:
+			filter = gtk.FileFilter()
+			filter.set_name(filtern)
+			filter.add_mime_type(filtern)
+			filter.add_pattern("*" + filtern)
+			FileChooser.add_filter(filter)
+		FileChooser.set_select_multiple(multiple)
+		FileChooser.set_current_folder(ScriptDir)
+		response = FileChooser.run()
+		FileChooser.hide()
+		if response == gtk.RESPONSE_OK:
+			if multiple == False:
+				Chosen = FileChooser.get_filename()
+			else:
+				Chosen = FileChooser.get_filenames()
+			return Chosen
 
 def YesNo(Title, Text, NoBtn="CANCEL", YesBtn="OK"):
 	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -771,6 +797,7 @@ def CopyFrom():
 		Btn.set_label(text + "   :   " + value)
 		Btn.show()
 		return value
+
 	def Start(cmd):
 		Ext = ExtBox.get_text()
 		print _("Copying files FROM " + FromDir + " to " + ToDir + " With extension " + Ext)
@@ -1091,46 +1118,30 @@ def Resize():
 
 def Theme():
 	def StartTheming(cmd):
-		def image_tint(im, tint_color=(255,255,255)):
+		# (C) MARTINEAU @ StackOverflow
+		def image_tint(im, tint=(51, 181, 229)):
+			_SUPPORTED_MODES = ['RGB', 'RGBA']
+			_R, _G, _B, _A = range(4)
 			src = PILImage.open(im)
+			if src.mode not in _SUPPORTED_MODES:
+				src = src.convert("RGBA")
 			src.load()
-			pixels = src.getdata()
+			bands = [band.getdata() for band in src.split()]
+			alpha = len(bands) > 3
 			result = PILImage.new(src.mode, src.size)
-			tr, tg, tb = tint_color
+			#tint = getrgb(tint)
 			tinted = []
-			try:
-				for r, g, b, a in pixels:
-					l = (r*0.299 + g*0.587 + b*0.114)/255.0  # luminosity of the original color (0-1)
-					nr, ng, nb = l*tr, l*tg, l*tb  # new color
-					nl = (nr*0.299 + ng*0.587 + nb*0.114)/255.0  # luminosity of the new color
-					s = l/nl if nl > 0 else 1  # ratio between old and new luninosities
-					tinted.append((int(s*nr), int(s*ng), int(s*nb), a)) # scaled new color
-				result.putdata(tinted)
-			except: pass
+			for c in izip(*bands):  # for each tuple of color components
+				l = (c[_R]*0.299 + c[_G]*0.587 + c[_B]*0.114)/255.0   # luminosity of the original color (0-1)
+				n = l*tint[_R], l*tint[_G], l*tint[_B]                # new color
+				nl = (n[_R]*0.299 + n[_G]*0.587 + n[_B]*0.114)/255.0  # luminosity of the new color
+				s = l/nl if nl > 0 else 1                             # scale by ratio of two luninosities
+				# scaled new color (with any copied alpha)
+				ns = (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]), c[_A]) if alpha else \
+				     (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]))
+				tinted.append(ns)
+			result.putdata(tinted)
 			return result
-
-		if Debug == True:
-			# (C) MARTINEAU @ StackOverflow
-			def image_tint(im, tint=(51, 181, 229)):
-				_R, _G, _B, _A = range(4)
-				src = PILImage.open(im)
-				src.load()
-				bands = [band.getdata() for band in src.split()]
-				alpha = len(bands) > 3
-				result = PILImage.new(src.mode, src.size)
-				#tint = getrgb(tint)
-				tinted = []
-				for c in izip(*bands):  # for each tuple of color components
-					l = (c[_R]*0.299 + c[_G]*0.587 + c[_B]*0.114)/255.0   # luminosity of the original color (0-1)
-					n = l*tint[_R], l*tint[_G], l*tint[_B]                # new color
-					nl = (n[_R]*0.299 + n[_G]*0.587 + n[_B]*0.114)/255.0  # luminosity of the new color
-					s = l/nl if nl > 0 else 1                             # scale by ratio of two luninosities
-					# scaled new color (with any copied alpha)
-					ns = (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]), c[_A]) if alpha else \
-					     (int(s*n[_R]), int(s*n[_G]), int(s*n[_B]))
-					tinted.append(ns)
-				result.putdata(tinted)
-				return result
 
 		CurCol = str(colorsel.get_current_color())
 		ColCode = CurCol.replace("#", '')
@@ -1148,7 +1159,8 @@ def Theme():
 
 		Clr = RGBToHTMLColor((Red, Green, Blue))
 		SrcDir = os.path.join(ScriptDir, "Theme")
-		SystemLog("mkdir -p " + SrcDir)
+		if not os.path.exists(SrcDir):
+			os.makedirs(SrcDir)
 		print(Clr)
 		for image in find_files(SrcDir, "*.png"):
 			Image1 = str(image)
@@ -1189,16 +1201,38 @@ def Theme():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Rename():
-	def UpdateLabel(cmd, cmd1, cmd2, cmd3):
+	class FileChooserRename(FileChooserD):
+		pass
+
+	def UpdateLabel(cmd):
 		fr = AddFront.get_text()
 		ba = AddBack.get_text()
 		ex = AddExt.get_text()
 		text = "btn_checked.png"
-		if not fr.startswith("[") or not fr.endswith("]"):text = fr + text
-		if not ba.startswith("[") or not ba.endswith("]"):text = str(ba + ".").join(text.split(".png"))
-		if not ex.startswith("[") or not ex.endswith("]"):text = text + ex
-		reviewLabel.set_text(text)
+		if not fr.startswith("[") and not fr.endswith("]"):text = fr + text
+		if not ba.startswith("[") and not ba.endswith("]"):text = str(ba + ".").join(text.split("."))
+		if not ex.startswith("[") and not ex.endswith("]"):text = text + ex
+		reviewLabel.set_text("btn_checked.png  -->>  %s" % text.replace(' ', ''))
 		reviewLabel.show()
+
+	def StartRename(cmd):
+		#searchDirectory = FileChooserRename.out
+		searchDirectory = RenameDirBtn.get_label()
+		pattern = Pattern.get_text()
+		i = 0
+		for file in find_files(searchDirectory, pattern):
+			fr = AddFront.get_text()
+			ba = AddBack.get_text()
+			ex = AddExt.get_text()
+			fileName = os.path.basename(file)
+			if not fr.startswith("[") and not fr.endswith("]"):fileName = fr + fileName
+			if not ba.startswith("[") and not ba.endswith("]"):fileName = str(ba + ".").join(fileName.split("."))
+			if not ex.startswith("[") and not ex.endswith("]"):fileName = fileName + ex
+			fullRenamed = os.path.join(os.path.dirname(file), fileName)
+			os.rename(file, fullRenamed)
+			i = i+1
+		NewDialog(_("Rename"), _("Renamed %d files" % i))
+			
 		
 		
 	notebook = MainApp.notebook
@@ -1208,6 +1242,12 @@ def Rename():
 	label = gtk.Label(_("This tool is used to batch-rename files found in a directory\nusing a pattern to find them"))
 	label.set_justify(gtk.JUSTIFY_CENTER)
 	vbox.pack_start(label, False, False, 10)
+
+	RenameDirBtn = gtk.Button(_("Open the directory in wich you want to rename files") )
+	RenameDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+	RenameDirBtn.connect("clicked", FileChooserRename, RenameDirDial, None, False, RenameDirBtn)
+	vbox.pack_start(RenameDirBtn, False, False)
 
 	hbox = gtk.HBox()
 	Pattern = gtk.Entry()
@@ -1224,14 +1264,20 @@ def Rename():
 	AddFront.connect("changed", UpdateLabel)
 	AddBack = gtk.Entry()
 	AddBack.set_text("[Add to the end]")
+	AddBack.connect("changed", UpdateLabel)
 	AddExt = gtk.Entry()
 	AddExt.set_text("[Add to ext]")
+	AddExt.connect("changed", UpdateLabel)
 	FileName = gtk.Label("[FILENAME]")
 	for widg in [AddFront, FileName, AddBack, AddExt]: hbox2.pack_start(widg)
 	vbox.pack_start(hbox2)
 
 	reviewLabel = gtk.Label("btn_checked.png")
 	vbox.pack_start(reviewLabel)
+
+	startBtn = gtk.Button(_("Rename"))
+	startBtn.connect("clicked", StartRename)
+	vbox.pack_start(startBtn, False, False)
 
 
 	notebook.insert_page(vbox, RenameLabel)
@@ -3268,7 +3314,8 @@ def About():
 	hbox.pack_start(me, False, False, 30)
 
 	label = gtk.Label()
-	label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n<a href="https://twitter.com/StudioAndroid">Follow @StudioAndroid!</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>')
+	label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n\n<a href="https://twitter.com/StudioAndroid">Follow @StudioAndroid!</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>\n\n<a href="http://bit.ly/SA-Donate">Donate to me!</a>')
+	label.set_justify(gtk.JUSTIFY_CENTER)
 	hbox.pack_start(label)
 
 	vbox.pack_start(hbox)

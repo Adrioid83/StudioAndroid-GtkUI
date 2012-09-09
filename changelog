@@ -180,6 +180,9 @@ Updates:
 	Resize: PIL Resizing
 	Batch Rename (for themers); search pattern, base dir, add to beginning/end/ext
 	Install Utils: [is now Install Image Tools]: Install ImageMagick | Python Image Library
+	BuildProp editor: Push now working, Remount before pushing
+	Added support for Mac OS X binary files
+	Added BatchRename (will be finished up)
 	
 
 Feature requests are always welcome :)
