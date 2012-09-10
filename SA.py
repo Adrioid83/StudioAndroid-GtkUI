@@ -200,7 +200,7 @@ GovDir = os.path.join(UtilDir, "Gov")
 
 if OS == "Win": plus + "-w.exe"
 elif OS == "Lin": plus = "-l"
-elif OS == Mac: plus = "-m"
+elif OS == "Mac": plus = "-m"
 
 OptPng = OptPng + plus
 aapt = aapt + plus
@@ -305,13 +305,16 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 	MainApp.Out = Returned
 
 class FileChooserD:
-	def __init__(self, cmd, FileChooser, filtern=None, multiple=False, Btn=False):
-		self.out = self.run(FileChooser, filtern, multiple)
+	def __init__(self, cmd, FileChooser, filtern=None, multiple=False, Btn=False, Store=False):
+		self.out = self.run(FileChooser, filtern, multiple) # run FileChooserD with the given arguments
 		if not multiple == True and not Btn == False:
-			Btn.set_label(self.out)
+			Btn.set_label(self.out) # set button label to OUT if Btn is given
+		if not Store ==  False:
+			Store.out = self.out # Set an "OUT" attribute to the given class, if given
 		
 
 	def run(self, FileChooser, filtern=None, multiple=False):
+		# Set dependencies
 		if not filtern == None:
 			filter = gtk.FileFilter()
 			filter.set_name(filtern)
@@ -1216,8 +1219,7 @@ def Rename():
 		reviewLabel.show()
 
 	def StartRename(cmd):
-		#searchDirectory = FileChooserRename.out
-		searchDirectory = RenameDirBtn.get_label()
+		searchDirectory = FileChooserRename.out
 		pattern = Pattern.get_text()
 		i = 0
 		for file in find_files(searchDirectory, pattern):
@@ -1246,7 +1248,7 @@ def Rename():
 	RenameDirBtn = gtk.Button(_("Open the directory in wich you want to rename files") )
 	RenameDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	RenameDirBtn.connect("clicked", FileChooserRename, RenameDirDial, None, False, RenameDirBtn)
+	RenameDirBtn.connect("clicked", FileChooserRename, RenameDirDial, None, False, RenameDirBtn, FileChooserRename)
 	vbox.pack_start(RenameDirBtn, False, False)
 
 	hbox = gtk.HBox()
@@ -2202,13 +2204,7 @@ def Install():
 			APK = apk[num]
 			SystemLog("adb install %s" % APK)
 
-	ADB = str(commands.getoutput("adb version"))
-	if not ADB.startswith("Android Debug Bridge version"):
-		print _("The Android SDK is not installed. Do you want to install it now?\n")
-		Choice = YesNo("Android SDK", _("Android SDK is not installed. \nDo you want to install it now?"))
-		if not Choice == '0' :
-			SDK()
-		return None
+	SystemLog("%s start-server" % adb)
 	notebook = MainApp.notebook
 	
 	vbox = gtk.VBox()
