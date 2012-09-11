@@ -305,13 +305,14 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 	MainApp.Out = Returned
 
 class FileChooserD:
-	def __init__(self, cmd, FileChooser, filtern=None, multiple=False, Btn=False, Store=False):
+	out = None
+	def openFile(self, cmd, FileChooser, OutClass, filtern=None, multiple=False, SetTo=False):
 		self.out = self.run(FileChooser, filtern, multiple) # run FileChooserD with the given arguments
-		if not multiple == True and not Btn == False:
-			Btn.set_label(self.out) # set button label to OUT if Btn is given
-		if not Store ==  False:
-			Store.out = self.out # Set an "OUT" attribute to the given class, if given
-		
+		if not self.out == None:
+			if not multiple == True and not SetTo == False:
+				SetTo(self.out) # set button label to OUT if Btn is given
+			if not OutClass == False:
+				OutClass.out = self.out
 
 	def run(self, FileChooser, filtern=None, multiple=False):
 		# Set dependencies
@@ -326,11 +327,10 @@ class FileChooserD:
 		response = FileChooser.run()
 		FileChooser.hide()
 		if response == gtk.RESPONSE_OK:
-			if multiple == False:
-				Chosen = FileChooser.get_filename()
-			else:
-				Chosen = FileChooser.get_filenames()
+			if multiple == False:Chosen = FileChooser.get_filename()
+			else:Chosen = FileChooser.get_filenames()
 			return Chosen
+		else: return None
 
 def YesNo(Title, Text, NoBtn="CANCEL", YesBtn="OK"):
 	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -382,7 +382,9 @@ def NewPage(Label, parent):
 	image = gtk.Image()
 	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
 	closebtn.connect("clicked", KillPage, parent)
+	image.set_size_request(8, 8)
 	closebtn.set_image(image)
+	image.set_size_request(10, 10)
 	closebtn.set_relief(gtk.RELIEF_NONE)
 	box.pack_start(label, False, False)
 	box.pack_end(closebtn, False, False)
@@ -545,7 +547,7 @@ class MainApp():
 	image.show()
 	UtilVBox.pack_start(image, False, False, 10)
 
-	for Opt in [[_("Install Image Tools"), "Utils"], [_("Resize"), "Resize"], [_("Batch Theme"), "Theme"], [_("Batch Rename"), "Rename"], [_("CopieFrom"), "CopyFrom"], [_("Optimize Images"), "OptimizeImage"]]:
+	for Opt in [[_("Install Image Tools"), "Utils"], [_("Convert Image"), "ConvertImage"], [_("Resize"), "Resize"], [_("Batch Theme"), "Theme"], [_("Batch Rename"), "Rename"], [_("CopieFrom"), "CopyFrom"], [_("Optimize Images"), "OptimizeImage"]]:
 		Btn = gtk.Button(Opt[0])
 		Btn.connect("clicked", callback, Opt[1])
 		UtilVBox.pack_start(Btn, True, False, 10)
@@ -716,11 +718,14 @@ def Clean():
 	os.remove(os.path.join(ScriptDir, "log"))
 	if os.path.exists(os.path.join(ConfDir, "debug")):
 		os.remove(os.path.join(ConfDir, "debug"))
-	for x in ['SA.pyc', os.path.join('Source', 'repocmd'), os.path.join('Source', 'syncswitches')]:
+	for x in [os.path.join('Source', 'repocmd'), os.path.join('Source', 'syncswitches')]:
 		try:
 			os.remove(os.path.join(ScriptDir, x))
 		except OSError:
 			pass
+	for x in find_files(ScriptDir, "*.pyc"):
+		try:os.remove(x)
+		except:pass
 
 
 
@@ -762,20 +767,16 @@ def Utils():
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 	hbox = gtk.HBox()
-	vbox1 = gtk.VBox()
-	vbox2 = gtk.VBox()
-	hbox.pack_start(vbox1)
-	hbox.pack_start(vbox2)
 
         label = gtk.Label( _("ImageMagick is needed for all image tools I included.\nIn future releases I will use PIL more. So install PIL too!") )
 	label.set_justify(gtk.JUSTIFY_CENTER)
 	vbox.pack_start(label, False, False, 0)
 
 	ImageBtn = gtk.CheckButton("ImageMagick")
-	vbox1.pack_start(ImageBtn)
-
 	PILBtn = gtk.CheckBtn = gtk.CheckButton("Python Image Library")
-	vbox2.pack_start(PILBtn)
+	hbox.pack_start(ImageBtn)
+	hbox.pack_start(PILBtn)
+	vbox.pack_start(hbox)
 
 	buttonInstall = gtk.Button( _("Install") )
 	buttonInstall.connect("clicked", Install)
@@ -783,25 +784,69 @@ def Utils():
 	UtilsLabel = NewPage( _("Install Image Tools") , vbox)
 	UtilsLabel.show_all()
 
-	vbox.pack_start(hbox)
 	vbox.pack_start(buttonInstall, False, False, 0)
 	notebook.insert_page(vbox, UtilsLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 	
+def ConvertImage():
+	class ConvertFC(FileChooserD):pass
+	def StartConvert(self, ExtBtn):
+		if ConvertFC.out == None:
+			NewDialog(_("ERROR"), _("Please select a directory first!"))
+		else:
+			ext = [r for r in ExtBtn.get_group() if r.get_active()][0].get_label()
+			if Pil == True:
+				for x in find_files(ConvertFC.out, "*"):
+					try:
+						im = PILImage.open(x)
+						im.load()
+					except: pass
+					else:
+						png_info = im.info
+						im.save(os.path.splitext(x)[0] + ext, **png_info)
+
+	vbox = gtk.VBox()
+	notebook = MainApp.notebook
+
+	ConvertLabel = NewPage( _("Convert Image") , vbox)
+	ConvertLabel.show_all()
 
 
-	
+	locLabel = gtk.Label(" ")
+
+	SelectBtn = gtk.Button(_("Open the directory with the images you want to convert") )
+	ConvertImageDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+
+	SelectBtn.connect("clicked", ConvertFC().openFile, ConvertImageDial, ConvertFC, None, False, locLabel.set_text)
+
+	vbox.pack_start(SelectBtn, False)
+	vbox.pack_start(locLabel, False, False, 15)
+
+	ChooseLabel = gtk.Label(_("Choose the extension you want to convert the images to:"))
+	vbox.pack_start(ChooseLabel, False, False, 0)
+
+	ExtBtn = None
+	for x in [".png", ".jpg", ".gif", ".bmp", ".jpeg"]:
+		ExtBtn = gtk.RadioButton(ExtBtn, x)
+		vbox.pack_start(ExtBtn, False, False, 0)
+
+	StartBtn = gtk.Button("Convert to selected extension")
+	StartBtn.connect("clicked", StartConvert, ExtBtn)
+	vbox.pack_end(StartBtn, False, False, 0)
+
+	notebook.insert_page(vbox, ConvertLabel)
+	window.show_all()
+	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def CopyFrom():
-	def GetDir(DirChooser, Btn):
-		value = DirChoose(DirChooser)
-		text = Btn.get_label().split("   :   ")[0]
-		Btn.set_label(text + "   :   " + value)
-		Btn.show()
-		return value
+	class ToFC(FileChooserD):pass
+	class FromFC(FileChooserD):pass
 
 	def Start(cmd):
+		FromDir = FromFC.out
+		ToDir = ToFC.out
 		Ext = ExtBox.get_text()
 		print _("Copying files FROM " + FromDir + " to " + ToDir + " With extension " + Ext)
 		for ToFile in find_files(ToDir, "*" + Ext):
@@ -809,8 +854,6 @@ def CopyFrom():
 			if os.path.exists(filename):
 				print _("Copying %s to %s" %(filename, ToFile))
 				shutil.copy(filename, ToFile)
-			
-		KillPage(cmd, vbox)
 
 	CopyFromWindow = window
 	CopyFromLabel = gtk.Label( _("CopyFrom"))
@@ -823,28 +866,18 @@ def CopyFrom():
 
 	vbox.pack_start(label, False, False, 0)
 
-	def Choose(cmd, DirChooser, kind, Btn):
-		DirChooser.set_current_folder(ScriptDir)
-		if kind == 'ToDir':
-			global ToDir
-			ToDir = GetDir(DirChooser, Btn)
-		elif kind == 'FromDir':
-			global FromDir
-			FromDir = GetDir(DirChooser, Btn)
-
-	ToDirBtn = gtk.Button( _("Enter the directory you want to copy the files TO") )
+	ToDirBtn = gtk.Button(_("Open the directory you want to copy the files TO") )
 	ToDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
-	ToDirBtn.connect("clicked", Choose, ToDirDial, 'ToDir', ToDirBtn)
+	ToDirBtn.connect("clicked", ToFC().openFile, ToDirDial, ToFC, None, False, ToDirBtn.set_label)
 	vbox.pack_start(ToDirBtn, False, False, 0)
 
-
-	FromDirBtn = gtk.Button(_("Enter the directory you want to copy the files FROM") )
+	FromDirBtn = gtk.Button(_("Open the directory you want to copy the files FROM") )
 	FromDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
-	FromDirBtn.connect("clicked", Choose, FromDirDial, 'FromDir', FromDirBtn)
+	FromDirBtn.connect("clicked", FromFC().openFile, FromDirDial, FromFC, None, False, FromDirBtn.set_label)
 	vbox.pack_start(FromDirBtn, False, False, 0)
 
 	hbox = gtk.HBox()
@@ -871,25 +904,13 @@ def CopyFrom():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Resize():
-	def GetDir(cmd, DirChooser, Btn):
-		try: In
-		except:
-			ResizeStartButton.show()
-		MainApp.In = DirChoose(DirChooser)
-		Btn.set_label(MainApp.In)
-		Btn.show()
+	class ResizeFC(FileChooserD):pass
 
-	def GetFile(cmd, FileChooser, Btn, label, filtern=None):
-		try: In
-		except:
-			ResizeStartButton.show()
-		MainApp.In = FileChoose(FileChooser, filtern)
-		Btn.set_label(MainApp.In)
-		Btn.show()
 	def StartResize(cmd):
-		try: MainApp.In
-		except:	NewDialog("Resize", _("Please select a directory/APK before you click START"))
-		else:
+		#try: MainApp.In
+		#except:	NewDialog("Resize", _("Please select a directory/APK before you click START"))
+		#else:
+			ResizeFC.out
 			DstDir = os.path.join(ScriptDir, "Resized", '')
 			if NormalResize.get_active():
 				Perc = ResizePercentageBox.get_text()
@@ -955,21 +976,22 @@ def Resize():
 				FullZipDir = os.path.join(ScriptDir, "Resizing")
 				if os.path.exists(FullZipDir):
 					shutil.rmtree(FullZipDir)
-				ExZip(MainApp.In, FullZipDir)
-				Apk = MainApp.In
-				MainApp.ResizeAPK = MainApp.In
-				MainApp.In = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + InDir1)
+				ExZip(ResizeFC.out, FullZipDir)
+				Apk = ResizeFC.out
+				print ResizeFC.out
+				ResizeFC.ResizeAPK = ResizeFC.out
+				ResizeFC.out = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + InDir1)
 				DstDir = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + OutDir1, '')
 
 			if ApkResize.get_active() or EasyResize.get_active():
-				Perc = str(round(OutRes * 100 / InRes, 2)) + "%"
+				Perc = round(OutRes * 100 / InRes, 2)
 
 			print _("Resize percentage is %s" % str(Perc))
 			if os.path.exists(DstDir):
 				shutil.rmtree(DstDir)
 			os.makedirs(DstDir)
 
-			SrcDir = os.path.join(MainApp.In, '')
+			SrcDir = os.path.join(ResizeFC.out, '')
 
 			print("SrcDir = %s\nDstDir = %s" %(SrcDir, DstDir))
 
@@ -987,32 +1009,35 @@ def Resize():
 					shutil.copy(image, DstFile)
 					continue
 				if Pil == True:
-					Perc = int(str(Perc).replace(r'%', '')) 
+					if r"%" in str(Perc):
+						Perc = round(float(str(Perc).replace(r'%', '')), 2)
 					im = PILImage.open(image)
+					im.load()
 					width, height = im.size
 					neww = int(int(Perc * width) / 100)
 					newh = int(int(Perc * height)  / 100)
-					img = im.resize((neww, newh), PILImage.ANTIALIAS)
+					if not int(Perc * width) >> width:
+						img = im.resize((neww, newh), PILImage.ANTIALIAS)
+					else:
+						img = im.resize((neww, newh))#, PILImage.NEAREST)
 					img.save(DstFile)
 				else:
-					if Debug == True: print("convert %s -resize %s %s" % (image, Perc, DstFile))
 					SystemLog("convert %s -resize %s %s" % (image, Perc, DstFile))
 			if ApkResize.get_active():
 				FinDstDir = os.path.join(ScriptDir, "Resized")
 				if os.path.exists(FinDstDir):
 					shutil.rmtree(FinDstDir)
 				os.makedirs(FinDstDir)
-				shutil.copy(MainApp.ResizeAPK, FinDstDir)
-				DstApk = os.path.join(FinDstDir, os.path.basename(MainApp.ResizeAPK))
+				shutil.copy(ResizeFC.ResizeAPK, FinDstDir)
+				DstApk = os.path.join(FinDstDir, os.path.basename(ResizeFC.ResizeAPK))
 				zipf = zipfile.ZipFile(DstApk, "a")
 				for file in os.listdir(DstDir):
 					fullfile = os.path.join(DstDir, file)
 					zipf.write(fullfile, os.path.join("res", "drawable-%s" % OutDir1, file))
 				zipf.close()
-			if os.path.exists(os.path.join(ScriptDir, "Resizing")):
+			if os.path.exists(os.path.join(ScriptDir, "Resizing")) and not Debug == True:
 				shutil.rmtree(os.path.join(ScriptDir, "Resizing"))
 			NewDialog( _("Resized") , _("You can find the resized images in Resized") )
-			KillPage(cmd, vbox)
 		
 		
 	ResizeWindow = window
@@ -1039,7 +1064,9 @@ def Resize():
 	ResizeDirBtn = gtk.Button("Select the directory")
 
 	ResizeDirLabel = gtk.Label( _("Choose the directory containing the images"))
-	ResizeDirBtn.connect("clicked", GetDir, ResizeDirDial, ResizeDirBtn)
+	ResizeDirBtn.connect("clicked", ResizeFC().openFile, ResizeDirDial, ResizeFC, None, False, False)
+
+	#ResizeDirBtn.connect("clicked", GetDir, ResizeDirDial, ResizeDirBtn)
 
 	NormalResizeTable.attach(ResizePercentageBox, 0, 1, 0, 1, xpadding=20)
 	NormalResizeTable.attach(ResizePercentageLabel, 1, 2, 0, 1)
@@ -1070,7 +1097,7 @@ def Resize():
 
 	EasyResizeTable.attach(EasyResizeDirBtn, 0, 1, 2, 3, xpadding=20)
 	ResizeDirLabel = gtk.Label(_("Choose the directory containing the images"))
-	EasyResizeDirBtn.connect("clicked", GetDir, ResizeDirDial, EasyResizeDirBtn)
+	EasyResizeDirBtn.connect("clicked", ResizeFC().openFile, ResizeDirDial, ResizeFC, None, False, False)
 	EasyResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
 
 	vbox.pack_start(EasyResizeTable, False, False, 0)
@@ -1100,7 +1127,7 @@ def Resize():
 					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 	ApkResizeBtn = gtk.Button(_("Choose the APK"))
 	APKResizeTable.attach(ApkResizeBtn, 0, 1, 2, 3, xpadding=20)
-	ApkResizeBtn.connect("clicked", GetFile, ApkResizeApk, ApkResizeBtn, ResizeDirLabel, ".apk")
+	ApkResizeBtn.connect("clicked", ResizeFC().openFile, ApkResizeApk, ResizeFC, ".apk", False, False)
 
 	ResizeDirLabel = gtk.Label(_("Choose the APK"))
 	APKResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
@@ -1116,7 +1143,7 @@ def Resize():
 
 	notebook.insert_page(vbox, ResizeLabel)
 	ResizeWindow.show_all()
-	ResizeStartButton.hide()
+	#ResizeStartButton.hide()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Theme():
@@ -1170,8 +1197,7 @@ def Theme():
 			if Pil == True:
 				img = image_tint(Image1, (Red, Green, Blue))
 				img.save("%s" % Image1)
-			else: 
-				if Debug == True: print('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
+			else:
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
 		NewDialog("Themed", "You can find the themed images inside Theme")
@@ -1204,8 +1230,7 @@ def Theme():
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Rename():
-	class FileChooserRename(FileChooserD):
-		pass
+	class FileChooserRename(FileChooserD):pass
 
 	def UpdateLabel(cmd):
 		fr = AddFront.get_text()
@@ -1226,14 +1251,38 @@ def Rename():
 			fr = AddFront.get_text()
 			ba = AddBack.get_text()
 			ex = AddExt.get_text()
-			fileName = os.path.basename(file)
+			originalFile = os.path.basename(file)
+			fileName = originalFile
 			if not fr.startswith("[") and not fr.endswith("]"):fileName = fr + fileName
 			if not ba.startswith("[") and not ba.endswith("]"):fileName = str(ba + ".").join(fileName.split("."))
 			if not ex.startswith("[") and not ex.endswith("]"):fileName = fileName + ex
 			fullRenamed = os.path.join(os.path.dirname(file), fileName)
 			os.rename(file, fullRenamed)
-			i = i+1
+			if not originalFile == fileName:
+				i = i+1
 		NewDialog(_("Rename"), _("Renamed %d files" % i))
+
+	def UndoName(cmd):
+		searchDirectory = FileChooserRename.out
+		pattern = Pattern.get_text()
+		fr = AddFront.get_text()
+		ba = AddBack.get_text()
+		ex = AddExt.get_text()
+		if not fr.startswith("[") and not fr.endswith("]"):pattern = fr + "*" + pattern
+		if not ba.startswith("[") and not ba.endswith("]"):pattern = str(ba + ".").join(pattern.split("."))
+		if not ex.startswith("[") and not ex.endswith("]"):pattern = pattern + ex
+		i = 0
+		for file in find_files(searchDirectory, pattern):
+			originalFile = os.path.basename(file)
+			fileName = originalFile
+			if not fr.startswith("[") and not fr.endswith("]") and not fr == '':fileName = ''.join(fileName.split(fr)[1:])
+			if not ba.startswith("[") and not ba.endswith("]") and not ba == '':fileName = fileName.replace(ba, '')
+			if not ex.startswith("[") and not ex.endswith("]") and not ex == '':fileName = ''.join(fileName.split(ex))
+			fullRenamed = os.path.join(os.path.dirname(file), fileName)
+			if not originalFile == fileName:
+				os.rename(file, fullRenamed)
+				i = i+1
+		NewDialog(_("Undo Rename"), _("Un-named %d files" % i))	
 			
 		
 		
@@ -1248,7 +1297,7 @@ def Rename():
 	RenameDirBtn = gtk.Button(_("Open the directory in wich you want to rename files") )
 	RenameDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	RenameDirBtn.connect("clicked", FileChooserRename, RenameDirDial, None, False, RenameDirBtn, FileChooserRename)
+	RenameDirBtn.connect("clicked", FileChooserRename().openFile, FileChooserRename, RenameDirDial, None, False, RenameDirBtn.set_label)
 	vbox.pack_start(RenameDirBtn, False, False)
 
 	hbox = gtk.HBox()
@@ -1277,9 +1326,16 @@ def Rename():
 	reviewLabel = gtk.Label("btn_checked.png")
 	vbox.pack_start(reviewLabel)
 
+	hbox = gtk.HBox()
+
 	startBtn = gtk.Button(_("Rename"))
 	startBtn.connect("clicked", StartRename)
-	vbox.pack_start(startBtn, False, False)
+	hbox.pack_start(startBtn)
+	ReverseBtn = gtk.Button(_("Undo Rename"))
+	ReverseBtn.connect("clicked", UndoName)
+	hbox.pack_start(ReverseBtn)
+	
+	vbox.pack_start(hbox, False, False)
 
 
 	notebook.insert_page(vbox, RenameLabel)
@@ -1857,7 +1913,6 @@ def DeCompile():
 						ApkDir = APK.replace('.apk', '')
 						APK = os.path.join(ScriptDir, "APK", "IN", APK)
 						OutDir = os.path.join(ScriptDir, "APK", "DEC", ApkDir)
-						if Debug == True: print("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
 						print _("Decompiled " + APK)
 			Refresh("cmd")
@@ -1871,7 +1926,6 @@ def DeCompile():
 					if dec == Dec :
 						ApkFolder = os.path.join(ScriptDir, "APK", "DEC", dec)
 						ApkName = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Dec + ".apk")
-						if Debug == True: print("\njava -jar %s b -f %s %s\n" %(ApkJar, ApkFolder, ApkName))
 						os.chdir(UtilDir)
 						SystemLog("java -jar %s b -f %s %s " %(ApkJar, ApkFolder, ApkName))
 						print _("Compiled %s" % ApkName)
@@ -1934,35 +1988,28 @@ def DeCompile():
 	
 	
 def OptimizeImage():
+	class OptimizeFC(FileChooserD):pass
 	def Start(cmd):
-		dialog = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
-									   (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-		dialog.set_default_response(gtk.RESPONSE_OK)
-		dialog.set_select_multiple(True)
-		filter = gtk.FileFilter()
-		filter.set_name("Images")
-		filter.add_mime_type("image/png")
-		filter.add_pattern("*.png")
-		dialog.add_filter(filter)
-		response = dialog.run()
-		if response == gtk.RESPONSE_OK:
-			dialog.hide_all()
-			for file in dialog.get_filenames():
-				if Debug == True: print ("%s -o99 %s" %(OptPng, file))				
-				SystemLog('"%s" -o99 %s &' %(OptPng, file))
-			NewDialog(_("Optimize Images"),  _("Successfully optimized images"))
-		elif response == gtk.RESPONSE_CANCEL:
-			print _('Closed, no files selected')
-		dialog.destroy()
-	
+		if not OptimizeFC.out == None:
+			for file in OptimizeFC.out:
+				SystemLog('"%s" -o99 "%s"' %(OptPng, file))
+			NewDialog(_("Optimize Images"),  _("Successfully optimized images"))	
 	OptimizeImageWindow = window
 	notebook = MainApp.notebook
 	sw = gtk.ScrolledWindow()
 	
 	vbox = gtk.VBox()
-	ChooseImageButton = gtk.Button(None, _("Choose Images and Optimize"))
-	vbox.pack_start(ChooseImageButton, True, False, 5)
-	ChooseImageButton.connect("clicked", Start)
+
+
+	ChooseImageButton = gtk.Button(_("Choose Images"))
+	OptimizeImDial = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+	ChooseImageButton.connect("clicked", OptimizeFC().openFile, OptimizeImDial, OptimizeFC, "*.png", True, False)
+	vbox.pack_start(ChooseImageButton, True, False)
+
+
+	StartButton = gtk.Button(_("Start"))
+	vbox.pack_start(StartButton, True, False, 5)
+	StartButton.connect("clicked", Start)
 	
 	OptimizeLabel = NewPage(_("Optimize Images"), sw)
 	OptimizeLabel.show_all()
@@ -1987,8 +2034,7 @@ def OptimizeInside():
 			
 			#Do Optimize
 			for apk_img in find_files(os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', '')), "*.png"):
-				name = os.path.abspath(apk_img)
-				if Debug == True: print ("%s -o99 %s" %(OptPng, name))		
+				name = os.path.abspath(apk_img)	
 				print ("%s -o99 \"%s\"" %(OptPng, name))		
 				SystemLog("%s -o99 \"%s\"" %(OptPng, name))
 				
@@ -2112,7 +2158,6 @@ def Sign():
 			APKName = os.path.basename(APKName)
 			APK = os.path.join(ScriptDir, "APK", APK)
 			APKName = os.path.join(ScriptDir, "APK", "OUT", "Signed-" + APKName)
-			if Debug == True: print("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
 			SystemLog("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
 		
 		
@@ -2166,7 +2211,6 @@ def Zipalign():
 			FullAPK = os.path.join(ScriptDir, "APK", APK)
 			Name = os.path.basename(FullAPK)
 			OutFile = os.path.join(ScriptDir, "APK", "OUT", "Aligned-" + Name)
-			if Debug == True: print(ZipalignFile + " -fv 4 %s %s" %(FullAPK, OutFile))
 			SystemLog("%s -fv 4 %s %s" %(ZipalignFile, FullAPK, OutFile))
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()

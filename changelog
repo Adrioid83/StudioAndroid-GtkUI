@@ -183,6 +183,10 @@ Updates:
 	BuildProp editor: Push now working, Remount before pushing
 	Added support for Mac OS X binary files
 	Added BatchRename (will be finished up)
+	Added Convert Image (Batch tool to convert any image to jpg, bmp, jpeg, png, gif)
+	Smalled close-button size
+	Added ABOUT tab when first opening StudioAndroid
+	
 	
 
 Feature requests are always welcome :)
