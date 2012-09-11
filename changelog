@@ -175,18 +175,25 @@ Updates:
 	Re-newed messages :D
 
 ==Beta13==
-	ADB FE: Delete bug fixed
-	Batch Theme: New color selector, Color Insertor, PIL theming
-	Resize: PIL Resizing
-	Batch Rename (for themers); search pattern, base dir, add to beginning/end/ext
-	Install Utils: [is now Install Image Tools]: Install ImageMagick | Python Image Library
-	BuildProp editor: Push now working, Remount before pushing
-	Added support for Mac OS X binary files
-	Added BatchRename (will be finished up)
+	Added BatchRename (Batch renames all files found in a directory with a given pattern, and renames them to given out (for porting Themes))
 	Added Convert Image (Batch tool to convert any image to jpg, bmp, jpeg, png, gif)
-	Smalled close-button size
+	Batch Theme: New color selector, Color Insertor, PIL theming
 	Added ABOUT tab when first opening StudioAndroid
-	
+	Resize: PIL Resizing
+	ADB FE: Delete bug fixed
+	BuildProp editor: Push now working, Remount before pushing
+	Install Utils: [is now Install Image Tools]: Install ImageMagick | Python Image Library
+	Added support for Mac OS X binary files
+	- (less important)
+	New Images! (optimized with my tool :P )
+	Button text when choosing language
+	Smalled close-button size
+	Scripted a FileChooser class
+	Scripted Yes/No dialog with custom text
+	Removed FirstRun message
+	Added Date divider to log
+	Added separator to options menu	
+
 	
 
 Feature requests are always welcome :)
