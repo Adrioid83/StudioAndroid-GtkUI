@@ -2438,7 +2438,7 @@ def BakSmali():
 		vbox.pack_start(NameBtn, False, False, 0)
 
 	Output = gtk.Entry()
-	Output.set_text("out.dex")
+	Output.set_text("classes.dex")
 	vbox.pack_start(Output, False, False, 0)
 
 	SmaliBtn = gtk.Button("Smali")
@@ -3392,8 +3392,10 @@ class Omega(Theme):
 	CopyTree(os.path.join(ScriptDir, "images", "Omega"), SrcDir, True)
 	def __init__(self):
 		notebook = MainApp.notebook
+		self.HBOX = gtk.Hbox()
 		self.OmegaNotebook = gtk.Notebook()
 		self.OmegaNotebook.set_tab_pos(gtk.POS_LEFT)
+		self.HBOX.pack_start(self.OmegaNotebook, False, False, 0)
 	
 		# DOWNLOAD THEME TAB
 		self.ThemeVbox = gtk.VBox()
@@ -3456,7 +3458,7 @@ class Omega(Theme):
 
 		self.img = gtk.Image()
 		self.EndTheming()
-		self.PreviewVbox.pack_start(self.img)
+		self.HBOX.pack_start(self.img)
 
 		# BUILD TAB
 		self.BuildVbox = gtk.VBox()
@@ -3472,8 +3474,8 @@ class Omega(Theme):
 			hbox.pack_start(gtk.Label([_("Enter theme name:"), _("Enter developer name"), _("Enter description:")][y]), False, False, 5)
 			hbox.pack_start([self.ThemeName, self.DevName, self.Description][y])
 		
-		#	
-		notebook.insert_page(self.OmegaNotebook, OmegaLabel)
+		#
+		notebook.insert_page(self.HBOX, OmegaLabel)
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
 
