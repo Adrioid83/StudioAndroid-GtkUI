@@ -29,36 +29,68 @@ try:
 	import ImageOps as PILImageOps
 	import ImageEnhance as PILImageEnhance
 	import ImageColor as PILImageColor
+	import ImageDraw as PILImageDraw
+	import ImageFont as PILImageFont
 except: Pil = False
 else:	Pil = True
 
+def TogglePil(widget):
+	global Pil  #So the user can toggle PIL usage
+	if widget.get_active():Pil = True
+	else: Pil = False
+	print("PIL = %s" % ["Disabled", "Enabled"][widget.get_active()])
 
 
+# TO FIX OTS <-> SA DEPENDENCIES
+class ToolAttr:
+	VersionFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version")
+	with open(VersionFile, "r") as f:
+		versionNo = f.readline()
+		toggledVersion = f.readline()
+	if "omega" in toggledVersion:
+		OmegaVersion = True
+	else: OmegaVersion = False
+
+	if OmegaVersion == True:
+		ToolName = "OmegaThemeStudio"
+		Name = "OTS"
+		GitLink = "http://github.com/mDroidd/OmegaThemeStudio/"
+		StableBranch = "tags"
+		UnstableBranch = "zipball/master"
+		DropboxLink = "http://dl.dropbox.com/u/61466577/"
+	else:
+		ToolName = "StudioAndroid"
+		Name = "SA"
+		GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
+		StableBranch = "tags"
+		UnstableBranch = "zipball/master"
+
+def ToggleOmega(widget):
+	if ToolAttr.OmegaVersion == True:
+		with open(ToolAttr.VersionFile, "w") as f:
+			f.writelines([ToolAttr.versionNo, "studio"])
+		ToolAttr.OmegaVersion = False
+	else:
+		with open(ToolAttr.VersionFile, "w") as f:
+			f.writelines([ToolAttr.versionNo, "omega"])
+		ToolAttr.OmegaVersion = True
+	Restart(widget)
 
 # VARIABLES
 
 ScriptDir=os.path.dirname(os.path.realpath(__file__))
 Home=os.path.expanduser('~')
-ConfDir = os.path.join(Home, ".SA")
+ConfDir = os.path.join(Home, ".%s" % ToolAttr.Name)
+OmegaDir = os.path.join(ScriptDir, "Omega")
+ImageDir = os.path.join(ScriptDir, "Image")
 MyFile = os.path.basename(__file__)
-FullFile = os.path.abspath(os.path.join(ScriptDir, "SA.py"))
+FullFile = os.path.abspath(os.path.join(ScriptDir, "%s.py" % ToolAttr.Name))
 Cores = str(multiprocessing.cpu_count())
 Python = os.path.abspath(sys.executable)
 PythonDir = os.path.dirname(Python)
 
+Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance", ["ODEX", ["IN", "OUT", "WORKING", "CURRENT"], "PORT", ["ROM", "TO", "WORKING"], "Smali", ["IN", "OUT", "Smali"]], "APK", ["IN", "DEC", "EX", "OUT"], "Image", ["Resized", "Theme"]]
 
-class ToolAttr:
-	OmegaVersion = False
-	if OmegaVersion == True:
-		ToolName = "OmegaThemeStudio"
-		GitLink = "http://github.com/mDroidd/OmegaThemeStudio/zipball/"
-		StableBranch = "master"
-		UnstableBranch = "Unstable"
-	else:
-		ToolName = "StudioAndroid"
-		GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/zipball/"
-		StableBranch = "master"
-		UnstableBranch = "Nightly"
 
 # OS Determination
 
@@ -84,25 +116,24 @@ for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
 # Choose language
 
-
 if not os.path.exists(os.path.join(ConfDir, "Language")):
 	def delete_event(self, widget, event, data=None):
 		exit()
 		return False
 	def PickLanguage(cmd):
-		f = open(os.path.join(Home, ".SA", "Language"), "w")
+		f = open(os.path.join(ConfDir, "Language"), "w")
 		f.flush()
 		if FrBtn.get_active(): f.write("fr_FR")
 		elif EnBtn.get_active(): f.write("en_US")
 		elif ItBtn.get_active(): f.write("it_IT")
 		elif NlBtn.get_active(): f.write("nl_NL")
 		else: 
-			active = [r for r in FrBtn.get_group() if r.get_active()][0].get_label()
+			active = [r for r in FrBtn.get_group() if r.get_active()][0].get_label().replace("--", "_")
 			f.write(active)
 		f.flush()
 		window2.destroy()
 		os.execl(sys.executable, sys.executable, * sys.argv)
-	if not os.path.exists(os.path.join(Home, ".SA")):
+	if not os.path.exists(ConfDir):
 		os.makedirs(ConfDir)
 	window2 = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	window2.set_position(gtk.WIN_POS_MOUSE)
@@ -117,9 +148,9 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 	NlBtn = gtk.RadioButton(FrBtn, "Nederlands")
 	RoBtn = gtk.RadioButton(FrBtn, "Romanian")
 	NewLang = []
-	for langd in os.listdir(os.path.join(ScriptDir, "lang")):
-		if not "fr" in langd and not "en" in langd and not "it" in langd and not "nl" in langd and not "ro" in langd:
-			NewBtn = gtk.RadioButton(FrBtn, langd)
+	for langd in [r for r in os.listdir(os.path.join(ScriptDir, "lang")) if "_" in r]:
+		if not langd.split("_")[0] in ["fr", "en", "it", "nl", "ro"]:
+			NewBtn = gtk.RadioButton(FrBtn, langd.replace("_", "--"))
 			vbox.pack_start(NewBtn)
 			NewLang.append(langd)
 	vbox.pack_start(EnBtn)
@@ -138,12 +169,12 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 # APPLY LANGUAGE
 
 DIR = os.path.join(ScriptDir, "lang")
-APP = 'SA'
+APP = ToolAttr.Name
 gettext.textdomain(APP)
 gettext.bindtextdomain(APP, DIR)
 gettext.bind_textdomain_codeset("default", 'UTF-8')
 locale.setlocale(locale.LC_ALL, "")
-Language = open(os.path.join(Home, ".SA", "Language"), "r").read()
+Language = open(os.path.join(ConfDir, "Language"), "r").read()
 LANG = Language
 
 
@@ -154,16 +185,19 @@ _ = lang.gettext
 
 # Double output
 class Logger(object):
+    OldStdout = sys.stdout
+    OldStderr = sys.stderr
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open(os.path.join(ScriptDir, "log"), "a")
 
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message)  
-	self.log.flush()
+	with open(os.path.join(ScriptDir, "log"), "a") as log:
+		log.write(message)  
+		log.flush()
 
 sys.stdout = Logger()
+sys.stderr = Logger()
 
 # Debug
 
@@ -179,7 +213,11 @@ else:
 def SystemLog(cmd, Debug=Debug):
 	if Debug == True:
 		print(cmd)
-		print(commands.getoutput(cmd))
+		pr = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True)
+		while True:
+			line = pr.stdout.readline()
+			if not line: break
+			print line.replace("\n", "")
 	elif Debug == False:
 		os.system(cmd)
 
@@ -230,7 +268,7 @@ sz = sz + plus
 
 
 # MAC OSX Fix
-def ExZip(zipf, expath, type='zip'):
+def ExZip(zipf, expath, type='zip', pattern='*'):
 	if type == 'zip':
 		Zip = zipfile.ZipFile(zipf, "r")
 		namelist = Zip.namelist()
@@ -241,22 +279,47 @@ def ExZip(zipf, expath, type='zip'):
 		if f.endswith(os.sep):
 			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
 		else: 
-			try:Zip.extract(f, path=expath)
-			except IOError: 
-				os.remove(os.path.join(expath, f))
-				Zip.extract(f, path=expath)
+			if fnmatch.fnmatch(f, pattern):
+				try:Zip.extract(f, path=expath)
+				except IOError: 
+					os.remove(os.path.join(expath, f))
+					Zip.extract(f, path=expath)
 
+def ExTo(zipf, expath, type='zip', pattern="*", ign=""):
+	if isinstance(ign, str): ign=[ign]
+	zip_file = zipfile.ZipFile(zipf, 'r')
+	for member in zip_file.namelist():
+		filename = os.path.basename(member)
+		# skip directories
+		if not filename:continue
+		# copy file (taken from zipfile's extract)
+		source = zip_file.open(member)
+		if fnmatch.fnmatch(filename, pattern) and [match for match in ign if fnmatch.fnmatch(filename, match)] == []: 
+			target = file(os.path.join(expath, filename), "wb")
+			shutil.copyfileobj(source, target)
+			target.close()
+		source.close()
+	zip_file.close()
 # EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
 ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
 
 
 def callback(widget, option):
-	# REDIRECTS THE BUTTON OPTION TO A FUNCTION
-	try: globals()[option]
-	except KeyError: print _("%s is not defined yet, SORRY!" % option)
-	else: 
-		#threading.Thread(None, globals()[option]).start()
-		globals()[option]()
+	if not option == None:
+		# REDIRECTS THE BUTTON OPTION TO A FUNCTION
+		try: globals()[option]
+		except KeyError: 
+			try:
+				option()
+			except:
+				print _("%s is not defined yet, SORRY!" % option)
+		else:
+			#threading.Thread(None, globals()[option]).start()
+			globals()[option]()
+
+
+def StartThread(widget, function, args=()):
+	threading.Thread(None, function, args=(widget,)+args).start()
 
 # New dialog
 
@@ -326,8 +389,8 @@ def GetFile(cmd, FileChooser, BtnChange=False, Multi=False, filtern=None):
 
 class FileChooserD:
 	out = None
-	def openFile(self, cmd, FileChooser, OutClass = False, filtern=None, multiple=False, SetTo=False):
-		self.out = self.run(FileChooser, filtern, multiple) # run FileChooserD with the given arguments
+	def openFile(self, cmd, FileChooser, OutClass = False, filters=[], multiple=False, SetTo=False):
+		self.out = self.run(FileChooser, filters, multiple) # run FileChooserD with the given arguments
 		if not self.out == None:
 			if not SetTo == False:
 				SetTo(self.out) # set button label to OUT if Btn is given
@@ -335,9 +398,10 @@ class FileChooserD:
 				OutClass.out = self.out
 		return self.out
 
-	def run(self, FileChooser, filtern=None, multiple=False):
+	def run(self, FileChooser, filters=[], multiple=False):
 		# Set dependencies
-		if not filtern == None:
+		if isinstance(filters, str): filters=[filters]
+		for filtern in filters:
 			filter = gtk.FileFilter()
 			filter.set_name(filtern)
 			filter.add_mime_type(filtern)
@@ -353,12 +417,24 @@ class FileChooserD:
 			else:Chosen = FileChooser.get_filenames()
 		return Chosen
 
-def YesNo(Title, Text, NoBtn="CANCEL", YesBtn="OK"):
-	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-		           (NoBtn, 0, YesBtn, 1))
+
+def ParseTree(base, tree, start=[]):
+	for x in tree:
+		if isinstance(x, str):
+			start.append(os.path.join(base, x, ''))
+		else:
+			ParseTree(os.path.join(base, tree[tree.index(x) - 1], ''), x, start)
+	return start
+
+def ChooseDialog(Title, Text, Btns=[]):
+	BtnTup = ()
+	for x in Btns:
+		BtnTup += (x, range(0,10)[Btns.index(x)])
+	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,BtnTup)
 	label = gtk.Label(Text)
 	dialog.vbox.pack_start(label)
 	label.show()
+	dialog.show_all()
 	response = dialog.run()
 	dialog.hide_all()
 	dialog.destroy()
@@ -374,6 +450,27 @@ class MLStripper(HTMLParser):
     def get_data(self):
         return ''.join(self.fed)
 
+def SetXml(File, list):
+	file = open(File, "r")
+	newLines = []
+	i = 0
+	for line in file.readlines():
+		line = line.replace("\n", "")
+		if "<" and '">' in line and not i == 0:
+			value = line.split('"')[1]
+			set = str(line.rsplit("<", 1)[0]).split(">", 2)[1]
+			for x in list:
+				if x[0] == value: break
+			newLines.append(line.split(">", 1)[0]  + ">%s<" %(str(x[1])) + line.rsplit("<", 1)[-1])
+		else:
+			newLines.append(line)
+		i += 1	
+	file.close()
+	writeFile = open(File, "w")
+	writeFile.write('\n'.join(newLines))
+	writeFile.close()
+		
+
 def remove_tags(html):
     s = MLStripper()
     s.feed(html)
@@ -386,6 +483,31 @@ def RGBToHTMLColor(rgb_tuple):
     return hexcolor
 # (C) ActivateState
 
+# FOR CONVERTING PIL IMAGES
+def pallette_convert(image):
+	pb = gtk.gdk.pixbuf_new_from_file(image)
+	pb.save(image, image.rsplit('.', 1)[-1])
+	im = PILImage.open(image) #pixbuf2image(pb) not working
+	return im
+
+def image2pixbuf(im):
+	arr = array.array('B', im.tostring())
+	width, height = im.size
+	return gtk.gdk.pixbuf_new_from_data(arr, gtk.gdk.COLORSPACE_RGB, True, 8, width, height, width * 4)
+
+def pixbuf2image(pb):
+	width,height = pb.get_width(),pb.get_height()
+	return PILImage.fromstring("RGB",(width,height),pb.get_pixels())
+#
+
+def strip_esc(s):
+	delete = ""
+	i=1
+	while (i<0x20):
+		delete += chr(i)
+		i += 1
+	return s.translate(None, delete)
+
 
 def find_files(directory, pattern):
     names = []
@@ -394,52 +516,51 @@ def find_files(directory, pattern):
             if fnmatch.fnmatch(basename, pattern):
                 filename = os.path.join(root, basename)
                 names.append(filename)
+    names.sort()
     return names
 # FindFiles (C) StackOverflow
 
-def CopyTree(src, dst, overwrite=True):
+def CopyTree(src, dst, overwrite=True, filter="*"):
 	src = os.path.join(src, '')
 	dst = os.path.join(dst, '')
 	if not os.path.exists(dst):
 		os.makedirs(dst)
 	for file in find_files(src, "*"):
-		dir = os.path.dirname(file)
+		dir = os.path.dirname(os.path.normpath(file))
 		if not os.path.exists(dir):
 			os.makedirs(dir)
 		if not os.path.exists(str(file).replace(src, dst)):
-			shutil.copy(file, str(file).replace(src, dst))
+			if fnmatch.fnmatch(file, filter):
+				shutil.copy(file, str(file).replace(src, dst))
 		if os.path.exists(str(file).replace(src, dst)) and overwrite == True:
-			os.remove(str(file).replace(src, dst))
-			shutil.copy(file, str(file).replace(src, dst))
+			if fnmatch.fnmatch(file, filter):
+				os.remove(str(file).replace(src, dst))
+				shutil.copy(file, str(file).replace(src, dst))
 			
 		
 
 
 def NewPage(Label, parent):
 	box = gtk.HBox()
-	label = gtk.Label(Label)
 	closebtn = gtk.Button()
 	image = gtk.Image()
 	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
 	closebtn.connect("clicked", KillPage, parent)
-	image.set_size_request(8, 8)
 	closebtn.set_image(image)
 	image.set_size_request(10, 10)
 	closebtn.set_relief(gtk.RELIEF_NONE)
-	box.pack_start(label, False, False)
+	box.pack_start(gtk.Label(Label), False, False)
 	box.pack_end(closebtn, False, False)
 	box.show_all()
 	return box
 
-for DIRS in [["APK", "IN"], ["APK", "OUT"], ["APK", "EX"], ["APK", "DEC"], ["Resize"], ["Advance", "Smali", "IN"], ["Advance", "Smali", "Smali"], ["Advance", "Smali", "OUT"], ["Advance", "ODEX", "IN"], ["Advance", "ODEX", "CURRENT"], ["Advance", "ODEX", "WORKING"], ["Advance", "ODEX", "OUT"], ["Advance", "PORT", "TO"], ["Advance", "PORT", "ROM"], ["Advance", "PORT", "WORKING"], ['ADB']]:
-	try:
-		subdir = ''
-		for x in DIRS:
-			subdir = os.path.join(subdir, x)
-		dir = os.path.join(ScriptDir, subdir)
-		os.makedirs(dir)
-	except:
-		pass
+
+for Dir in ParseTree(ScriptDir, Trees):
+	if not os.path.isdir(Dir):
+		try:
+			os.makedirs(Dir)
+		except: print Dir
+
 
 # FIX PERMISSIONS
 if not OS == "Win":
@@ -455,9 +576,9 @@ else:
 		SystemLog('PATH %s;%s;' % (UtilDir, PythonDir) + r'%path%')
 
 
-if not os.path.exists(os.path.join(Home, ".SA", "ran")):
+if not os.path.exists(os.path.join(ConfDir, "ran")):
 	FirstRun = True
-	open(os.path.join(Home, ".SA", "ran"), "w").flush()
+	open(os.path.join(ConfDir, "ran"), "w").flush()
 else:
 	FirstRun = False
 
@@ -474,6 +595,7 @@ window.set_position(gtk.WIN_POS_CENTER)
 
 vbox = gtk.VBox(False, 5)
 hbox = gtk.HBox(False, 5)
+
 
 
 # PRINT INFO
@@ -495,17 +617,13 @@ print _("Cores = %s" %(Cores))
 print _("Home = %s" %(Home))
 print _("ScriptDir = %s" %(ScriptDir))
 print _("File = %s" %(MyFile))
-print ("Debug = %s" %(bug))
+print ("Debug = %s, PIL = %s, Omega = %s" %(["Disabled", "Enabled"][Debug], ["Disabled", "Enabled"][Pil], ["Disabled", "Enabled"][ToolAttr.OmegaVersion]))
 print _("Language = %s" %(Language))
-if Pil == True:
-	print("PIL = Enabled")
 
 
 
-class MainApp():
-
+class MainApp:
 	# MAIN APP
-
 	placeIcon = gtk.gdk.pixbuf_new_from_file(os.path.join(ScriptDir, "images", "icon.png"))
 	window.set_icon(placeIcon)
 
@@ -523,7 +641,7 @@ class MainApp():
 	menu.append(OptionsMenu)
 	OptionsMenu.set_submenu(Options)
 
-	MainOptCl = gtk.MenuItem( _("Clean Workspace"))
+	MainOptCl = gtk.MenuItem( _("Reset"))
 	MainOptCl.connect("activate", callback, "Clean")
 	Options.append(MainOptCl)
 
@@ -563,10 +681,17 @@ class MainApp():
 	Options.append(AboutOption)
 	AboutOption.connect("activate", callback, "About")
 
+	sep = gtk.SeparatorMenuItem()
+	Options.append(sep)
+
+	OmegaToggle = gtk.MenuItem("Toggle Omega")
+	Options.append(OmegaToggle)
+	OmegaToggle.connect("activate", ToggleOmega)
+
 
 
 	menu.show_all()
-	
+
 	vbox.pack_start(menu, False, False, 0)
 
 	notebook = gtk.Notebook()
@@ -574,13 +699,20 @@ class MainApp():
 	vbox.pack_start(notebook)
 	notebook.set_scrollable(True)
 
-        notebook.show()
+	notebook.show()
 
 	# IMAGE TAB
 
 	UtilVBox = gtk.VBox()
 
 	UtilLabel = gtk.Label( _("Images"))
+
+	hbox = gtk.HBox()
+	PilToggle = gtk.ToggleButton(_("Use PIL (beta)"))
+	if Pil == True: PilToggle.set_active(True)
+	PilToggle.connect("toggled", TogglePil)
+	hbox.pack_end(PilToggle, False, False, 0)
+	UtilVBox.pack_start(hbox, False, False, 0)
 
 	image = gtk.Image()
 	image.set_from_file(os.path.join(ScriptDir, "images", "Images.png"))
@@ -651,27 +783,12 @@ class MainApp():
 	image.show()
 	AdvanceVBox.pack_start(image, False, False, 10)
 
-	MainOpt20 = gtk.Button( _("(Bak)Smali"))
-	MainOpt20.connect("clicked", callback, "BakSmali")
-	AdvanceVBox.pack_start(MainOpt20, True, False, 10)
+	for opt in [[_("(Bak)Smali"), "BakSmali"], [_("ODEX"), "Odex"], [_("DE-ODEX"), "Deodex"], [_("Aroma Menu"), "Aroma"], [_("Compile to an exe"), "Compile"]]:
+		OptBtn = gtk.Button(opt[0])
+		OptBtn.connect("clicked", callback, opt[1])
+		AdvanceVBox.pack_start(OptBtn, True, False, 10)
 
-	MainOpt22 = gtk.Button( _("ODEX") )
-	MainOpt22.connect("clicked", callback, "Odex")
-	AdvanceVBox.pack_start(MainOpt22, True, False, 10)
-
-	MainOpt23 = gtk.Button(_("DE-ODEX"))
-	MainOpt23.connect("clicked", callback, "Deodex")
-	AdvanceVBox.pack_start(MainOpt23, True, False, 10)
-
-	MainOpt24 = gtk.Button(_("Aroma Menu"))
-	MainOpt24.connect("clicked", callback, "Aroma")
-	AdvanceVBox.pack_start(MainOpt24, True, False, 10)
-
-	MainOptComp = gtk.Button(_("Compile to an exe"))
-	MainOptComp.connect("clicked", callback, "Compile")
-	AdvanceVBox.pack_start(MainOptComp, True, False, 10)
-
-	if ToolAttr.OmegaVersion == False:
+	if not ToolAttr.OmegaVersion == True:
 		notebook.insert_page(AdvanceVBox, AdvanceLabel, 4)
 
 	# ANDROID TAB
@@ -704,7 +821,7 @@ class MainApp():
 	AdbFEBtn.connect("clicked", callback, "AdbFE")
 	AndroidVBox.pack_start(AdbFEBtn, True, False, 10)
 
-	if ToolAttr.OmegaVersion == False:
+	if not ToolAttr.OmegaVersion == True:
 		notebook.insert_page(AndroidVBox, AndroidLabel, 5)
 
 	# OMEGA TAB
@@ -712,9 +829,13 @@ class MainApp():
 	OmegaVbox = gtk.VBox()
 	OmegaLabel = gtk.Label(_("Omega"))
 
-	OmegaBtn = gtk.Button("Omega")
-	OmegaBtn.connect("clicked", callback, "Omega")
+	OmegaBtn = gtk.Button("Omega Statusbar")
+	OmegaBtn.connect("clicked", callback, "OmegaSB")
 	OmegaVbox.pack_start(OmegaBtn, True, False)
+
+	CompileBtn = gtk.Button(_("Compile to an exe"))
+	CompileBtn.connect("clicked", callback, "Compile")
+	OmegaVbox.pack_start(CompileBtn, True, False)
 
 	if ToolAttr.OmegaVersion == True:
 		notebook.insert_page(OmegaVbox, OmegaLabel)
@@ -732,19 +853,16 @@ class GlobalData():
 # FROM HERE, ALL FUNCTIONS USED IN MAINAPP WILL BE DEFINED
 
 def Clean():
-	open(os.path.join(ScriptDir, "log")).close()
-	for tree in ['APK', 'Resize', 'Resized', 'Resizing', 'Advance', 'Utils', 'Theme', 'ADB']:
-		tree = os.path.join(ScriptDir, tree)
+	for tree in ParseTree(ScriptDir, Trees):
 		shutil.rmtree(tree, True)
-	shutil.rmtree(os.path.join(Home, ".SA"), True)
+	shutil.rmtree(os.path.join(ConfDir), True)
 	os.remove(os.path.join(ScriptDir, "log"))
-	if os.path.exists(os.path.join(ConfDir, "debug")):
-		os.remove(os.path.join(ConfDir, "debug"))
-	for x in [os.path.join('Source', 'repocmd'), os.path.join('Source', 'syncswitches')]:
-		try:
-			os.remove(os.path.join(ScriptDir, x))
-		except OSError:
-			pass
+	shutil.rmtree(UtilDir)
+	try:
+		os.remove(os.path.join(ScriptDir, 'Source', 'syncswitches'))
+		os.remove(os.path.join(ScriptDir, 'Source', 'repocmd'))
+	except OSError:pass
+
 	for x in find_files(ScriptDir, "*.pyc"):
 		try:os.remove(x)
 		except:pass
@@ -773,10 +891,8 @@ def Utils():
 		if OS == 'Win':
 			if ImageBtn.get_active():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
-				f = open(os.path.join(ConfDir, "index.html"), "r").readlines()
-				ln = f[10]
+				ln = open(os.path.join(ConfDir, "index.html"), "r").readlines()[10]
 				version = str(str(remove_tags(ln)).split('.exe')[0]).replace('Q8', 'Q16') + ".exe"
-			
 				wait = NewDialog(_("ImageMagick"), _("You will now download and run ImageMagick. Proceed the installation."))
 				if os.path.exists(os.path.join(ConfDir, "IM.exe")):
 					os.remove(os.path.join(ConfDir, "IM.exe"))
@@ -785,7 +901,6 @@ def Utils():
 			if PILBtn.get_active():
 				urllib.urlretrieve("http://effbot.org/downloads/PIL-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
-
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
 	hbox = gtk.HBox()
@@ -801,12 +916,12 @@ def Utils():
 	vbox.pack_start(hbox)
 
 	buttonInstall = gtk.Button( _("Install") )
-	buttonInstall.connect("clicked", Install)
+	buttonInstall.connect("clicked", StartThread, Install)
+	vbox.pack_start(buttonInstall, False, False, 0)
 
 	UtilsLabel = NewPage( _("Install Image Tools") , vbox)
 	UtilsLabel.show_all()
 
-	vbox.pack_start(buttonInstall, False, False, 0)
 	notebook.insert_page(vbox, UtilsLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
@@ -817,16 +932,23 @@ def ConvertImage():
 		if ConvertFC.out == None:
 			NewDialog(_("ERROR"), _("Please select a directory first!"))
 		else:
+			if not os.path.exists(os.path.join(ImageDir, "Convert")): os.makedirs(os.path.join(ImageDir, "Convert"))
 			ext = [r for r in ExtBtn.get_group() if r.get_active()][0].get_label()
 			if Pil == True:
-				for x in find_files(ConvertFC.out, "*%s" % ext):
-					try:
-						im = PILImage.open(x)
-						im.load()
-					except: pass
-					else:
-						png_info = im.info
-						im.save(os.path.splitext(x)[0] + ext, **png_info)
+				for x in find_files(ConvertFC.out, "*"):
+					Dst = os.path.splitext(x.replace(ConvertFC.out, os.path.join(ImageDir, "Convert")))[0] + ext
+					if os.path.splitext(x)[1] in [".png", ".jpg", ".gif", ".bmp", ".jpeg"] and not os.path.splitext(x)[1] == ext.replace(".", ""):
+						try:
+							im = PILImage.open(x)
+							im.load()
+						except: pass
+						else:
+							png_info = im.info
+							if not os.path.exists(os.path.dirname(Dst)): os.makedirs(os.path.dirname(Dst))
+							if os.path.exists(Dst): os.remove(Dst)
+							if ext == ".jpg" or ".jpeg": im = im.convert(im.mode.replace("A", ""))
+							else: im.convert("RGBA")
+							im.save(Dst, **png_info)
 
 	vbox = gtk.VBox()
 	notebook = MainApp.notebook
@@ -841,7 +963,7 @@ def ConvertImage():
 	ConvertImageDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
-	SelectBtn.connect("clicked", ConvertFC().openFile, ConvertImageDial, ConvertFC, None, False, locLabel.set_text)
+	SelectBtn.connect("clicked", ConvertFC().openFile, ConvertImageDial, ConvertFC, [], False, locLabel.set_text)
 
 	vbox.pack_start(SelectBtn, False)
 	vbox.pack_start(locLabel, False, False, 15)
@@ -862,14 +984,16 @@ def ConvertImage():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def CopyFrom():
+class CopyFrom():
 	class ToFC(FileChooserD):pass
 	class FromFC(FileChooserD):pass
 
-	def Start(cmd):
-		FromDir = FromFC.out
-		ToDir = ToFC.out
-		Ext = ExtBox.get_text()
+	def StartCopy(self, cmd, Conf="Std"):	
+		if Conf == "Std":
+			FromDir = self.FromFC.out
+			ToDir = self.ToFC.out
+			Ext = self.ExtBox.get_text()
+		else: FromDir, ToDir, Ext = Conf
 		print _("Copying files FROM " + FromDir + " to " + ToDir + " With extension " + Ext)
 		for ToFile in find_files(ToDir, "*" + Ext):
 			filename = ToFile.replace(ToDir, FromDir)
@@ -877,59 +1001,61 @@ def CopyFrom():
 				print _("Copying %s to %s" %(filename, ToFile))
 				shutil.copy(filename, ToFile)
 
-	CopyFromWindow = window
-	CopyFromLabel = gtk.Label( _("CopyFrom"))
+	def __init__(self):
+		CopyFromWindow = window
+		CopyFromLabel = gtk.Label( _("CopyFrom"))
 
-	vbox = gtk.VBox()
-	notebook = MainApp.notebook
+		vbox = gtk.VBox()
+		notebook = MainApp.notebook
 
-	label = gtk.Label( _("""This tool copies files existing in a directory FROM an other directory.
-			Can be handy for porting themes and such\n\nMake sure both directories have the same structure!\n\n\n""") )
+		label = gtk.Label( _("""This tool copies files existing in a directory FROM an other directory.
+				Can be handy for porting themes and such\n\nMake sure both directories have the same structure!\n\n\n""") )
 
-	vbox.pack_start(label, False, False, 0)
+		vbox.pack_start(label, False, False, 0)
 
-	ToDirBtn = gtk.Button(_("Open the directory you want to copy the files TO") )
-	ToDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		ToDirBtn = gtk.Button(_("Open the directory you want to copy the files TO") )
+		ToDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+		                          	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
-	ToDirBtn.connect("clicked", ToFC().openFile, ToDirDial, ToFC, None, False, ToDirBtn.set_label)
-	vbox.pack_start(ToDirBtn, False, False, 0)
+		ToDirBtn.connect("clicked", self.ToFC().openFile, ToDirDial, self.ToFC, [], False, ToDirBtn.set_label)
+		vbox.pack_start(ToDirBtn, False, False, 0)
 
-	FromDirBtn = gtk.Button(_("Open the directory you want to copy the files FROM") )
-	FromDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		FromDirBtn = gtk.Button(_("Open the directory you want to copy the files FROM") )
+		FromDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+		                          	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
-	FromDirBtn.connect("clicked", FromFC().openFile, FromDirDial, FromFC, None, False, FromDirBtn.set_label)
-	vbox.pack_start(FromDirBtn, False, False, 0)
+		FromDirBtn.connect("clicked", self.FromFC().openFile, FromDirDial, self.FromFC, [], False, FromDirBtn.set_label)
+		vbox.pack_start(FromDirBtn, False, False, 0)
 
-	hbox = gtk.HBox()
+		hbox = gtk.HBox()
 
-	ExtBox = gtk.Entry()
-	ExtBox.set_size_request(80, 25)
-	ExtBox.set_text(".")
-	ExtLabel = gtk.Label( _("Enter the extension of the files you want to copy") )
-	hbox.pack_start(ExtBox, False, False, 3)
-	hbox.pack_start(ExtLabel, False, False, 45)
+		self.ExtBox = gtk.Entry()
+		self.ExtBox.set_size_request(80, 25)
+		self.ExtBox.set_text(".")
+		ExtLabel = gtk.Label( _("Enter the extension of the files you want to copy") )
+		hbox.pack_start(self.ExtBox, False, False, 3)
+		hbox.pack_start(ExtLabel, False, False, 45)
 
-	vbox.pack_start(hbox, False, False, 0)
+		vbox.pack_start(hbox, False, False, 0)
 
-	StartButton = gtk.Button("CopyFrom!")
-	StartButton.connect("clicked", Start)
+		StartButton = gtk.Button("CopyFrom!")
+		StartButton.connect("clicked", self.StartCopy)
 
-	vbox.pack_start(StartButton, False, False, 30)
+		vbox.pack_start(StartButton, False, False, 30)
 
-	CopyFromLabel = NewPage( _("CopyFrom"), vbox )
-	CopyFromLabel.show_all()
+		CopyFromLabel = NewPage( _("CopyFrom"), vbox )
+		CopyFromLabel.show_all()
 	
-	notebook.insert_page(vbox, CopyFromLabel)
-	CopyFromWindow.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+		notebook.insert_page(vbox, CopyFromLabel)
+		CopyFromWindow.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Resize():
+	SrcDir = None
 	class ResizeFC(FileChooserD):pass
-	def StartResize(cmd):
+	def StartResize(self, widget):
 			ResizeFC.out
-			DstDir = os.path.join(ScriptDir, "Resized", '')
+			DstDir = os.path.join(ImageDir, "Resized", '')
 			if NormalResize.get_active():
 				Perc = ResizePercentageBox.get_text()
 				if not Perc.endswith("%"):
@@ -1026,24 +1152,19 @@ def Resize():
 					print("%s has 9patch" % image)
 					shutil.copy(image, DstFile)
 					continue
-				if Pil == "Truebla": # Pil resizing results in blur for now :(
-					if r"%" in str(Perc):
-						Perc = round(float(str(Perc).replace(r'%', '')), 2)
-					im = PILImage.open(image)
-					im.load()
-					im = im.convert("RGBA")
-					width, height = im.size
-					neww = int(int(Perc * width) / 100)
-					newh = int(int(Perc * height)  / 100)
-					if not int(Perc * width) >> width:
-						img = im.resize((neww, newh), PILImage.ANTIALIAS)
-					else:
-						img = im.resize((neww, newh))#, PILImage.NEAREST)
-					img.save(DstFile)
-				else:
-					SystemLog("convert %s -resize %s %s" % (image, Perc, DstFile))
+				if r"%" in str(Perc):
+					Perc = round(float(str(Perc).replace(r'%', '')), 2)
+				pixbuf = gtk.gdk.pixbuf_new_from_file(image)
+				w = pixbuf.get_width()
+				h = pixbuf.get_height()
+				if not w <= 1 and not h <= 1:
+					w = int(int(Perc * w) / 100)
+					h = int(int(Perc * h)  / 100)
+					pixbuf = pixbuf.scale_simple(w,h,gtk.gdk.INTERP_HYPER)
+				pixbuf.save(DstFile, os.path.splitext(image)[1].replace(".", ""))
+				#SystemLog("convert %s -resize %s%% %s" % (image, Perc, DstFile))
 			if ApkResize.get_active():
-				FinDstDir = os.path.join(ScriptDir, "Resized")
+				FinDstDir = os.path.join(ImageDir, "Resized")
 				if os.path.exists(FinDstDir):
 					shutil.rmtree(FinDstDir)
 				os.makedirs(FinDstDir)
@@ -1056,148 +1177,150 @@ def Resize():
 				zipf.close()
 			if os.path.exists(os.path.join(ScriptDir, "Resizing")) and not Debug == True:
 				shutil.rmtree(os.path.join(ScriptDir, "Resizing"))
-			NewDialog( _("Resized") , _("You can find the resized images in Resized") )
+			NewDialog( _("Resized") , _("You can find the resized images in %s" % os.path.join(os.path.basename(ImageDir), "Resized")) )
 		
-		
-	ResizeWindow = window
-	ResizeLabel = gtk.Label("Resize")
-	vbox = gtk.VBox()
-	sw = gtk.ScrolledWindow()
-	notebook = MainApp.notebook
+	def __init__(self):
+		ResizeWindow = window
+		ResizeLabel = gtk.Label("Resize")
+		vbox = gtk.VBox()
+		sw = gtk.ScrolledWindow()
+		notebook = MainApp.notebook
 
-	NormalResize = gtk.RadioButton(None, "Normal resizing using resize percentage")
-	vbox.pack_start(NormalResize, False, False, 2)
+		NormalResize = gtk.RadioButton(None, "Normal resizing using resize percentage")
+		vbox.pack_start(NormalResize, False, False, 2)
 
-	NormalResizeTable = gtk.Table(2, 2, True)
-	NormalResizeTable.set_col_spacings(2)
-	NormalResizeTable.set_row_spacings(2)
+		NormalResizeTable = gtk.Table(2, 2, True)
+		NormalResizeTable.set_col_spacings(2)
+		NormalResizeTable.set_row_spacings(2)
 
-	ResizePercentageBox = gtk.Entry()
-	ResizePercentageBox.set_text("%")
-	ResizePercentageBox.set_size_request(0, 30)
+		ResizePercentageBox = gtk.Entry()
+		ResizePercentageBox.set_text("%")
+		ResizePercentageBox.set_size_request(0, 30)
 
-	ResizePercentageLabel = gtk.Label( _("Enter the resize percentage 0-100 %") )
+		ResizePercentageLabel = gtk.Label( _("Enter the resize percentage 0-100 %") )
 
-	ResizeDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	ResizeDirBtn = gtk.Button("Select the directory")
+		ResizeDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+		                          	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		ResizeDirBtn = gtk.Button("Select the directory")
 
-	ResizeDirLabel = gtk.Label( _("Choose the directory containing the images"))
-	ResizeDirBtn.connect("clicked", ResizeFC().openFile, ResizeDirDial, ResizeFC, None, False, False)
+		ResizeDirLabel = gtk.Label( _("Choose the directory containing the images"))
+		ResizeDirBtn.connect("clicked", self.ResizeFC().openFile, ResizeDirDial, self.ResizeFC, [], False, False)
 
-	NormalResizeTable.attach(ResizePercentageBox, 0, 1, 0, 1, xpadding=20)
-	NormalResizeTable.attach(ResizePercentageLabel, 1, 2, 0, 1)
-	NormalResizeTable.attach(ResizeDirBtn, 0, 1, 1, 2, xpadding=20)
-	NormalResizeTable.attach(ResizeDirLabel, 1, 2, 1, 2)
-	vbox.pack_start(NormalResizeTable, False, False, 0)
+		NormalResizeTable.attach(ResizePercentageBox, 0, 1, 0, 1, xpadding=20)
+		NormalResizeTable.attach(ResizePercentageLabel, 1, 2, 0, 1)
+		NormalResizeTable.attach(ResizeDirBtn, 0, 1, 1, 2, xpadding=20)
+		NormalResizeTable.attach(ResizeDirLabel, 1, 2, 1, 2)
+		vbox.pack_start(NormalResizeTable, False, False, 0)
 
-	EasyResize = gtk.RadioButton(NormalResize, _("Easy resizing using ..DPI values"))
-	vbox.pack_start(EasyResize, False, False, 2)
+		EasyResize = gtk.RadioButton(NormalResize, _("Easy resizing using ..DPI values"))
+		vbox.pack_start(EasyResize, False, False, 2)
 
-	EasyResizeTable = gtk.Table(2, 2, True)
+		EasyResizeTable = gtk.Table(2, 2, True)
 	
-	InDPIBox = gtk.Entry()
-	InDPIBox.set_text("..DPI")
-	EasyResizeTable.attach(InDPIBox, 0, 1, 0, 1, xpadding=20)
-	InDPILabel = gtk.Label( _("Give the DPI of the images"))
-	EasyResizeTable.attach(InDPILabel, 1, 2, 0, 1)
+		InDPIBox = gtk.Entry()
+		InDPIBox.set_text("..DPI")
+		EasyResizeTable.attach(InDPIBox, 0, 1, 0, 1, xpadding=20)
+		InDPILabel = gtk.Label( _("Give the DPI of the images"))
+		EasyResizeTable.attach(InDPILabel, 1, 2, 0, 1)
 
-	OutDPIBox = gtk.Entry()
-	OutDPIBox.set_text("..DPI")
-	EasyResizeTable.attach(OutDPIBox, 0, 1, 1, 2, xpadding=20)
-	OutDPILabel = gtk.Label( _("Give the Resized DPI"))
-	EasyResizeTable.attach(OutDPILabel, 1, 2, 1, 2)
+		OutDPIBox = gtk.Entry()
+		OutDPIBox.set_text("..DPI")
+		EasyResizeTable.attach(OutDPIBox, 0, 1, 1, 2, xpadding=20)
+		OutDPILabel = gtk.Label( _("Give the Resized DPI"))
+		EasyResizeTable.attach(OutDPILabel, 1, 2, 1, 2)
 
-	EasyResizeDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	EasyResizeDirBtn = gtk.Button("Select the directory")
+		EasyResizeDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+		                          	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		EasyResizeDirBtn = gtk.Button("Select the directory")
 
-	EasyResizeTable.attach(EasyResizeDirBtn, 0, 1, 2, 3, xpadding=20)
-	ResizeDirLabel = gtk.Label(_("Choose the directory containing the images"))
-	EasyResizeDirBtn.connect("clicked", ResizeFC().openFile, ResizeDirDial, ResizeFC, None, False, False)
-	EasyResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
+		EasyResizeTable.attach(EasyResizeDirBtn, 0, 1, 2, 3, xpadding=20)
+		ResizeDirLabel = gtk.Label(_("Choose the directory containing the images"))
+		EasyResizeDirBtn.connect("clicked", self.ResizeFC().openFile, ResizeDirDial, self.ResizeFC, [], False, False)
+		EasyResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
 
-	vbox.pack_start(EasyResizeTable, False, False, 0)
+		vbox.pack_start(EasyResizeTable, False, False, 0)
 
-	ApkResize = gtk.RadioButton(NormalResize, _("Resize an APK using DPI values"))
-	vbox.pack_start(ApkResize, False, False, 10)
+		ApkResize = gtk.RadioButton(NormalResize, _("Resize an APK using DPI values"))
+		vbox.pack_start(ApkResize, False, False, 10)
 
-	APKResizeTable = gtk.Table(3, 2, True)
+		APKResizeTable = gtk.Table(3, 2, True)
 	
-	ApkInDPIBox = gtk.Entry()
-	ApkInDPIBox.set_text("..DPI")
-	APKResizeTable.attach(ApkInDPIBox, 0, 1, 0, 1, xpadding=20)
-	ApkInDPILabel = gtk.Label(_("Give the DPI of the images"))
-	APKResizeTable.attach(ApkInDPILabel, 1, 2, 0, 1)
+		ApkInDPIBox = gtk.Entry()
+		ApkInDPIBox.set_text("..DPI")
+		APKResizeTable.attach(ApkInDPIBox, 0, 1, 0, 1, xpadding=20)
+		ApkInDPILabel = gtk.Label(_("Give the DPI of the images"))
+		APKResizeTable.attach(ApkInDPILabel, 1, 2, 0, 1)
 
-	ApkOutDPIBox = gtk.Entry()
-	ApkOutDPIBox.set_text("..DPI")
-	APKResizeTable.attach(ApkOutDPIBox, 0, 1, 1, 2, xpadding=20)
-	ApkOutDPILabel = gtk.Label("Give the Resized DPI")
-	APKResizeTable.attach(ApkOutDPILabel, 1, 2, 1, 2)
+		ApkOutDPIBox = gtk.Entry()
+		ApkOutDPIBox.set_text("..DPI")
+		APKResizeTable.attach(ApkOutDPIBox, 0, 1, 1, 2, xpadding=20)
+		ApkOutDPILabel = gtk.Label("Give the Resized DPI")
+		APKResizeTable.attach(ApkOutDPILabel, 1, 2, 1, 2)
 
-	ApkResizeDirBox = gtk.Entry()
-	ApkResizeDirBox.set_text(os.path.join(ScriptDir, ''))
-	ApkResizeDirBox.set_size_request(0, 30)
+		ApkResizeDirBox = gtk.Entry()
+		ApkResizeDirBox.set_text(os.path.join(ScriptDir, ''))
+		ApkResizeDirBox.set_size_request(0, 30)
 	
-	ApkResizeApk = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
-					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-	ApkResizeBtn = gtk.Button(_("Choose the APK"))
-	APKResizeTable.attach(ApkResizeBtn, 0, 1, 2, 3, xpadding=20)
-	ApkResizeBtn.connect("clicked", ResizeFC().openFile, ApkResizeApk, ResizeFC, ".apk", False, False)
+		ApkResizeApk = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
+						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		ApkResizeBtn = gtk.Button(_("Choose the APK"))
+		APKResizeTable.attach(ApkResizeBtn, 0, 1, 2, 3, xpadding=20)
+		ApkResizeBtn.connect("clicked", self.ResizeFC().openFile, ApkResizeApk, self.ResizeFC, [".apk"], False, False)
 
-	ResizeDirLabel = gtk.Label(_("Choose the APK"))
-	APKResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
+		ResizeDirLabel = gtk.Label(_("Choose the APK"))
+		APKResizeTable.attach(ResizeDirLabel, 1, 2, 2, 3)
 
-	vbox.pack_start(APKResizeTable, False, False, 0)
+		vbox.pack_start(APKResizeTable, False, False, 0)
 
-	ResizeStartButton = gtk.Button(_("Start resizing"))
-	ResizeStartButton.connect("clicked", StartResize)
-	vbox.pack_end(ResizeStartButton, False, False, 15)
+		ResizeStartButton = gtk.Button(_("Start resizing"))
+		ResizeStartButton.connect("clicked", self.StartResize)
+		vbox.pack_end(ResizeStartButton, False, False, 15)
 
-	ResizeLabel = NewPage("Resize", vbox)
-	ResizeLabel.show_all()
+		ResizeLabel = NewPage("Resize", vbox)
+		ResizeLabel.show_all()
 
-	notebook.insert_page(vbox, ResizeLabel)
-	ResizeWindow.show_all()
-	#ResizeStartButton.hide()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+		notebook.insert_page(vbox, ResizeLabel)
+		ResizeWindow.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 class Theme:
-	SrcDir =  os.path.join(ScriptDir, "Theme")
+	SrcDir =  os.path.join(ScriptDir, "Image", "Theme")
 	msg = _("Place the images you want to theme inside %s" % SrcDir)
-	def StartTheming(self, cmd):
-		# (C) MARTINEAU @ StackOverflow
-		def image_tint(src, tint="#33b5e5"):
-			if PILImage.isStringType(src):  # file path?
-				src = PILImage.open(src)
-			if src.mode not in ['RGB', 'RGBA']:
-				print _("Converting %s to RGBA" % src.mode)
-				src = src.convert("RGBA")
-			src.load()
+		
 
-			tr, tg, tb = PILImageColor.getrgb(tint)
-			tl = PILImageColor.getcolor(tint, "L")  # tint color's overall luminosity
-			if not tl: tl = 1  # avoid division by zero
-			tl = float(tl)  # compute luminosity preserving tint factors
-			sr, sg, sb = map(lambda tv: tv/tl, (tr, tg, tb))  # per component adjustments
+	# (C) MARTINEAU @ StackOverflow
+	def image_tint(self, im, tint="#33b5e5"):
+		if isinstance(im, str):  # file path?
+			src = PILImage.open(im)
+		else: src = im
+		if src.mode == "P": src = pallette_convert(im)
+		if src.mode not in ['RGB', 'RGBA']:
+			print _("Converting %s to RGBA" % src.mode)
+			src = src.convert("RGBA")
+		src.load()
 
-			# create look-up tables to map luminosity to adjusted tint
-			# (using floating-point math only to compute table)
-			luts = (map(lambda lr: int(lr*sr + 0.5), range(256)) +
-			    map(lambda lg: int(lg*sg + 0.5), range(256)) +
-			    map(lambda lb: int(lb*sb + 0.5), range(256)))
-			l = PILImageOps.grayscale(src)  # 8-bit luminosity version of whole image
-			if PILImage.getmodebands(src.mode) < 4:
-				merge_args = (src.mode, (l, l, l))  # for RGB verion of grayscale
-			else:  # include copy of src image's alpha layer
-				a = PILImage.new("L", src.size)
-				a.putdata(src.getdata(3))
-				merge_args = (src.mode, (l, l, l, a))  # for RGBA verion of grayscale
-				luts += range(256)  # for 1:1 mapping of copied alpha values
+		tr, tg, tb = PILImageColor.getrgb(tint)
+		tl = PILImageColor.getcolor(tint, "L")  # tint color's overall luminosity
+		if not tl: tl = 1  # avoid division by zero
+		tl = float(tl)  # compute luminosity preserving tint factors
+		sr, sg, sb = map(lambda tv: tv/tl, (tr, tg, tb))  # per component adjustments
 
-			return PILImage.merge(*merge_args).point(luts)
+		# create look-up tables to map luminosity to adjusted tint
+		# (using floating-point math only to compute table)
+		luts = (map(lambda lr: int(lr*sr + 0.5), range(256)) +
+		    map(lambda lg: int(lg*sg + 0.5), range(256)) +
+		    map(lambda lb: int(lb*sb + 0.5), range(256)))
+		l = PILImageOps.grayscale(src)  # 8-bit luminosity version of whole image
+		if PILImage.getmodebands(src.mode) < 4:
+			merge_args = (src.mode, (l, l, l))  # for RGB verion of grayscale
+		else:  # include copy of src image's alpha layer
+			a = PILImage.new("L", src.size)
+			a.putdata(src.getdata(3))
+			merge_args = (src.mode, (l, l, l, a))  # for RGBA verion of grayscale
+			luts += range(256)  # for 1:1 mapping of copied alpha values
 
+		return PILImage.merge(*merge_args).point(luts)
+	def ParseColor(self):
 		CurCol = str(self.colorsel.get_current_color())
 		ColCode = CurCol.replace("#", '')
 		PerLen = int(len(ColCode) / 3)
@@ -1213,13 +1336,16 @@ class Theme:
 		Blue = int(Blue * 255 / int(''.join(['f', 'f', 'f', 'f'][0:PerLen]), 16))
 
 		Clr = RGBToHTMLColor((Red, Green, Blue))
+		return Clr	
+	def StartTheming(self, widget):
+		Clr = self.ParseColor()
 		if not os.path.exists(self.SrcDir):
 			os.makedirs(self.SrcDir)
 		print(Clr)
 		for image in find_files(self.SrcDir, "*.png"):
 			Image1 = str(image)
 			if Pil == True:
-				img = image_tint(Image1, Clr)
+				img = self.image_tint(Image1, Clr)
 				img.save("%s" % Image1)
 			else:
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
@@ -1325,7 +1451,7 @@ def Rename():
 	RenameDirBtn = gtk.Button(_("Open the directory in wich you want to rename files") )
 	RenameDirDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
                                   	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	RenameDirBtn.connect("clicked", FileChooserRename().openFile, FileChooserRename, RenameDirDial, None, False, RenameDirBtn.set_label)
+	RenameDirBtn.connect("clicked", FileChooserRename().openFile, FileChooserRename, RenameDirDial, [], False, RenameDirBtn.set_label)
 	vbox.pack_start(RenameDirBtn, False, False)
 
 	hbox = gtk.HBox()
@@ -1618,8 +1744,8 @@ def BuildSource():
 	vbox = gtk.VBox()
 	sw = gtk.ScrolledWindow()
 
-	if os.path.exists(os.path.join(Home, ".SA", "Device")):
-		Text = open(os.path.join(Home, ".SA", "Device"), "r")
+	if os.path.exists(os.path.join(ConfDir, "Device")):
+		Text = open(os.path.join(ConfDir, "Device"), "r")
 		Text = Text.readline()
 		Device = str(Text.replace('.py', '')).replace('\n', '')
 	else:	Device = "SourceStock"
@@ -1701,7 +1827,7 @@ def BuildSource():
 
 
 	def NewSources(cmd, SourceFile):
-		f = open(os.path.join(Home, ".SA", "Device"), "w")
+		f = open(os.path.join(ConfDir, "Device"), "w")
 		print >> f,SourceFile
 		SourceFile = SourceFile.replace('.py', '')
 		SourceFile = SourceFile.replace('\n', '')
@@ -1815,7 +1941,7 @@ def BuildSource():
 		MenuItem.show()
 	menu.show_all()
 
-	if not os.path.exists(os.path.join(Home, ".SA", "Device")):
+	if not os.path.exists(os.path.join(ConfDir, "Device")):
 		NewDialog(_("Device"), _("You can choose the device you want to build for in the top bar."))
 
 
@@ -1935,92 +2061,100 @@ def AddGovernor():
 	AddGovWindow.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def DeCompile():
-	def Start(cmd):
-		if DecompileButton.get_active():
-			Number = len(decname)
+class DeCompile:
+	InDir = os.path.join(ScriptDir, "APK", "IN")
+	DecDir = os.path.join(ScriptDir, "APK", "DEC")
+	OutDir = os.path.join(ScriptDir, "APK", "OUT")
+	text = _("Place APKs inside %s to select them." % InDir)
+	name = "(De)Compile"
+	firstText = _("Decompile")
+	secondText = _("Compile")
+	startBtnText = _("Start (De)Compiling")
+	chainFunc = "Sign"
+	Dual = True
+
+	def StartDeCompile(self, widget, firstnames, secnames):
+		First = self.FirstButton.get_active()
+		Second = self.SecondButton.get_active()
+		if First:
+			Number = len(firstnames)
 			if Number == 0:
-				NewDialog(_("ERROR"), _("No images inside %s. exit." % os.path.join("APK", "IN")))
+				NewDialog(_("ERROR"), _("No APKs selected!"))
 			for num in range(0, Number):
-				APK = decname[num]
-				for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), '*.apk'):
+				APK = firstnames[num]
+				for apk in find_files(self.InDir, '*.apk'):
 					name = os.path.basename(apk)
 					if APK == name :
 						ApkDir = APK.replace('.apk', '')
-						APK = os.path.join(ScriptDir, "APK", "IN", APK)
-						OutDir = os.path.join(ScriptDir, "APK", "DEC", ApkDir)
+						APK = os.path.join(self.InDir, APK)
+						OutDir = os.path.join(self.DecDir, ApkDir)
 						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
-						print _("Decompiled " + APK)
-			Refresh("cmd")
-		if CompileButton.get_active():
-			Number = len(comname)
+						print _("Decompiled %s" % APK)
+			self.Refresh(widget, self.vbox)
+		if Second:
+			Number = len(secnames)
 			if Number == 0:
-				NewDialog(_("ERROR"), _("No images inside %s. exit." % os.path.join("APK", "IN") ))
+				NewDialog(_("ERROR"), _("No APKs selected!" % os.path.join("APK", "IN") ))
 			for num in range(0, Number):
-				Dec = comname[num]
-				for dec in os.listdir(os.path.join(ScriptDir, "APK", "DEC")):
-					if dec == Dec :
-						ApkFolder = os.path.join(ScriptDir, "APK", "DEC", dec)
-						ApkName = os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Dec + ".apk")
+				Dec = secnames[num]
+				for dec in os.listdir(self.DecDir):
+					if dec == Dec:
+						ApkFolder = os.path.join(self.DecDir, dec)
+						ApkName = os.path.join(self.OutDir, "Unsigned-" + Dec + ".apk")
 						os.chdir(UtilDir)
 						SystemLog("java -jar %s b -f %s %s " %(ApkJar, ApkFolder, ApkName))
 						print _("Compiled %s" % ApkName)
-						
+			callback(widget, self.chainFunc)
 
-	def Refresh(cmd):
-		KillPage("cmd", vbox)
-		DeCompile()
+	def Refresh(self, widget, vbox):
+		KillPage(widget, vbox)
+		self.__init__()
 
-
-	DeCompileWindow = window
-	notebook = MainApp.notebook
-	sw = gtk.ScrolledWindow()
+	def __init__(self):
+		DeCompileWindow = window
+		notebook = MainApp.notebook
+		sw = gtk.ScrolledWindow()
 	
-	vbox = gtk.VBox()
+		self.vbox = gtk.VBox()
 
-	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
-	vbox.pack_start(InfoLabel, False, False, 0)
+		InfoLabel = gtk.Label(self.text)
+		self.vbox.pack_start(InfoLabel, False, False, 0)
 
-	DecompileButton = gtk.RadioButton(None, _("Decompile"))
-	CompileButton = gtk.RadioButton(DecompileButton, _("Compile"))
-	vbox.pack_start(DecompileButton, False, False, 10)
-	decname = []
+		self.FirstButton = gtk.RadioButton(None, self.firstText)
+		self.vbox.pack_start(self.FirstButton, False, False, 10)
+		decname = []
+		comname = []
+		for apk in find_files(self.InDir, '*.apk'):
+			name = os.path.basename(apk)
+			NameBtn = gtk.CheckButton(name)
+			NameBtn.connect("toggled", AddToList, decname, name, NameBtn)
+			self.vbox.pack_start(NameBtn, False, False, 0)
 
+		if self.Dual == True:
+			self.SecondButton = gtk.RadioButton(self.FirstButton, self.secondText)
+			self.vbox.pack_start(self.SecondButton, False, False, 10)
+			for dec in os.listdir(self.DecDir):
+				name = os.path.join(self.DecDir, dec)
+				NameBtn = gtk.CheckButton(dec)
+				NameBtn.connect("toggled", AddToList, comname, dec, NameBtn)
+				self.vbox.pack_start(NameBtn, False, False, 0)
 
-	for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), '*.apk'):
-		name = os.path.basename(apk)
-		NameBtn = gtk.CheckButton(name)
-		NameBtn.connect("toggled", AddToList, decname, name, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-
-
-	vbox.pack_start(CompileButton, False, False, 10)
-
-	comname = []
-
-	for dec in os.listdir(os.path.join(ScriptDir, "APK", "DEC")):
-		name = os.path.join(ScriptDir, "APK" , "DEC", dec)
-		NameBtn = gtk.CheckButton(dec)
-		NameBtn.connect("toggled", AddToList, comname, dec, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-
-	StartButton = gtk.Button(_("Start (De)Compiling"))
-	StartButton.connect("clicked", Start)
-	vbox.pack_start(StartButton, False, False, 15)
+		self.StartButton = gtk.Button(self.startBtnText)
+		self.StartButton.connect("clicked", self.StartDeCompile, decname, comname)
+		#self.StartButton.connect("clicked", StartThread, self.StartDeCompile, (comname, decname,))
+		self.vbox.pack_start(self.StartButton, False, False, 15)
 
 
-	RefreshBtn = gtk.Button(_("Refresh") )
-	RefreshBtn.connect("clicked", Refresh)
-	vbox.pack_end(RefreshBtn, False, False, 10)
+		RefreshBtn = gtk.Button(_("Refresh") )
+		RefreshBtn.connect("clicked", self.Refresh, vbox)
+		self.vbox.pack_end(RefreshBtn, False, False, 10)
 
-
-
-	DeComLabel = NewPage("(De)Compile", sw)
-	DeComLabel.show_all()
-	sw.add_with_viewport(vbox)
-	notebook.insert_page(sw, DeComLabel)
-	DeCompileWindow.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+		DeComLabel = NewPage(self.name, sw)
+		DeComLabel.show_all()
+		sw.add_with_viewport(self.vbox)
+		notebook.insert_page(sw, DeComLabel)
+		DeCompileWindow.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 	
 	
 def OptimizeImage():
@@ -2039,7 +2173,7 @@ def OptimizeImage():
 
 	ChooseImageButton = gtk.Button(_("Choose Images"))
 	OptimizeImDial = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, (gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-	ChooseImageButton.connect("clicked", OptimizeFC().openFile, OptimizeImDial, OptimizeFC, "*.png", True, False)
+	ChooseImageButton.connect("clicked", OptimizeFC().openFile, OptimizeImDial, OptimizeFC, ["*.png"], True, False)
 	vbox.pack_start(ChooseImageButton, True, False)
 
 
@@ -2109,198 +2243,209 @@ def OptimizeInside():
 	OptInsideWindow.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
+class ExPackage(DeCompile):
+	InDir = os.path.join(ScriptDir, "APK", "IN")
+	DecDir = os.path.join(ScriptDir, "APK", "EX")
+	OutDir = os.path.join(ScriptDir, "APK", "OUT")
+	text = _("Place APKs inside %s to select them." % InDir)
+	name = "Extract / Repackage"
+	firstText = "Extract"
+	secondText = "Repackage"
+	startBtnText = "Extract / Repackage"
+	chainFunc = "Sign"
+	Dual = True
 
-def ExPackage():
-	def Start(cmd):
-		if ExtractButton.get_active():
-			Number = len(exname)
+	def StartDeCompile(self, widget, firstnames, secnames):
+		First = self.FirstButton.get_active()
+		Second = self.SecondButton.get_active()
+		if First:
+			Number = len(firstnames)
 			for num in range(0, Number):
-				APK = exname[num]
+				APK = firstnames[num]
 				APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 				DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
-				print APKPath
 				ExZip(APKPath, DstDir)
-				Refresh("cmd")
-		elif RepackageButton.get_active():
-			Number = len(repname)
+			self.Refresh(widget, self.vbox)
+		elif Second:
+			Number = len(secnames)
 			for num in range(0, Number):
-				Ex = repname[num]
+				Ex = secnames[num]
 				DirPath = os.path.join(ScriptDir, "APK", "EX", Ex)
 				DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", "Unsigned-" + Ex + ".apk"), "w")
 				for fpath in find_files(DirPath, "*"):
 					f = fpath.replace(DirPath, '')
 					DstFile.write(fpath, f)
 				DstFile.close()
+			callback(widget, self.chainFunc)
 
-	def Refresh(cmd):
-		KillPage("cmd", vbox)
-		ExPackage()
-		
-	notebook = MainApp.notebook
-	ExPackWindow = window
-	vbox = gtk.VBox()
 
-	InfoLabel = gtk.Label(_("Place APKs inside %s to select them." % os.path.join("APK", "IN")))
-	vbox.pack_start(InfoLabel, False, False, 0)
+class Sign:
+	InDir = os.path.join(ScriptDir, "APK")
+	text = _("Place APKs inside %s to select them.\n\n\n" % os.path.join("APK", "IN"))
+	chain = "Install"
+	def __init__(self, widget=None):
+		self.alias = None
+		hbox = gtk.HBox()
+		notebook = MainApp.notebook
+		sw = gtk.ScrolledWindow()
+		vbox = gtk.VBox()
+		sw.add_with_viewport(vbox)
+		vbox2 = gtk.VBox()
+		hbox.pack_start(sw)
+		sep = gtk.VSeparator()
+		hbox.pack_start(sep, False, False, 0)
+		hbox.pack_start(vbox2, False, False, 0)
+
+		InfoLabel = gtk.Label(self.text)
+		vbox.pack_start(InfoLabel, False, False, 0)
+
+		label = gtk.Label(_("Choose the key you want to sign with:"))
+		vbox.pack_start(label, False, False)
+		Std = gtk.RadioButton(None, "None")
+		for key in find_files(UtilDir, "*.pk8"):
+			name = str(os.path.basename(key)).replace(".pk8", '')
+			NameBtn = gtk.RadioButton(Std, name)
+			vbox.pack_start(NameBtn, False, False, 2)
+		for key in find_files(UtilDir, "*.keystore"):
+			name = str(os.path.basename(key))
+			NameBtn = gtk.RadioButton(Std, name)
+			vbox.pack_start(NameBtn, False, False, 2)
+		[r for r in Std.get_group() if r.get_label() == "testkey"][0].set_active(True)
+
+		label = gtk.Label("Choose the APK you want to sign:")
+		vbox.pack_start(label, False, False)
+
+		self.sign = []
+
+		NameBtn = None
+		for apk in find_files(self.InDir, "*.apk"):
+			NameBtn = gtk.CheckButton(os.path.join(apk.split(os.sep)[-2], apk.split(os.sep)[-1]))
+			NameBtn.APKpath = apk
+			NameBtn.connect("clicked", AddToList, self.sign, apk, NameBtn)
+			vbox.pack_start(NameBtn, False, False, 0)
+
+		if NameBtn == None: label.set_text(InfoLabel.get_text())
+
+		self.StartBtn = gtk.Button("Sign")
+		self.StartBtn.connect("clicked", self.StartSign, Std)
+		vbox.pack_start(self.StartBtn, False, False, 5)
+
+		RefreshBtn = gtk.Button(_("Refresh") )
+		RefreshBtn.connect("clicked", self.Refresh)
+		vbox.pack_end(RefreshBtn, False, False, 10)
+
+		targetF = gtk.Frame(_("Key file"))
+		self.targetE = gtk.Entry()
+
+		passF = gtk.Frame(_("Password"))
+		self.passE = gtk.Entry()
+		self.passE.set_visibility(False)
+
+		aliasF = gtk.Frame(_("Alias"))
+		self.aliasE = gtk.Entry()
+
+		validityF = gtk.Frame(_("Validity (years)"))
+		self.validityE = gtk.Entry()
+
+		nameF = gtk.Frame(_("First and last name"))
+		self.nameE = gtk.Entry()
+
+		for x in [[targetF, self.targetE], [passF, self.passE], [aliasF, self.aliasE], [validityF, self.validityE], [nameF, self.nameE]]:
+			x[0].add(x[1])
+			vbox2.pack_start(x[0], False, False)
+
+		localF = gtk.Frame(_("Country (XX) | State / Province | City / Locality"))
+		localHBox = gtk.HBox()
+		self.countryE = gtk.Entry()
+		self.stateE = gtk.Entry()
+		self.cityE = gtk.Entry()
+		for x in [self.countryE, self.stateE, self.cityE]:
+			x.set_size_request(8, 30)
+			localHBox.pack_start(x)
+		localF.add(localHBox)
+		vbox2.pack_start(localF, False, False)
+
+		CreateBtn = gtk.Button(_("Create keyfile"))
+		CreateBtn.connect("clicked", self.CreateKey)
+		vbox2.pack_start(CreateBtn, False, False)
 	
-	ExtractButton = gtk.RadioButton(None, "Extract")
-	vbox.pack_start(ExtractButton, False, False, 10)
-
-	exname = []
-
-	for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), "*.apk"):
-		name = os.path.basename(apk)
-		NameBtn = gtk.CheckButton(name)
-		NameBtn.connect("toggled", AddToList, exname, name, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-
-	RepackageButton = gtk.RadioButton(ExtractButton, "Repackage")
-	vbox.pack_start(RepackageButton, False, False, 10)
-
-	repname = []
-
-	for ex in os.listdir(os.path.join(ScriptDir, "APK", "EX")):
-		name = os.path.join(ScriptDir, "APK", "EX", ex)
-		NameBtn = gtk.CheckButton(ex)
-		NameBtn.connect("toggled", AddToList, repname, ex, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-
-	StartButton = gtk.Button(_("Extract / Repackage"))
-	StartButton.connect("clicked", Start)
-	vbox.pack_start(StartButton, False, False, 10)
-
-	RefreshBtn = gtk.Button(_("Refresh") )
-	RefreshBtn.connect("clicked", Refresh)
-	vbox.pack_end(RefreshBtn, False, False, 10)
-	sw = gtk.ScrolledWindow()
 	
-	ExPackLabel = NewPage("ExPackage", sw)
-	ExPackLabel.show_all()
-	sw.add_with_viewport(vbox)
-	notebook.insert_page(sw, ExPackLabel)
-	ExPackWindow.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def Sign():
-	def Refresh(self):
+		SignLabel = NewPage("Sign", hbox)
+		notebook.insert_page(hbox, SignLabel)
+		window.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+
+
+	def Refresh(self, vbox):
 		KillPage("cmd", vbox)
-		Sign()
-	def StartSign(self):
-		print Std.get_group()
+		self.__init__()
+
+	def StartSign(self, widget, Std):
 		name = [r for r in Std.get_group() if r.get_active()][0].get_label()
-		key1 = os.path.join(ScriptDir, "Utils", name + ".x509.pem")
-		key2 = os.path.join(ScriptDir, "Utils", name + ".pk8")
-		Number = len(sign)
+		if name.endswith(".keystore"):
+			self.KeyStore(widget, name)
+		else:self.NormalSign(widget, Std)
+
+	def KeyStore(self, widget, active):
+		vbox = gtk.VBox()
+		KeystoreLabel = NewPage("Sign", vbox)
+		frame = gtk.Frame("Enter your keystore alias:")
+		self.alias = gtk.Entry()
+		frame.add(self.alias)
+		vbox.pack_start(frame, True, False, 0)
+		frame = gtk.Frame("Enter your keystore password:")
+		self.KeyPass = gtk.Entry()
+		self.KeyPass.set_visibility(False)
+		frame.add(self.KeyPass)
+		vbox.pack_start(frame, True, False, 0)
+		frame = gtk.Frame("Enter your private key pass:")
+		self.StorePass = gtk.Entry()
+		self.StorePass.set_visibility(False)
+		frame.add(self.StorePass)
+		vbox.pack_start(frame, True, False, 0)
+		StartBtn = gtk.Button(_("Start signing"))
+		StartBtn.connect("clicked", self.SignKeystore, active)
+		vbox.pack_start(StartBtn, True, False)
+		MainApp.notebook.insert_page(vbox, KeystoreLabel)
+		window.show_all()
+		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
+
+	def SignKeystore(self, widget, key):
+		alias = self.alias.get_text()
+		storepass = self.StorePass.get_text()
+		keypass = self.KeyPass.get_text()
+		for APK in self.sign:
+			OUT = os.path.join(ScriptDir, "APK", "OUT", "Signed-" + os.path.basename(APK).replace("Unsigned-", ""))
+			if os.path.exists(OUT):os.remove(OUT)
+			shutil.copy(APK, OUT)
+			os.system("jarsigner -verbose -keystore %s -storepass %s -keypass %s %s %s" %(key, storepass, keypass, OUT, alias))
+		callback(widget, self.chain)
+
+	def NormalSign(self, widget, Std):
+		name = [r for r in Std.get_group() if r.get_active()][0].get_label()
+		key1 = os.path.join(UtilDir, name + ".x509.pem")
+		key2 = os.path.join(UtilDir, name + ".pk8")
+		Number = len(self.sign)
 		for num in range(0, Number):
-			APK = sign[num]
+			APK = self.sign[num]
 			APKName = APK.replace('Unsigned-', '')
 			APKName = os.path.basename(APKName)
-			APK = os.path.join(ScriptDir, "APK", APK)
 			APKName = os.path.join(ScriptDir, "APK", "OUT", "Signed-" + APKName)
 			SystemLog("java -jar %s -w %s %s %s %s" %(SignJar, key1, key2, APK, APKName))
+		callback(widget, self.chain)
 
-	def CreateKey(cmd):
-		target = targetE.get_text()
-		alias = aliasE.get_text()
-		passw = passE.get_text()
-		validity = validityE.get_text()
-		name = nameE.get_text()
-		country = countryE.get_text()
-		state = stateE.get_text()
-		city = cityE.get_text()
-		print('keytool -genkey -alias %s -keypass %s -validity %s -keystore %s -storepass %s -genkeypair -dname "CN=%s, OU=JavaSoft, O=Sun, L=%s, S=%s C=%s"' %(alias, passw, validity, target, passw, name, city, state, country))
-	
-	hbox = gtk.HBox()
-	notebook = MainApp.notebook
-	vbox = gtk.VBox()
-	vbox2 = gtk.VBox()
-	hbox.pack_start(vbox)
-	sep = gtk.VSeparator()
-	hbox.pack_start(sep, False, False, 0)
-	hbox.pack_start(vbox2)
+	def CreateKey(self, widget):
+		target = self.targetE.get_text()
+		alias = self.aliasE.get_text()
+		passw = self.passE.get_text()
+		validity = self.validityE.get_text()
+		name = self.nameE.get_text()
+		country = self.countryE.get_text()
+		state = self.stateE.get_text()
+		city = self.cityE.get_text()
+		SystemLog('keytool -genkey -alias %s -keypass %s -validity %s -keystore %s.keystore -storepass %s -genkeypair -dname "CN=%s, OU=JavaSoft, O=Sun, L=%s, S=%s C=%s"' %(alias, passw, validity, os.path.join(ScriptDir, "Utils", target), passw, name, city, state, country))
 
-	InfoLabel = gtk.Label(_("Place APKs inside %s to select them.\n\n\n" % os.path.join("APK", "IN")))
-	vbox.pack_start(InfoLabel, False, False, 0)
-
-	label = gtk.Label(_("Choose the key you want to sign with:"))
-	vbox.pack_start(label, False, False, 10)
-	Std = gtk.RadioButton(None, "None")
-	for key in find_files(UtilDir, "*.pk8"):
-		name = str(os.path.basename(key)).replace(".pk8", '')
-		NameBtn = gtk.RadioButton(Std, name)
-		vbox.pack_start(NameBtn, False, False, 2)
-	[r for r in Std.get_group() if r.get_label() == "testkey"][0].set_active(True)
-
-	label = gtk.Label("Choose the APK you want to sign:")
-	vbox.pack_start(label, False, False, 10)
-
-	sign = []
-
-	NameBtn = None
-	for apk in find_files(os.path.join(ScriptDir, "APK", "OUT"), "*.apk"):
-		name = os.path.join("OUT", os.path.basename(apk))
-		NameBtn = gtk.CheckButton(name)
-		NameBtn.connect("clicked", AddToList, sign, name, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-	
-	for apk in find_files(os.path.join(ScriptDir, "APK", "IN"), "*.apk"):
-		name = os.path.join("IN", os.path.basename(apk))
-		NameBtn = gtk.CheckButton(name)
-		NameBtn.connect("clicked", AddToList, sign, name, NameBtn)
-		vbox.pack_start(NameBtn, False, False, 0)
-
-	if NameBtn == None: label.set_text(InfoLabel.get_text())
-
-	StartBtn = gtk.Button("Sign")
-	StartBtn.connect("clicked", StartSign)
-	vbox.pack_start(StartBtn, False, False, 5)
-
-	RefreshBtn = gtk.Button(_("Refresh") )
-	RefreshBtn.connect("clicked", Refresh)
-	vbox.pack_end(RefreshBtn, False, False, 10)
-
-	targetF = gtk.Frame(_("Key file"))
-	targetE = gtk.Entry()
-
-	passF = gtk.Frame(_("Password"))
-	passE = gtk.Entry()
-	passE.set_visibility(False)
-
-	aliasF = gtk.Frame(_("Alias"))
-	aliasE = gtk.Entry()
-
-	validityF = gtk.Frame(_("Validity (years)"))
-	validityE = gtk.Entry()
-
-	nameF = gtk.Frame(_("First and last name"))
-	nameE = gtk.Entry()
-
-	for x in [[targetF, targetE], [passF, passE], [aliasF, aliasE], [validityF, validityE], [nameF, nameE]]:
-		x[0].add(x[1])
-		vbox2.pack_start(x[0], False, False)
-
-	localF = gtk.Frame(_("Country (XX) | State / Province | City / Locality"))
-	localHBox = gtk.HBox()
-	countryE = gtk.Entry()
-	stateE = gtk.Entry()
-	cityE = gtk.Entry()
-	for x in [countryE, stateE, cityE]:
-		x.set_size_request(8, 30)
-		localHBox.pack_start(x)
-	localF.add(localHBox)
-	vbox2.pack_start(localF, False, False)
-
-	CreateBtn = gtk.Button(_("Create keyfile"))
-	CreateBtn.connect("clicked", CreateKey)
-	vbox2.pack_start(CreateBtn, False, False)
-	
-	
-
-	SignLabel = NewPage("Sign", hbox)
-	SignLabel.show_all()
-	notebook.insert_page(hbox, SignLabel)
-	window.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def Zipalign():
 	def StartZip(cmd):
@@ -2339,15 +2484,14 @@ def Zipalign():
 
 def Install():
 	def StartInst(cmd):
+		SystemLog("%s start-server" % adb)
 		print _("\n Waiting for device to connect via ADB...\n\n")
 		SystemLog("adb wait-for-device")
 		print _("Connected")
-		Number = len(apk)
-		for num in range(0, Number):
+		for num in range(0, len(apk)):
 			APK = apk[num]
-			SystemLog("adb install %s" % APK)
+			SystemLog("%s install -r %s" % (adb, APK))
 
-	SystemLog("%s start-server" % adb)
 	notebook = MainApp.notebook
 	
 	vbox = gtk.VBox()
@@ -2438,7 +2582,7 @@ def BakSmali():
 		vbox.pack_start(NameBtn, False, False, 0)
 
 	Output = gtk.Entry()
-	Output.set_text("classes.dex")
+	Output.set_text("out.dex")
 	vbox.pack_start(Output, False, False, 0)
 
 	SmaliBtn = gtk.Button("Smali")
@@ -2545,7 +2689,7 @@ def Deodex():
 					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 
 	RomChooseBtn = gtk.Button("Choose ROM to deodex")
-	RomChooseBtn.connect("clicked", DeoFC().openFile, RomChooser, DeoFC, ".zip", False)
+	RomChooseBtn.connect("clicked", DeoFC().openFile, RomChooser, DeoFC, [".zip"], False)
 	vbox.pack_start(RomChooseBtn, False, False, 0)
 
 	DoneBtn = gtk.Button( _("Done") )
@@ -2814,7 +2958,7 @@ def Compile():
 
 	CustomPythonFile = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
 						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-	CustomPyBtn = gtk.Button("Choose .py file (default SA.py)")
+	CustomPyBtn = gtk.Button("Choose .py file (default %s.py)" % ToolAttr.Name)
 	CustomPyBtn.connect("clicked", CstPy)
 	vbox.pack_start(CustomPyBtn, False, False, 0)
 
@@ -3385,154 +3529,433 @@ def AdbFE():
 	window.show_all()
 	frame.hide()
 
-class Omega(Theme):
+class OmegaSB(Theme, CopyFrom):
 	class OmegaThemeFC(FileChooserD): pass
-	SrcDir = os.path.join(ScriptDir, "Omega")
+	Name = "Statusbar"
+	PreviewDir = os.path.join(ScriptDir, "images", "Omega")
+	SrcDir = os.path.join(OmegaDir, "Working")
+	DownloadDir = os.path.join(OmegaDir, "Download")
+	TemplateDir = os.path.join(OmegaDir, "Templates")
+	CurrentTemplateDir = os.path.join(TemplateDir, Name)
+	TemplateZip = os.path.join(TemplateDir, Name + ".zip")
+	BuildDir = os.path.join(OmegaDir, "Build")
 	msg = _("Choose the color you want to theme with!")
-	CopyTree(os.path.join(ScriptDir, "images", "Omega"), SrcDir, True)
+
 	def __init__(self):
 		notebook = MainApp.notebook
-		self.HBOX = gtk.Hbox()
+		self.OmegaVbox = gtk.VBox()
 		self.OmegaNotebook = gtk.Notebook()
 		self.OmegaNotebook.set_tab_pos(gtk.POS_LEFT)
-		self.HBOX.pack_start(self.OmegaNotebook, False, False, 0)
-	
-		# DOWNLOAD THEME TAB
+		self.OmegaVbox.pack_start(self.OmegaNotebook)
+
+		self.ThemeImage = gtk.Image()
+		self.OmegaVbox.pack_start(self.ThemeImage, False, False, 8)
+
+		self.ThemeSW = gtk.ScrolledWindow()
 		self.ThemeVbox = gtk.VBox()
-		self.OmegaNotebook.insert_page(self.ThemeVbox, gtk.Label("Theme"), 0)
-		self.ThemeVbox.pack_start(gtk.Label(_("Select the theme you want to use:")), False, False, 0)
-		NameBtn = None
-		for x in ["GB", "ICS", "JB", "Custom..."]:
-			NameBtn = gtk.RadioButton(NameBtn, x)
-			self.ThemeVbox.pack_start(NameBtn, False, False, 0)
-		self.LastButton = NameBtn
+		self.ThemeSW.add_with_viewport(self.ThemeVbox)
+
+
+		UploadThemeBtn = gtk.Button(_("Upload theme APK"))
+		UploadThemeBtn.connect("clicked", self.UploadTheme)
+		self.ThemeVbox.pack_start(UploadThemeBtn)
+
+		self.OmegaNotebook.insert_page(self.ThemeSW, gtk.Label("Theme"), 0)
+		NotificationTypes = ["*com*", "*background*", "*bluetooth*", "*noti*", "*alarm*", "*ringer*", "*gps*", "*warning*", "*usb*"]
+		BatteryTypes = ["*battery*.png"]
+		SignalTypes = ["*signal*.png", "*data_fully_connected*"]
+	
+		# DOWNLOAD THEMES TAB
+		BatteryList = ["battery", "batt_*.png", "batt_", "*battery*.png", "*battery*65*.png"]
+		SignalList = ["signal", "*signal_*.png", "signal_", ["*signal*.png", "*data_fully_connected*"], "*wifi*4*.png"]
+		NotificationsList = ["Notifications", "noti_*.png", "noti_", NotificationTypes, "*adb*"]
+		for type in [BatteryList, SignalList, NotificationsList]:
+			model = gtk.ListStore(str, gtk.gdk.Pixbuf)
+			for x in find_files(os.path.join(self.PreviewDir), type[1]):
+				name = str(os.path.splitext(os.path.basename(x))[0].split(type[2])[1]).capitalize()
+				model.append([name, gtk.gdk.pixbuf_new_from_file(x)])
+
+			cb = gtk.ComboBox(model)
+			hbox = gtk.HBox(True)
+			ThemesVbox = gtk.VBox()
+
+			txt_cell = gtk.CellRendererText()
+			cb.pack_start(txt_cell, True)
+			cb.add_attribute(txt_cell, 'text', 0)
+
+			pb_cell = gtk.CellRendererPixbuf()
+			cb.pack_start(pb_cell, False)
+			cb.add_attribute(pb_cell, 'pixbuf', 1)
+			cb.set_title("Select battery")
+
+			DownloadBtn = gtk.Button(_("Download"))
+			DownloadBtn.connect("clicked", StartThread, self.DownloadTheme, (cb, type[2], type[4], type[0],))
+
+			hbox.pack_start(cb)
+			hbox.pack_start(DownloadBtn, False, False, 0)
+			ThemesVbox.pack_start(hbox, False, False, 0)
+			UploadBatteryBtn = gtk.Button(_("Upload custom battery files"))
+			UploadBatteryBtn.connect("clicked", self.UpdateTheme, type[3])
+			ThemesVbox.pack_start(UploadBatteryBtn, False, False)
+
+			ThemesFrame = gtk.Frame(_("Select %s style") % type[0])
+			ThemesFrame.add(ThemesVbox)
+			if find_files(os.path.join(self.PreviewDir), type[1]) != []:
+				self.ThemeVbox.pack_start(ThemesFrame, True, False)		
+		#
 
 		hbox = gtk.HBox()
-		SelectBtn = gtk.Button(_("Select theme"))
-		SelectBtn.connect("clicked", self.SelectTheme)
-		SelectApkBtn = gtk.Button(_("Select theme APK"))
-		SelectApkBtn.connect("clicked", self.SelectTheme, "APK")
-		hbox.pack_start(SelectBtn)
-		hbox.pack_start(SelectApkBtn)
+		self.CenterClockBtn = gtk.RadioButton(None, "Center clock")
+		lClock = gtk.RadioButton(self.CenterClockBtn, "Left clock")
+		rClock = gtk.RadioButton(self.CenterClockBtn, "Right clock")
+		for x in [lClock, self.CenterClockBtn, rClock]:
+			hbox.pack_start(x, True, False)
+			x.connect("toggled", self.CustomClock)
 		self.ThemeVbox.pack_start(hbox, False, False)
 
 		# COLORIZE TAB
 		self.vbox = gtk.VBox()
 		self.hbox = gtk.HBox()
-		self.vbox1 = gtk.VBox()
+		vbox1 = gtk.VBox()
+		vbox2 = gtk.VBox()
 		self.OmegaNotebook.insert_page(self.vbox, gtk.Label("Colorize"), 1)
 		OmegaLabel = NewPage(_("Omega"), self.vbox)
-		self.vbox.pack_start(self.hbox, False, False, 10)
-		self.hbox.pack_start(self.vbox1, False, False, 2)
 		self.colorsel = gtk.ColorSelection()
 		self.colorsel.set_current_color(gtk.gdk.Color("#33b5e5"))
 
 		if not os.path.exists(self.SrcDir):
 			os.makedirs(self.SrcDir)
-		self.hbox.pack_start(self.colorsel, False, False, 0)
+		self.vbox.pack_start(self.colorsel, False, False, 0)
+
+		self.vbox.pack_start(self.hbox, False, False, 10)
+		self.hbox.pack_start(vbox1)
+		sep = gtk.VSeparator()
+		self.hbox.pack_start(sep, False, False, 20)
+		self.hbox.pack_start(vbox2)
 
 		StartButton = gtk.Button( _("Colorize") )
-		StartButton.connect("clicked", self.PreTheming)
 		StartButton.connect("clicked", self.StartTheming)
 		self.vbox.pack_start(StartButton, False, False, 15)
-		label = gtk.Label(_("Theme:"))
-		self.vbox1.pack_start(label, False, False, 3)
-		for x in ["Buttons", "Pulldown", "icons"]:
-			NameBtn = gtk.CheckButton(x)
-			NameBtn.set_active(True)
-			self.vbox1.pack_start(NameBtn, False, False)
-		sep = gtk.HSeparator()
-		self.vbox1.pack_start(sep, False, False, 20)
-		self.RightClockBtn = gtk.RadioButton(None, "Right clock")
-		self.CenterClockBtn = gtk.RadioButton(self.RightClockBtn, "Center clock")
-		for x in [self.RightClockBtn, self.CenterClockBtn]: self.vbox1.pack_start(x, False, False, 0)
+		# SET CHECKBUTTONS FOR THEMING
+		self.BatteryCheck = gtk.CheckButton("Battery")
+		self.NotificationCheck = gtk.CheckButton("Notifications")
+		self.SignalCheck = gtk.CheckButton("Signal")
+		self.StatBg = gtk.CheckButton("Statusbar bg")
+		for x in [self.BatteryCheck, self.NotificationCheck, self.SignalCheck, self.StatBg]:
+			vbox1.pack_start(x, False, False)
+		# SET CLOCK CHECKS
+		self.ClockCheck = gtk.CheckButton("Clock")
+		self.BattPercCheck = gtk.CheckButton("Battery percentage")
+		self.ClockAMCheck = gtk.CheckButton("AM/PM")
+		self.ClockHourCheck = gtk.CheckButton("Hour")
+		self.ClockMinuteCheck = gtk.CheckButton("Minute")
+		self.ClockDividerCheck = gtk.CheckButton("Divider")
+		for x in [self.BattPercCheck, self.ClockAMCheck, self.ClockHourCheck, self.ClockMinuteCheck, self.ClockDividerCheck]:
+			vbox2.pack_start(x, False, False)
+		# SET CLOCK COLORS
+		self.BatteryPercColor = "#FFFFFF"
+		self.ClockHourColor = "#FFFFFF"
+		self.ClockDividerColor = "#FFFFFF"
+		self.ClockMinuteColor = "#FFFFFF"
+		self.ClockAMColor = "#FFFFFF"
 
-		# PREVIEW TAB
-		self.PreviewVbox = gtk.VBox()
-		self.OmegaNotebook.insert_page(self.PreviewVbox, gtk.Label("Preview"), 2)
+		# PREVIEW
 
-		self.Pic1 = os.path.join(ScriptDir, "Omega", "BAR.png")
-		self.Pic2 = os.path.join(ScriptDir, "Omega", "WIFI.png")
-		self.Pic3 = os.path.join(ScriptDir, "Omega", "CLOCK.png")
-		self.Pic4 = os.path.join(ScriptDir, "Omega", "GPS.png")
+		if find_files(self.SrcDir, "stat_sys_battery_65.png") == []: self.BattPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.BattPic = find_files(self.SrcDir, "stat_sys_battery_65.png")[0]
+		if find_files(self.SrcDir, "*wifi*4*") == []: self.SignPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.SignPic = find_files(self.SrcDir, "*wifi*4*")[0]
+		self.Pic3 = PILImage.open(os.path.join(self.PreviewDir, "CLOCK.png"))
+		if find_files(self.SrcDir, "*adb*") == []: self.NotiPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.NotiPic = find_files(self.SrcDir, "*adb*")[0]
+		if os.path.exists(os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")):
+			self.StatusbarPic = os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")
+		else: self.StatusbarPic = os.path.join(self.PreviewDir, "status_bar_bg.png")
+		#if
 
-		self.img = gtk.Image()
-		self.EndTheming()
-		self.HBOX.pack_start(self.img)
+		self.EndTheming(self.OmegaNotebook)
 
 		# BUILD TAB
 		self.BuildVbox = gtk.VBox()
 		self.OmegaNotebook.insert_page(self.BuildVbox, gtk.Label("Build"), 3)
 
-		self.ThemeName = gtk.Entry()
-		self.DevName = gtk.Entry()
-		self.Description = gtk.Entry()
-
-		for y in range(0,3):
-			hbox = gtk.HBox()
-			self.BuildVbox.pack_start(hbox, False, False, 15)
-			hbox.pack_start(gtk.Label([_("Enter theme name:"), _("Enter developer name"), _("Enter description:")][y]), False, False, 5)
-			hbox.pack_start([self.ThemeName, self.DevName, self.Description][y])
-		
-		#
-		notebook.insert_page(self.HBOX, OmegaLabel)
+		hbox = gtk.HBox()
+		DownloadBtn = gtk.Button("Download Template")
+		DownloadBtn.connect("clicked", StartThread, self.DownloadTemplate, (self.BuildVbox,))
+		hbox.pack_start(DownloadBtn)
+		self.Customize = False
+		if os.path.exists(os.path.join(self.TemplateDir, self.Name)): self.DownloadTemplate(DownloadBtn, self.BuildVbox)
+		BuildBtn = gtk.Button("Build!")
+		BuildBtn.connect("clicked", self.BuildTheme)
+		hbox.pack_start(BuildBtn)
+		self.BuildVbox.pack_end(hbox, True, False)
+		notebook.insert_page(self.OmegaVbox, OmegaLabel)
+		self.OmegaNotebook.connect("switch-page", self.EndTheming)
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
+		if not os.path.exists(self.TemplateZip): StartThread("", self.DownloadTemplate, (self.BuildVbox,))
 
-	def SelectTheme(self, cmd, option="Folder"):
-		if option == 'APK':
-			self.SelectThemeDial = gtk.FileChooserDialog(title=_("Select your theme APK"),action=gtk.FILE_CHOOSER_ACTION_OPEN,
-				                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-			APK = self.OmegaThemeFC().openFile(" ", self.SelectThemeDial, self.OmegaThemeFC, ".apk", False)
-			SystemLog("%s x %s -y -o%s" %(sz, APK, os.path.join(ScriptDir, "Omega")))
-			for dir in ["xhdpi", "hdpi", "mdpi", "ldpi"]:
-				self.SearchDir = os.path.join(ScriptDir, "Omega", "res", "drawable-%s" % dir)
-				if os.path.exists(os.path.join(ScriptDir, "Omega", "res", "drawable-%s" % dir)): break
-			self.Pic1 = find_files(self.SearchDir, "*stat*signal*fully*")[random.randrange(0, len(find_files(self.SearchDir, "*stat*signal*fully*")))]
-			self.Pic4 = find_files(self.SearchDir, "*gps**")[random.randrange(0, len(find_files(self.SearchDir, "*gps*")))]
-			self.EndTheming()
-		elif option == "Folder":
-			active = [r for r in self.LastButton.get_group() if r.get_active()][0].get_label()
-			if active == "Custom...":
-				self.SelectThemeDial = gtk.FileChooserDialog(title=_("Select your theme folder"),action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-						          	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-				self.OmegaThemeFC().openFile(" ", self.SelectThemeDial, self.OmegaThemeFC, None, False)
-	
-	def PreTheming(self, cmd):
-		CopyTree(os.path.join(ScriptDir, "images", "Omega"), self.SrcDir, True)
+	def DownloadTheme(self, widget, cb, startpatt, newpatt, name):
+		if not os.path.exists(self.DownloadDir):
+			os.makedirs(self.DownloadDir)
+		activeText = cb.get_active_text().lower()
+		pattern = startpatt+activeText
+		link = "https://dl.dropbox.com/u/22147062/Omega_Theme_Styles/StatusBar/%s/%s%s.zip" % (name.capitalize(), startpatt, activeText)
+		print link
+		Zip = os.path.join(self.DownloadDir, pattern + ".zip")
+		if not os.path.exists(Zip):
+			urllib.urlretrieve(link, Zip)
+		if startpatt == "batt_": self.ExBatt(Zip, self.SrcDir, ign="*.db")
+		else: ExTo(Zip, self.SrcDir, ign="*.db")
+		newImage = find_files(self.SrcDir, newpatt)[0]
+
+		if startpatt == "batt_": self.BattPic = newImage
+		elif startpatt == "signal_": self.SignPic = newImage
+		elif startpatt == "noti_": self.NotiPic = newImage
+		self.EndTheming(widget)
+
+	def ExBatt(self, zipf, expath, pattern = "*", ign=""):
+		zip_file = zipfile.ZipFile(zipf, 'r')
+		for member in zip_file.namelist():
+			filename = self.BattNameChanger(os.path.basename(member))
+			if not filename:continue
+			source = zip_file.open(member)
+			if fnmatch.fnmatch(filename, pattern) and not fnmatch.fnmatch(filename, ign):
+				target = file(os.path.join(expath, filename), "wb")
+				shutil.copyfileobj(source, target)
+			source.close()
+			target.close()
+		zip_file.close()
+
+	def BattNameChanger(self, name):
+		perc = ''.join(filter(lambda x: x.isdigit(), name))
+		filename = "stat_sys_battery_" + perc
+		if "charge" in name or "anim" in name:
+			filename = filename + "_charge"
+		filename = filename + ".png"
+		if perc == '': return name
+		elif filename != name:
+			print "%s -> %s" %(name, filename)
+		if not perc == '': return filename
+
+	def DownloadTemplate(self, widget, vbox):
+		Zip = self.TemplateZip
+		if not os.path.exists(Zip):
+			urllib.urlretrieve(ToolAttr.DropboxLink + self.Name + ".zip", Zip)
+		ExZip(Zip, os.path.dirname(Zip))
+		stringFile = find_files(os.path.dirname(Zip), "strings.xml")[0]
+		strings = open(stringFile, "r")
+		i = 0
+		self.intList = []
+		self.strList = []
+		hbox = gtk.HBox()
+		vbox.pack_start(hbox)
+		vbox1 = gtk.VBox()
+		vbox2 = gtk.VBox()
+		hbox.pack_start(vbox1)
+		hbox.pack_start(vbox2)
+		for line in strings.read().split("\n"):
+			if i > 0 and '"' in line:
+				value = strip_esc(line).split('"')[1]
+				sett = str(strip_esc(line).split(">", 1)[1]).split("<")[0]
+				try:
+					if int(sett) in range(0,23):self.intList.append([value, sett])
+				except:
+					self.strList.append([value, sett])
+			i += 1
+		for x in self.strList:
+			frame = gtk.Frame(x[0])
+			entry = gtk.Entry()
+			frame.add(entry)
+			if self.strList.index(x) < len(self.strList) / 2 : vbox1.pack_start(frame)
+			else: vbox2.pack_start(frame)
+			self.strList[self.strList.index(x)].append(entry.get_text)
+		if not self.Customize == True:
+			self.SetCustomize()
+			self.Customize = True
+
+	def SetCustomize(self):
+		list = self.intList
+		sw = gtk.ScrolledWindow()
+		hbox = gtk.HBox(True)
+		vbox1 = gtk.VBox()
+		vbox2 = gtk.VBox()
+		hbox.pack_start(vbox1, True, False)
+		hbox.pack_start(vbox2, True, False)
+		sw.add_with_viewport(hbox)
+		for x in list:
+			frame = gtk.Frame(x[0])
+			adj = gtk.Adjustment(1.0, 1.0, 22.0, 1.0, 0.0, 0.0)
+			spin = gtk.SpinButton(adj, 0, 0)
+			spin.set_value(float(x[1]))
+			frame.add(spin)
+			if "location" in x[0]: vbox2.pack_start(frame)
+			else: vbox1.pack_start(frame)
+			list[list.index(x)] += [spin.get_value_as_int, spin]
+		self.OmegaNotebook.insert_page(sw, gtk.Label("Customize"), 2)
+		window.show_all()
+
+	def UploadTheme(self, widget):
+		ThemeVbox = gtk.VBox()
+		ThemeVbox.pack_start(gtk.Label(_("Import from APK:")), False, False, 10)
+		self.SignalImportBtn = gtk.CheckButton("Signal styles")
+		self.NotiImportBtn = gtk.CheckButton("Notification styles")
+		self.BatteryImportBtn = gtk.CheckButton("Battery styles")
+		ThemeVbox.pack_start(self.SignalImportBtn, False, False, 0)
+		ThemeVbox.pack_start(self.NotiImportBtn, False, False, 0)
+		ThemeVbox.pack_start(self.BatteryImportBtn, False, False, 0)
+		SelectApkBtn = gtk.Button("Select theme APK")
+		SelectApkBtn.connect("clicked", self.ImportTheme)
+		ThemeVbox.pack_start(SelectApkBtn, True, False)
+		self.OmegaNotebook.insert_page(ThemeVbox, gtk.Label("Upload APK"), 1)
+		window.show_all()
+		self.OmegaNotebook.set_current_page(1)
+
+	def ImportTheme(self, widget):
 		
-	def EndTheming(self):
-		im = PILImage.open(os.path.join(ScriptDir, "Omega", "statusbar.png")).convert("RGBA")
+		NotificationTypes = ["com_*", "global_counter_background", "*bluetooth*", "stat_overflow_notifications", "*alarm*", "*ringer*", "*gps*", "stat_sys_warning*", "*usb*"]
+		BatteryTypes = ["stat_sys_battery*"]
+		SignalTypes = ["stat_sys_signal*", "stat_sys_wifi*", "stat_sys_data_fully_connected*"]
+		Types = []
+
+		NotiIgn = ["*off*", "*on*", "*tether*", "*dialog*", "ic_*"]
+		IgnoreTypes = []
+
+		self.UpdateThemeDial = gtk.FileChooserDialog(title=_("Select your theme APK"),action=gtk.FILE_CHOOSER_ACTION_OPEN,
+					  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		APK = self.OmegaThemeFC().openFile(" ", self.UpdateThemeDial, self.OmegaThemeFC, ["*.apk"], False)
+		
+		if self.SignalImportBtn.get_active():Types += SignalTypes
+		if self.NotiImportBtn.get_active():
+			Types += NotificationTypes
+			IgnoreTypes += NotiIgn
+		if self.BatteryImportBtn.get_active():Types += BatteryTypes
+
+		for filter in Types: ExTo(APK, self.SrcDir, pattern=filter + ".png", ign=IgnoreTypes)
+		
+		self.EndTheming(widget)
+		
+
+	def UpdateTheme(self, widget, patterns=["*"]):
+		self.UpdateThemeDial = gtk.FileChooserDialog(title=_("Select your theme folder"),action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+					  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		self.BaseDir = self.OmegaThemeFC().openFile(" ", self.UpdateThemeDial, self.OmegaThemeFC, [], False)
+
+		if not self.BaseDir == None:
+			if not self.BaseDir.endswith("dpi"):
+				for dir in ["xhdpi", "hdpi", "mdpi", "ldpi"]:
+					self.SearchDir = os.path.join(self.BaseDir, "res", "drawable-%s" % dir)
+					if os.path.exists(self.SearchDir): break
+			if not os.path.exists(self.SearchDir) or self.BaseDir.endswith("dpi"):
+				self.SearchDir = self.BaseDir
+
+			if isinstance(patterns, str):patterns = [patterns]
+			for pattern in patterns:
+				for file in [x for x in find_files(self.SearchDir, pattern) if fnmatch.fnmatch(x, pattern)]:
+					if "battery" in os.path.basename(file):
+						Dest = os.path.join(self.SrcDir, self.BattNameChanger(os.path.basename(file)) )
+					else:
+						Dest = os.path.join(self.SrcDir, os.path.basename(file))
+					shutil.copy(file, Dest)
+
+			if find_files(self.SrcDir, "stat_sys_battery_65.png") == []: self.BattPic = os.path.join(ScriptDir, "images", "Empty.png")
+			else: self.BattPic = find_files(self.SrcDir, "stat_sys_battery_65.png")[0]
+			if find_files(self.SrcDir, "*wifi*4*") == []: self.SignPic = os.path.join(ScriptDir, "images", "Empty.png")
+			else: self.SignPic = find_files(self.SrcDir, "*wifi*4*")[0]
+			self.Pic3 = PILImage.open(os.path.join(self.PreviewDir, "CLOCK.png"))
+			if find_files(self.SrcDir, "*adb*") == []: self.NotiPic = os.path.join(ScriptDir, "images", "Empty.png")
+			else: self.NotiPic = find_files(self.SrcDir, "*adb*")[0]
+			if os.path.exists(os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")):
+				self.StatusbarPic = os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")
+			else: self.StatusbarPic = os.path.join(self.PreviewDir, "status_bar_bg.png")
+			self.EndTheming(widget)
+		
+
+	def StartTheming(self, widget):
+		Clr = self.ParseColor()
+		images = []
+		if self.BatteryCheck.get_active(): images += find_files(self.SrcDir, "*battery*")
+		if self.NotificationCheck.get_active():
+			images += find_files(self.SrcDir, "com*")
+			for x in find_files(self.SrcDir, "*stat*"):
+				if not "signal" in x and not "battery" in x: images.append(x)
+		if self.SignalCheck.get_active():
+			images += find_files(self.SrcDir, "*stat*sys*signal*")
+			images += find_files(self.SrcDir, "*stat_sys_data*")
+		if self.BattPercCheck.get_active():
+			self.BatteryPercColor = Clr
+		if self.ClockAMCheck.get_active():
+			self.ClockAMColor = Clr
+		if self.ClockHourCheck.get_active():
+			self.ClockHourColor = Clr
+		if self.ClockMinuteCheck.get_active():
+			self.ClockMinuteColor = Clr
+		if self.ClockDividerCheck.get_active():
+			self.ClockDividerColor = Clr
+
+		for image in images:
+			Image1 = str(image)
+			if Pil == True:
+				img = self.image_tint(Image1, Clr)
+				img.save("%s" % Image1)
+			else:
+				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
+				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
+		if self.StatBg.get_active():
+			NewStat = PILImage.new("RGBA", PILImage.open(self.StatusbarPic).size, Clr)
+			NewStat.save(os.path.join(self.SrcDir, "status_bar_bg.png"))
+			self.StatusbarPic = os.path.join(self.SrcDir, "status_bar_bg.png")
+			self.StatusbarColor = Clr
+		self.EndTheming(widget)
+		
+	def EndTheming(self, widget, event=None, data=0):
+		if event == None: data = self.OmegaNotebook.get_current_page()
+		pageWidget = self.OmegaNotebook.get_nth_page(data)
+		TabName = self.OmegaNotebook.get_tab_label_text(pageWidget)
+		if TabName == _("Colorize"): 
+			Landscape = True
+		else: Landscape = False
+
+		im = PILImage.open(self.StatusbarPic).convert("RGBA")
 		im.load()
-		Result = im.resize((240, im.size[1]), PILImage.ANTIALIAS)
-		self.usedWidth = 0
+		if Landscape == False:
+			Result = im.resize((240, 24), PILImage.ANTIALIAS)
+		else: Result = im.resize((480, 24), PILImage.ANTIALIAS)
+		self.usedRight = 0
+		self.usedLeft = 0
 
-		Result = self.pasteRight(Result, [self.Pic1, self.Pic2])
-		
-		if self.RightClockBtn.get_active():
-			Result = self.pasteRight(Result, [self.Pic3])
-		elif self.CenterClockBtn.get_active():
-			Result = self.pasteCenter(Result, self.Pic3)
+		size = 18
+		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), size)
+		img=PILImage.new("RGBA", (4*size,22))
+		draw = PILImageDraw.Draw(img)
+		draw.text((0, 0),"19", PILImageColor.getrgb(self.ClockHourColor),font=font)
+		draw.text((size + 2, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=font)
+		draw.text((size + 4, 0),"19", PILImageColor.getrgb(self.ClockMinuteColor),font=font)
+		draw.text((size*2 + 6, 0),"am", PILImageColor.getrgb(self.ClockAMColor),font=font)
+		draw = PILImageDraw.Draw(img)
+		draw = PILImageDraw.Draw(img)
 
-		Result = self.pasteLeft(Result, [self.Pic4])
+		ClockLoc = [self.pasteLeft, self.pasteCenter, self.pasteRight][["Left clock", "Center clock", "Right clock"].index([r for r in self.CenterClockBtn.get_group() if r.get_active()][0].get_label())]
+		Result = ClockLoc(Result, [img])
+
+		Result = self.pasteRight(Result, [self.BattPic, self.SignPic])
+
+		Result = self.pasteLeft(Result, [self.NotiPic])
 		Result.load()
 		
-		self.img.set_from_pixbuf(self.image2pixbuf(Result))
+		self.ThemeImage.set_from_pixbuf(image2pixbuf(Result))
+		
 
-
-	def image2pixbuf(self, im):
-	    arr = array.array('B', im.tostring())
-	    width, height = im.size
-	    return gtk.gdk.pixbuf_new_from_data(arr, gtk.gdk.COLORSPACE_RGB, True, 8, width, height, width * 4)
 
 	def pasteLeft(self, im, imList):
 		w, h = im.size
-		w = 4
-		i = 0
 		for x in imList:
-			pasteImage = PILImage.open(x)
+			if PILImage.isStringType(x):  # file path?
+				pasteImage = PILImage.open(x)
+			else:
+				pasteImage = x
 			if not pasteImage.mode in ["RGB", "RGBA"]:
-				print("Converting %s to RGBA" % pasteImage.mode)
+				if pasteImage.mode == "P": print("Converting %s to RGBA" % pasteImage.mode)
 				pasteImage = pasteImage.convert("RGBA")
 			pasteImage.load()
 			width, height = pasteImage.size
@@ -3541,28 +3964,38 @@ class Omega(Theme):
 				pasteImage = pasteImage.resize((int(perc * width), int(perc * height)), PILImage.ANTIALIAS)
 				pasteImage.load()
 				width, height = pasteImage.size
-			im.paste(pasteImage, (w, int((h - height) / 2), w + width, int(((h - height) / 2) + height)), pasteImage)
-			w = w + width + 2
-			i = i + 1
+			box = (self.usedLeft + 2, int((h - height) / 2), self.usedLeft + width + 2, int(((h - height) / 2) + height))
+			im.paste(pasteImage, box, pasteImage)
+			self.usedLeft += width + 2
 		return im
 
 	def pasteCenter(self, im, image):
-		pasteImage = PILImage.open(image)
+		if isinstance(image, str):  # file path?
+			pasteImage = PILImage.open(image[0])
+		else: pasteImage = image[0]
 		if not pasteImage.mode in ["RGB", "RGBA"]:
 			print("Converting %s to RGBA" % pasteImage.mode)
 			pasteImage = pasteImage.convert("RGBA")
 		pasteImage.load()
 		w, h = pasteImage.size
 		width, height = im.size
+		if h > height:
+			perc = (height - 2) / h
+			pasteImage = pasteImage.resize((int(perc * w), int(perc * h)), PILImage.ANTIALIAS)
+			pasteImage.load()
+			w, h = pasteImage.size
 		im.paste(pasteImage, (int((width / 2) - (w/2)), int((height - h) / 2),  int((width / 2) + (w/2)),   int(((height - h) / 2) + h)), pasteImage)
 		return im
 
 	def pasteRight(self, im, imList):
 		w, h = im.size
 		for x in imList:
-			pasteImage = PILImage.open(x)
+			if PILImage.isStringType(x):  # file path?
+				pasteImage = PILImage.open(x)
+			else:
+				pasteImage = x
 			if not pasteImage.mode in ["RGB", "RGBA"]:
-				print("Converting %s to RGBA" % pasteImage.mode)
+				if pasteImage.mode == "P": print("Converting %s to RGBA" % pasteImage.mode)
 				pasteImage = pasteImage.convert("RGBA")
 			pasteImage.load()
 			width, height = pasteImage.size
@@ -3571,12 +4004,74 @@ class Omega(Theme):
 				pasteImage = pasteImage.resize((int(perc * width), int(perc * height)), PILImage.ANTIALIAS)
 				pasteImage.load()
 				width, height = pasteImage.size
-			box = (w - self.usedWidth - width - 2, int((h - height) / 2), w - self.usedWidth - 2, int(((h - height) / 2) + height))
-			print box
+			box = (w - self.usedRight - width - 2, int((h - height) / 2), w - self.usedRight - 2, int(((h - height) / 2) + height))
 			im.paste(pasteImage, box, pasteImage)
-			self.usedWidth = self.usedWidth + width + 2
+			self.usedRight += width + 2
 		return im
 
+	def CustomClock(self, widget):
+		if not self.Customize == False:
+			val = ["Left clock", "Center clock", "Right clock"].index(widget.get_label())
+			self.ShiftCustom("digital_clock_grid_location", [1,11,22][val], ["plus", "plus", "min"][val])
+		self.EndTheming(widget)
+
+	def ShiftCustom(self, value, valInt, mat="min"):
+		valList = [val for val in self.intList if val[0] == value][0]
+		value = valList[0]
+		AlreadySet = []
+		for val in [intv for intv in self.intList if "location" in intv[0]]:
+			if val[0] != value and val[2]() == valInt:AlreadySet.append(val[0])
+		valList[3].set_value(valInt)
+		if not AlreadySet == []:
+			if mat == "min":self.ShiftCustom(AlreadySet[0], valInt - 1)
+			elif mat == "plus":self.ShiftCustom(AlreadySet[0], valInt + 1)
+
+	def BuildTheme(self, cmd):
+		self.CurrentBuildDir = os.path.join(self.BuildDir, self.Name, date())
+		shutil.copytree(self.CurrentTemplateDir, self.CurrentBuildDir)
+		TemplateStrings = find_files(self.CurrentBuildDir, "*strings.xml")[0]
+		TemplateColors = find_files(self.CurrentBuildDir, "colors.xml")[0]
+		values = []
+		for x in self.strList + self.intList: 
+			print x[2]()
+			values.append([x[0], x[2]()])
+		SetXml(TemplateStrings, values)
+		SetXml(TemplateColors, [["digital_clock_minute_text_color", self.ClockMinuteColor], ["digital_clock_hour_text_color", self.ClockHourColor], ["digital_clock_am_pm_text_color", self.ClockAMColor], ["digital_clock_:_text_color", self.ClockDividerColor], ["battery_percent_text_color", self.BatteryPercColor]])
+		self.StartCopy(None, (self.SrcDir, os.path.join(self.CurrentBuildDir, "res", "drawable-xhdpi"), "*.png"))
+		for density in [[480, "hdpi"], [320, "mdpi"], [240, "ldpi"]]:
+			dpi = density[0]
+			Perc = dpi * 100 / 720
+			dpiDir = density[1]
+			SrcDir = os.path.join(self.CurrentBuildDir, "res", "drawable-xhdpi")
+			DstDir = SrcDir.replace("drawable-xhdpi", "drawable-%s" % dpiDir)
+			if os.path.exists(DstDir):shutil.rmtree(DstDir)
+			os.makedirs(DstDir)
+			for image in find_files(SrcDir, "*.png"):
+				DstFile = image.replace("drawable-xhdpi", "drawable-%s" % dpiDir)
+				print("%s -> %s" %(image, DstFile))
+				if image.endswith("9.png"):
+					print("%s has 9patch" % image)
+					shutil.copy(image, DstFile)
+					continue
+				if r"%" in str(Perc):
+					Perc = round(float(str(Perc).replace(r'%', '')), 2)
+				pixbuf = gtk.gdk.pixbuf_new_from_file(image)
+				w = pixbuf.get_width()
+				h = pixbuf.get_height()
+				if not w <= 1 and not h <= 1:
+					w = int(int(Perc * w) / 100)
+					h = int(int(Perc * h)  / 100)
+					pixbuf = pixbuf.scale_simple(w,h,gtk.gdk.INTERP_HYPER)
+				pixbuf.save(DstFile, os.path.splitext(image)[1].replace(".", ""))
+
+		class Compile(DeCompile):
+				name = "DeCompile"
+				text = _("Choose the themes you want to (de)compile")
+				InDir = os.path.join(self.BuildDir, "OUT")
+				DecDir = os.path.join(os.path.join(self.BuildDir, self.Name))
+				OutDir = os.path.join(ScriptDir, "APK", "OUT")
+				dual = False
+		Compile()
 	
 
 def Changelog():
@@ -3626,6 +4121,14 @@ def Bug(cmd=''):
 
 	webbrowser.open("http://forum.xda-developers.com/newreply.php?do=newreply&noquote=1&p=22414621")
 
+def Update():
+	stablechoose =  ChooseDialog("Update", "What branch do you want?", ["Stable", "Test"])
+	if stablechoose == 1:
+		branch = ToolAttr.UnstableBranch
+	else:
+		branch = ToolAttr.StableBranch
+	Web.open(ToolAttr.GitLink + branch)
+
 def About():
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
@@ -3655,22 +4158,8 @@ def About():
 	notebook.insert_page(vbox, AboutLabel)
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
-	
 
-def Update():
-	stablechoose =  YesNo("Update", "What branch do you want?", "Stable", "Test")
-	if stablechoose == 1:
-		branch = ToolAttr.UnstableBranch
-	else:
-		branch = ToolAttr.StableBranch
-
-	if os.path.exists(os.path.join(ConfDir, "Update.zip")):
-		print _("Removing old update.zip")
-		os.remove(os.path.join(ConfDir, "Update.zip"))
-	print _("Retrieving new Update.zip")
-	Web.open(ToolAttr.GitLink + branch)
-
-if not os.path.exists(os.path.join(Home, ".SA", "Language")):
+if not os.path.exists(os.path.join(ConfDir, "Language")):
 	window.destroy()
 	window2.show_all()
 
@@ -3678,11 +4167,14 @@ if not FirstRun == False:
 	callback("cmd", "Utils")
 	callback("cmd", "About")
 
+
+
 def main():
 	try:
+		gobject.threads_init()
 		gtk.main()
 	except KeyboardInterrupt:
-		exit()
+		exit(0)
 
 if  __name__ == '__main__':
 	main()

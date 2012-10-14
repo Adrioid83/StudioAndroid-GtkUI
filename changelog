@@ -196,6 +196,32 @@ Updates:
 	Fixed Windows bug
 	A lot of other things!
 
+==v0.82==
+	Updating now opens zip URL in browser, automized updating not possible :(
+	Omega Statusbar is able to build a theme - fully automized
+	Chained reactions, like Compile > Sign > Install
+	Live output when Debug = ON
+	Sign with own created private key
+	PIL toggle on Image tab
+	Install eclipse button
+
+==v0.83.1==
+	Omega toggle in options menu - Toggles version, then restarts
+	Threading - this means screan won't turn black anymore (hang)
+	Download Template won't be killed after click anymore
+	Auto download template on Omega startup
+	Left clock fixed
+	Much more icon sets & styles, uploaded by Mike (Team Syndicate)
+	Fixed downloading styles
+	Fixed invalid colorize notification icons
+	GTK resizing! No more tools need to be installed to resize.
+	Clock colors divided now
+	Colors will be put in XMLs now
+	Landscape (+) bar in Colorize Tab
+	Locations are now on the left @ Customize tab
+	Upload custom theme APK and import styles from there
+	Clock will now be written by PIL instead of edited with a color tint!
+
 	
 
 Feature requests are always welcome :)
