@@ -172,7 +172,7 @@ DIR = os.path.join(ScriptDir, "lang")
 APP = ToolAttr.Name
 gettext.textdomain(APP)
 gettext.bindtextdomain(APP, DIR)
-gettext.bind_textdomain_codeset("default", 'UTF-8')
+#gettext.bind_textdomain_codeset("default", 'UTF-8')
 locale.setlocale(locale.LC_ALL, "")
 Language = open(os.path.join(ConfDir, "Language"), "r").read()
 LANG = Language
@@ -899,7 +899,7 @@ def Utils():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/%s" % version, os.path.join(ConfDir, "IM.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "IM.exe"))
 			if PILBtn.get_active():
-				urllib.urlretrieve("http://effbot.org/downloads/PIL-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
+				urllib.urlretrieve("http://www.lfd.uci.edu/~gohlke/pythonlibs/e93k5hzy/PIL-fork-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
 	notebook = MainApp.notebook
 	vbox = gtk.VBox()
@@ -2935,9 +2935,7 @@ def Compile():
 		
 		if OS == 'Win':
 			PythonF = os.path.join(PythonDir, "python.exe")
-
 			print _("Python = %s" % PythonF)
-
 			SystemLog("%s pyinstaller.py -y -w -F %s -i %s -n %s" %(PythonF, ScriptFile, icon, Name))
 		elif OS == 'Lin':
 			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
