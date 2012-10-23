@@ -13,17 +13,17 @@ Contact me if so!
 
 HOW TO RUN
 [Easy]
--Linux: double-click "OmegaLinux"
--Windows: double-click "OmegaWindows.exe" [Not frequent updated]
+-Linux: double-click "StudioLinux"
+-Windows: double-click "StudioWindows.exe" [Not frequent updated]
 
-[Hard but tech]
--Linux: open terminal, type "python " and drag OTS.py into the terminal. press enter.
--Windows: Right-click OTS.py, Open with > Python
+[Tech]
+-Linux: open terminal, type "python " and drag Studio.py into the terminal. press enter.
+-Windows: Right-click Studio.py > Open with > Python
 
 
 HOW TO COMPILE (TECH):
--Make sure you have Python installed
--Run OTS.py in python
--"Advanced > Compile to Exe"
--"Start Compiling"
--When compiled, please send me your OTS(.exe)!
+- Make sure you have Python installed
+- Run Studio.py in python
+- "Advanced > Compile to Exe" ("Omega > Compile to Exe" in Omega version)
+- "Start Compiling"
+- When compiled, please send me your OTS(.exe)!
