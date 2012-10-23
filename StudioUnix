@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+MyCommand=${0##*/}
+Dir=${0%%/"$MyCommand"}
+ScriptDir=$(cd $Dir && pwd)
+
+python -V 2> /dev/null
+
+if [ "$?" != "0" ]
+then
+	sudo apt-get install python
+fi
+
+python $ScriptDir/Source/VerifyMac.py
+
+if [ "$?" = "0" ]
+then
+	python $ScriptDir/Studio.py
+fi
+

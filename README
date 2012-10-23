@@ -1,0 +1,29 @@
+Welcome to OmegaThemeKitchen
+I hope you like it!
+
+If you encounter ANY problem, please click "Options > Report Bug" in OmegaAndroid.
+Thanks
+
+If you have some free time, please suggest some ideas!
+
+If you have experience in Python, you can contribute!
+Contact me if so!
+
+
+
+HOW TO RUN
+[Easy]
+-Linux: double-click "OmegaLinux"
+-Windows: double-click "OmegaWindows.exe" [Not frequent updated]
+
+[Hard but tech]
+-Linux: open terminal, type "python " and drag OTS.py into the terminal. press enter.
+-Windows: Right-click OTS.py, Open with > Python
+
+
+HOW TO COMPILE (TECH):
+-Make sure you have Python installed
+-Run OTS.py in python
+-"Advanced > Compile to Exe"
+-"Start Compiling"
+-When compiled, please send me your OTS(.exe)!

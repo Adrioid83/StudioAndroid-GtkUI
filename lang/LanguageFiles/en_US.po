@@ -1,0 +1,896 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2012 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Marty <martijn.ruijzendaal@gmail.com>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-10-22 22:42+0200\n"
+"PO-Revision-Date: 2012-10-22 22:42+0200\n"
+"Last-Translator: Marty <martijn.ruijzendaal@gmail.com>\n"
+"Language-Team: English\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: Studio.py:316
+#, python-format
+msgid "%s is not defined yet, SORRY!"
+msgstr "%s is not defined yet, SORRY!"
+
+#: Studio.py:581
+#, python-format
+msgid ""
+"You extracted %s to a path with spaces!\n"
+"Please move it somewhere without spaces."
+msgstr ""
+"You extracted %s to a path with spaces!\n"
+"Please move it somewhere without spaces."
+
+#: Studio.py:624
+#, python-format
+msgid "PythonDir = %s"
+msgstr "PythonDir = %s"
+
+#: Studio.py:625
+#, python-format
+msgid "Cores = %s"
+msgstr "Cores = %s"
+
+#: Studio.py:626
+#, python-format
+msgid "Home = %s"
+msgstr "Home = %s"
+
+#: Studio.py:627
+#, python-format
+msgid "ScriptDir = %s"
+msgstr "ScriptDir = %s"
+
+#: Studio.py:628
+#, python-format
+msgid "File = %s"
+msgstr "File = %s"
+
+#: Studio.py:630
+#, python-format
+msgid "Language = %s"
+msgstr "Language = %s"
+
+#: Studio.py:649
+msgid "Options"
+msgstr "Options"
+
+#: Studio.py:654
+msgid "Reset"
+msgstr "Reset"
+
+#: Studio.py:658
+msgid "Debug"
+msgstr "Debug"
+
+#: Studio.py:662
+msgid "Check the log"
+msgstr "Check the log"
+
+#: Studio.py:666
+msgid "Report a bug"
+msgstr "Report a bug"
+
+#: Studio.py:674
+msgid "Changelog"
+msgstr "Changelog"
+
+#: Studio.py:678
+msgid "Update"
+msgstr "Update"
+
+#: Studio.py:683
+msgid "Restart"
+msgstr "Restart"
+
+#: Studio.py:718
+msgid "Images"
+msgstr "Images"
+
+#: Studio.py:721
+msgid "Use PIL (beta)"
+msgstr "Use PIL (beta)"
+
+#: Studio.py:732 Studio.py:902
+msgid "Install Image Tools"
+msgstr "Install Image Tools"
+
+#: Studio.py:732 Studio.py:969
+msgid "Convert Image"
+msgstr "Convert Image"
+
+#: Studio.py:732
+msgid "Resize"
+msgstr "Resize"
+
+#: Studio.py:732
+msgid "Batch Theme"
+msgstr "Batch Theme"
+
+#: Studio.py:732
+msgid "Batch Rename"
+msgstr "Batch Rename"
+
+#: Studio.py:732
+msgid "CopieFrom"
+msgstr "CopieFrom"
+
+#: Studio.py:732 Studio.py:2197 Studio.py:2217
+msgid "Optimize Images"
+msgstr "Optimize Images"
+
+#: Studio.py:741 Studio.py:1837
+msgid "Development"
+msgstr "Development"
+
+#: Studio.py:750
+msgid "Prepare Building"
+msgstr "Prepare Building"
+
+#: Studio.py:754 Studio.py:1827
+msgid "Build from Source"
+msgstr "Build from Source"
+
+#: Studio.py:758 Studio.py:2085
+msgid "Add Governor"
+msgstr "Add Governor"
+
+#: Studio.py:762
+msgid "Install Android-SDK"
+msgstr "Install Android-SDK"
+
+#: Studio.py:762
+msgid "Install Eclipse"
+msgstr "Install Eclipse"
+
+#: Studio.py:762
+msgid "Port a ROM (without source)"
+msgstr "Port a ROM (without source)"
+
+#: Studio.py:779
+msgid "(De)Compile"
+msgstr "(De)Compile"
+
+#: Studio.py:779
+msgid "Extract/Repackage"
+msgstr "Extract/Repackage"
+
+#: Studio.py:779
+msgid "Sign / Create signature"
+msgstr "Sign / Create signature"
+
+#: Studio.py:779
+msgid "Zipalign APK"
+msgstr "Zipalign APK"
+
+#: Studio.py:779
+msgid "Install APK"
+msgstr "Install APK"
+
+#: Studio.py:779
+msgid "Optimize Image Inside APK"
+msgstr "Optimize Image Inside APK"
+
+#: Studio.py:789
+msgid "Advanced"
+msgstr "Advanced"
+
+#: Studio.py:796
+msgid "(Bak)Smali"
+msgstr "(Bak)Smali"
+
+#: Studio.py:796
+msgid "ODEX"
+msgstr "ODEX"
+
+#: Studio.py:796
+msgid "DE-ODEX"
+msgstr "DE-ODEX"
+
+#: Studio.py:796
+msgid "Aroma Menu"
+msgstr "Aroma Menu"
+
+#: Studio.py:796 Studio.py:846
+msgid "Compile to an exe"
+msgstr "Compile to an exe"
+
+#: Studio.py:807
+msgid "Android"
+msgstr "Android"
+
+#: Studio.py:814
+msgid "Configure ADB"
+msgstr "Configure ADB"
+
+#: Studio.py:818
+msgid "Logcat"
+msgstr "Logcat"
+
+#: Studio.py:822
+msgid "Build.prop ADB"
+msgstr "Build.prop ADB"
+
+#: Studio.py:826
+msgid "Backup / Restore"
+msgstr "Backup / Restore"
+
+#: Studio.py:830
+msgid "ADB File Explorer"
+msgstr "ADB File Explorer"
+
+#: Studio.py:840 Studio.py:3624
+msgid "Omega"
+msgstr "Omega"
+
+#: Studio.py:888
+msgid ""
+"ImageMagick is needed for all image tools I included.\n"
+"In future releases I will use PIL more. So install PIL too!"
+msgstr ""
+"ImageMagick is needed for all image tools I included.\n"
+"In future releases I will use PIL more. So install PIL too!"
+
+#: Studio.py:898 Studio.py:2542
+msgid "Install"
+msgstr "Install"
+
+#: Studio.py:933
+msgid "ImageMagick"
+msgstr "ImageMagick"
+
+#: Studio.py:933
+msgid "You will now download and run ImageMagick. Proceed the installation."
+msgstr "You will now download and run ImageMagick. Proceed the installation."
+
+#: Studio.py:946 Studio.py:2110 Studio.py:2125 Studio.py:2229
+msgid "ERROR"
+msgstr "ERROR"
+
+#: Studio.py:946
+msgid "Please select a directory first!"
+msgstr "Please select a directory first!"
+
+#: Studio.py:975
+msgid "Open the directory with the images you want to convert"
+msgstr "Open the directory with the images you want to convert"
+
+#: Studio.py:985
+msgid "Choose the extension you want to convert the images to:"
+msgstr "Choose the extension you want to convert the images to:"
+
+#: Studio.py:1013
+msgid "Copying files FROM "
+msgstr "Copying files FROM "
+
+#: Studio.py:1017 Studio.py:2853
+#, python-format
+msgid "Copying %s to %s"
+msgstr "Copying %s to %s"
+
+#: Studio.py:1022 Studio.py:1062
+msgid "CopyFrom"
+msgstr "CopyFrom"
+
+#: Studio.py:1027
+msgid ""
+"This tool copies files existing in a directory FROM an other directory.\n"
+"\t\t\t\tCan be handy for porting themes and such\n"
+"\n"
+"Make sure both directories have the same structure!\n"
+"\n"
+"\n"
+msgstr ""
+"This tool copies files existing in a directory FROM an other directory.\n"
+"\t\t\t\tCan be handy for porting themes and such\n"
+"\n"
+"Make sure both directories have the same structure!\n"
+"\n"
+"\n"
+
+#: Studio.py:1032
+msgid "Open the directory you want to copy the files TO"
+msgstr "Open the directory you want to copy the files TO"
+
+#: Studio.py:1039
+msgid "Open the directory you want to copy the files FROM"
+msgstr "Open the directory you want to copy the files FROM"
+
+#: Studio.py:1051
+msgid "Enter the extension of the files you want to copy"
+msgstr "Enter the extension of the files you want to copy"
+
+#: Studio.py:1149
+#, python-format
+msgid "Resize percentage is %s"
+msgstr "Resize percentage is %s"
+
+#: Studio.py:1195
+msgid "Resized"
+msgstr "Resized"
+
+#: Studio.py:1195
+#, python-format
+msgid "You can find the resized images in %s"
+msgstr "You can find the resized images in %s"
+
+#: Studio.py:1215
+msgid "Enter the resize percentage 0-100 %"
+msgstr "Enter the resize percentage 0-100 %"
+
+#: Studio.py:1221 Studio.py:1252
+msgid "Choose the directory containing the images"
+msgstr "Choose the directory containing the images"
+
+#: Studio.py:1230
+msgid "Easy resizing using ..DPI values"
+msgstr "Easy resizing using ..DPI values"
+
+#: Studio.py:1238 Studio.py:1266
+msgid "Give the DPI of the images"
+msgstr "Give the DPI of the images"
+
+#: Studio.py:1244
+msgid "Give the Resized DPI"
+msgstr "Give the Resized DPI"
+
+#: Studio.py:1258
+msgid "Resize an APK using DPI values"
+msgstr "Resize an APK using DPI values"
+
+#: Studio.py:1281 Studio.py:1285
+msgid "Choose the APK"
+msgstr "Choose the APK"
+
+#: Studio.py:1290
+msgid "Start resizing"
+msgstr "Start resizing"
+
+#: Studio.py:1303
+#, python-format
+msgid "Place the images you want to theme inside %s"
+msgstr "Place the images you want to theme inside %s"
+
+#: Studio.py:1313
+#, python-format
+msgid "Converting %s to RGBA"
+msgstr "Converting %s to RGBA"
+
+#: Studio.py:1389
+msgid "Start theming!"
+msgstr "Start theming!"
+
+#: Studio.py:1410
+msgid ""
+"This tool is used to batch-rename files found in a directory\n"
+"using a pattern to find them"
+msgstr ""
+"This tool is used to batch-rename files found in a directory\n"
+"using a pattern to find them"
+
+#: Studio.py:1414
+msgid "Open the directory in wich you want to rename files"
+msgstr "Open the directory in wich you want to rename files"
+
+#: Studio.py:1449 Studio.py:1491
+msgid "Rename"
+msgstr "Rename"
+
+#: Studio.py:1452 Studio.py:1511
+msgid "Undo Rename"
+msgstr "Undo Rename"
+
+#: Studio.py:1491
+#, python-format
+msgid "Renamed %d files"
+msgstr "Renamed %d files"
+
+#: Studio.py:1511
+#, python-format
+msgid "Un-named %d files"
+msgstr "Un-named %d files"
+
+#: Studio.py:1516
+msgid "Please check the terminal for further progress."
+msgstr "Please check the terminal for further progress."
+
+#: Studio.py:1676
+msgid ""
+"You need this option before you can build.\n"
+"Please select your OS..."
+msgstr ""
+"You need this option before you can build.\n"
+"Please select your OS..."
+
+#: Studio.py:1713
+msgid "Retrieving SDK"
+msgstr "Retrieving SDK"
+
+#: Studio.py:1720 Studio.py:1724
+msgid "Extracting SDK"
+msgstr "Extracting SDK"
+
+#: Studio.py:1729
+msgid "Setting permissions"
+msgstr "Setting permissions"
+
+#: Studio.py:1773
+msgid "Choose the OS you want to build:"
+msgstr "Choose the OS you want to build:"
+
+#: Studio.py:1788
+msgid "Sync"
+msgstr "Sync"
+
+#: Studio.py:1792
+msgid "Force sync"
+msgstr "Force sync"
+
+#: Studio.py:1796 Studio.py:1816
+msgid "Be quiet!"
+msgstr "Be quiet!"
+
+#: Studio.py:1800
+msgid "Sync local only"
+msgstr "Sync local only"
+
+#: Studio.py:1804 Studio.py:1820
+#, python-format
+msgid "Custom number of parallel jobs: %s"
+msgstr "Custom number of parallel jobs: %s"
+
+#: Studio.py:1808
+msgid "Build (Only when synced)"
+msgstr "Build (Only when synced)"
+
+#: Studio.py:1812
+msgid "Force build"
+msgstr "Force build"
+
+#: Studio.py:1842 Studio.py:1862
+msgid "Device"
+msgstr "Device"
+
+#: Studio.py:1847
+msgid "Set Working Folder"
+msgstr "Set Working Folder"
+
+#: Studio.py:1862
+msgid "You can choose the device you want to build for in the top bar."
+msgstr "You can choose the device you want to build for in the top bar."
+
+#: Studio.py:1898
+msgid "Select your working folder"
+msgstr "Select your working folder"
+
+#: Studio.py:1902
+#, python-format
+msgid "Working folder set to %s"
+msgstr "Working folder set to %s"
+
+#: Studio.py:1920
+msgid ""
+" does not exist!\n"
+"Press SYNC instead."
+msgstr ""
+" does not exist!\n"
+"Press SYNC instead."
+
+#: Studio.py:2062
+msgid "Added"
+msgstr "Added"
+
+#: Studio.py:2062
+msgid "Added governors"
+msgstr "Added governors"
+
+#: Studio.py:2069
+msgid "Ofcourse you need the kernel SOURCE, not the update.zip ;P"
+msgstr "Ofcourse you need the kernel SOURCE, not the update.zip ;P"
+
+#: Studio.py:2081
+msgid "Pick your drivers/cpufreq/Kconfig and start!"
+msgstr "Pick your drivers/cpufreq/Kconfig and start!"
+
+#: Studio.py:2096 Studio.py:2283 Studio.py:2495 Studio.py:2531
+#, python-format
+msgid "Place APKs inside %s to select them."
+msgstr "Place APKs inside %s to select them."
+
+#: Studio.py:2098
+msgid "Decompile"
+msgstr "Decompile"
+
+#: Studio.py:2099
+msgid "Compile"
+msgstr "Compile"
+
+#: Studio.py:2100
+msgid "Start (De)Compiling"
+msgstr "Start (De)Compiling"
+
+#: Studio.py:2110 Studio.py:2125
+msgid "No APKs selected!"
+msgstr "No APKs selected!"
+
+#: Studio.py:2120
+#, python-format
+msgid "Decompiled %s"
+msgstr "Decompiled %s"
+
+#: Studio.py:2134
+#, python-format
+msgid "Compiled %s"
+msgstr "Compiled %s"
+
+#: Studio.py:2176 Studio.py:2366
+msgid "Refresh"
+msgstr "Refresh"
+
+#: Studio.py:2197
+msgid "Successfully optimized images"
+msgstr "Successfully optimized images"
+
+#: Studio.py:2207
+msgid "Choose Images"
+msgstr "Choose Images"
+
+#: Studio.py:2213
+msgid "Start"
+msgstr "Start"
+
+#: Studio.py:2229
+#, python-format
+msgid "No images inside %s. exit."
+msgstr "No images inside %s. exit."
+
+#: Studio.py:2268
+msgid "Do Optimize Inside APK"
+msgstr "Do Optimize Inside APK"
+
+#: Studio.py:2272
+msgid "Optimize Inside APK"
+msgstr "Optimize Inside APK"
+
+#: Studio.py:2317
+#, python-format
+msgid ""
+"Place APKs inside %s to select them.\n"
+"\n"
+"\n"
+msgstr ""
+"Place APKs inside %s to select them.\n"
+"\n"
+"\n"
+
+#: Studio.py:2335
+msgid "Choose the key you want to sign with:"
+msgstr "Choose the key you want to sign with:"
+
+#: Studio.py:2370
+msgid "Key file"
+msgstr "Key file"
+
+#: Studio.py:2373
+msgid "Password"
+msgstr "Password"
+
+#: Studio.py:2377
+msgid "Alias"
+msgstr "Alias"
+
+#: Studio.py:2380
+msgid "Validity (years)"
+msgstr "Validity (years)"
+
+#: Studio.py:2383
+msgid "First and last name"
+msgstr "First and last name"
+
+#: Studio.py:2390
+msgid "Country (XX) | State / Province | City / Locality"
+msgstr "Country (XX) | State / Province | City / Locality"
+
+#: Studio.py:2401
+msgid "Create keyfile"
+msgstr "Create keyfile"
+
+#: Studio.py:2440
+msgid "Start signing"
+msgstr "Start signing"
+
+#: Studio.py:2506
+msgid "Zipalign"
+msgstr "Zipalign"
+
+#: Studio.py:2521
+msgid ""
+"\n"
+" Waiting for device to connect via ADB...\n"
+"\n"
+msgstr ""
+"\n"
+" Waiting for device to connect via ADB...\n"
+"\n"
+
+#: Studio.py:2523
+msgid "Connected"
+msgstr "Connected"
+
+#: Studio.py:2569
+#, python-format
+msgid "Smaling %s into %s with %s"
+msgstr "Smaling %s into %s with %s"
+
+#: Studio.py:2587
+#, python-format
+msgid "Baksmaling %s to %s with %s"
+msgstr "Baksmaling %s to %s with %s"
+
+#: Studio.py:2589
+msgid "BakSmali"
+msgstr "BakSmali"
+
+#: Studio.py:2589
+msgid "Successfully finished BakSmali"
+msgstr "Successfully finished BakSmali"
+
+#: Studio.py:2591
+msgid "Closed, no files selected"
+msgstr "Closed, no files selected"
+
+#: Studio.py:2597
+msgid "Choose file(s) to Baksmali"
+msgstr "Choose file(s) to Baksmali"
+
+#: Studio.py:2601
+msgid ""
+"\n"
+"\n"
+" OR choose a Smali folder to Smali:"
+msgstr ""
+"\n"
+"\n"
+" OR choose a Smali folder to Smali:"
+
+#: Studio.py:2622
+msgid "Choose a custom API Level:"
+msgstr "Choose a custom API Level:"
+
+#: Studio.py:2663
+#, python-format
+msgid "Deodexing %s"
+msgstr "Deodexing %s"
+
+#: Studio.py:2676
+#, python-format
+msgid "Adding %s to %s"
+msgstr "Adding %s to %s"
+
+#: Studio.py:2684
+msgid ""
+"\n"
+"\n"
+"Deodexing done!\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"Deodexing done!\n"
+"\n"
+
+#: Studio.py:2685 Studio.py:2768
+msgid "Done!"
+msgstr "Done!"
+
+#: Studio.py:2693 Studio.py:2776
+#, python-format
+msgid "Extracting %s"
+msgstr "Extracting %s"
+
+#: Studio.py:2709 Studio.py:2792
+msgid "Start deodex"
+msgstr "Start deodex"
+
+#: Studio.py:2724 Studio.py:2808
+msgid "Done"
+msgstr "Done"
+
+#: Studio.py:2758
+#, python-format
+msgid "Odexing %s"
+msgstr "Odexing %s"
+
+#: Studio.py:2764
+#, python-format
+msgid "Skipped %s "
+msgstr "Skipped %s "
+
+#: Studio.py:2767
+msgid ""
+"\n"
+"\n"
+"Odexing done!\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"Odexing done!\n"
+"\n"
+
+#: Studio.py:2843
+msgid "Info"
+msgstr "Info"
+
+#: Studio.py:2843
+#, python-format
+msgid ""
+"Choose a ROM you want to port to your device with version %s.\n"
+"\n"
+" Version of your BASE: %s\n"
+"Version of the ROM you want to port: %s"
+msgstr ""
+"Choose a ROM you want to port to your device with version %s.\n"
+"\n"
+" Version of your BASE: %s\n"
+"Version of the ROM you want to port: %s"
+
+#: Studio.py:2847
+#, python-format
+msgid "Removing %s"
+msgstr "Removing %s"
+
+#: Studio.py:2886
+msgid "Choose ROM you want to port to:"
+msgstr "Choose ROM you want to port to:"
+
+#: Studio.py:2890
+msgid "Choose the ROM you want to port"
+msgstr "Choose the ROM you want to port"
+
+#: Studio.py:2895
+msgid "Start porting"
+msgstr "Start porting"
+
+#: Studio.py:2898
+msgid "Binary port"
+msgstr "Binary port"
+
+#: Studio.py:2957
+msgid "Retrieving PyInstaller source..."
+msgstr "Retrieving PyInstaller source..."
+
+#: Studio.py:2959
+msgid "Extracting PyInstaller source..."
+msgstr "Extracting PyInstaller source..."
+
+#: Studio.py:2970
+#, python-format
+msgid "Python = %s"
+msgstr "Python = %s"
+
+#: Studio.py:3006
+msgid "ADB"
+msgstr "ADB"
+
+#: Studio.py:3006
+msgid "ADB traffic now goes through WiFi"
+msgstr "ADB traffic now goes through WiFi"
+
+#: Studio.py:3201
+msgid "Warning!"
+msgstr "Warning!"
+
+#: Studio.py:3201
+msgid ""
+"Please copy your backups from the ADB directory to a safe place elsewhere"
+msgstr ""
+"Please copy your backups from the ADB directory to a safe place elsewhere"
+
+#: Studio.py:3213
+msgid "Backup the APKs too"
+msgstr "Backup the APKs too"
+
+#: Studio.py:3216
+msgid "Backup shared storage"
+msgstr "Backup shared storage"
+
+#: Studio.py:3219
+msgid "Backup ALL applications"
+msgstr "Backup ALL applications"
+
+#: Studio.py:3222
+msgid "Declude System apps"
+msgstr "Declude System apps"
+
+#: Studio.py:3225
+msgid "Backup (get a cup of coffee)"
+msgstr "Backup (get a cup of coffee)"
+
+#: Studio.py:3241
+msgid "Restore (get a cup of coffee)"
+msgstr "Restore (get a cup of coffee)"
+
+#: Studio.py:3247 Studio.py:3250
+msgid "Backup Contacts, SMS, WiFi"
+msgstr "Backup Contacts, SMS, WiFi"
+
+#: Studio.py:3261
+msgid "Restore Contacts, WiFi, SMS"
+msgstr "Restore Contacts, WiFi, SMS"
+
+#: Studio.py:3302
+#, python-format
+msgid "Deleting %s"
+msgstr "Deleting %s"
+
+#: Studio.py:3415
+msgid "Empty directory..."
+msgstr "Empty directory..."
+
+#: Studio.py:3505
+msgid "Set permissions"
+msgstr "Set permissions"
+
+#: Studio.py:3544
+msgid "Choose the color you want to theme with!"
+msgstr "Choose the color you want to theme with!"
+
+#: Studio.py:3561
+msgid "Upload theme APK"
+msgstr "Upload theme APK"
+
+#: Studio.py:3593
+msgid "Download"
+msgstr "Download"
+
+#: Studio.py:3599
+msgid "Upload custom battery files"
+msgstr "Upload custom battery files"
+
+#: Studio.py:3603
+#, python-format
+msgid "Select %s style"
+msgstr "Select %s style"
+
+#: Studio.py:3638 Studio.py:3943
+msgid "Colorize"
+msgstr "Colorize"
+
+#: Studio.py:3805
+msgid "Import from APK:"
+msgstr "Import from APK:"
+
+#: Studio.py:3829
+msgid "Select your theme APK"
+msgstr "Select your theme APK"
+
+#: Studio.py:3868
+msgid "Select your theme folder"
+msgstr "Select your theme folder"
+
+#: Studio.py:4103
+msgid "Choose the themes you want to (de)compile"
+msgstr "Choose the themes you want to (de)compile"
+
+#: Studio.py:4143
+msgid "Delete log"
+msgstr "Delete log"
+
+#: Studio.py:4153
+msgid ""
+"The log content has been copied to the clipboard\n"
+"Please paste it in the reply that will be opened now!"
+msgstr ""
+"The log content has been copied to the clipboard\n"
+"Please paste it in the reply that will be opened now!"
