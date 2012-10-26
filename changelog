@@ -1,5 +1,12 @@
 This is the changelog for the StudioAndroid GUI.
 
+[UPDATED WINDOWS EXE]
+[MAIN]
+[OMEGA]
+[TRANSLATION]
+[Support]
+[Style, Usability & Polish]
+
 ==Alpha 12==
 -Utility tab: everything defined
 -Development tab: not defined::
@@ -241,6 +248,11 @@ Updates:
 	converted some more functions to classes
 	New file choosers (internal)
 	Merged Linux&Mac -> StudioUnix
+
+	[OMEGA]
+	Expanded view @Customize tab
+	Icon location customization live visible in preview (:D)
+	Preview & Undo-Preview @Colorize-tab (Temporarily preview the selected icons without affecting them)
 
 	[Style, Usability & Polish]
 	Converted "Build from Source" to 3-column UI

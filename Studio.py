@@ -51,17 +51,16 @@ class ToolAttr:
 		OmegaVersion = True
 	else: OmegaVersion = False
 
+	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 	if OmegaVersion == True:
 		ToolName = "OmegaThemeStudio"
 		Name = "OTS"
-		GitLink = "http://github.com/mDroidd/OmegaThemeStudio/"
 		StableBranch = "tags"
 		UnstableBranch = "zipball/master"
 		DropboxLink = "http://dl.dropbox.com/u/61466577/"
 	else:
 		ToolName = "StudioAndroid"
 		Name = "SA"
-		GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 		StableBranch = "tags"
 		UnstableBranch = "zipball/master"
 
@@ -80,11 +79,11 @@ def ToggleOmega(widget):
 
 ScriptDir=os.path.dirname(os.path.realpath(__file__))
 Home=os.path.expanduser('~')
-ConfDir = os.path.join(Home, ".%s" % ToolAttr.Name)
+ConfDir = os.path.join(Home, ".STUDIO")
 OmegaDir = os.path.join(ScriptDir, "Omega")
 ImageDir = os.path.join(ScriptDir, "Image")
 MyFile = os.path.basename(__file__)
-FullFile = os.path.abspath(os.path.join(ScriptDir, "%s.py" % ToolAttr.Name))
+FullFile = os.path.abspath(os.path.realpath(__file__))
 Cores = str(multiprocessing.cpu_count())
 Python = os.path.abspath(sys.executable)
 PythonDir = os.path.dirname(Python)
@@ -562,6 +561,10 @@ def NewPage(Label, parent):
 	box.show_all()
 	return box
 
+def CurrentPageText(notebook, data):
+	TabName = notebook.get_tab_label_text(notebook.get_nth_page(data))
+	return TabName
+
 
 for Dir in ParseTree(ScriptDir, Trees):
 	if not os.path.isdir(Dir):
@@ -594,11 +597,11 @@ else:
 
 
 window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-window.set_title(ToolAttr.ToolName)
+window.set_title("%s" %(ToolAttr.ToolName,))
 window.connect("delete_event", delete_event, 0)
 window.set_border_width(15)
 window.set_size_request(750,500)
-window.set_resizable(False)
+window.set_resizable(True)
 window.set_position(gtk.WIN_POS_CENTER)
 
 vbox = gtk.VBox(False, 5)
@@ -624,7 +627,6 @@ print _("PythonDir = %s" %(PythonDir))
 print _("Cores = %s" %(Cores))
 print _("Home = %s" %(Home))
 print _("ScriptDir = %s" %(ScriptDir))
-print _("File = %s" %(MyFile))
 print ("Debug = %s, PIL = %s, Omega = %s" %(["Disabled", "Enabled"][Debug], ["Disabled", "Enabled"][Pil], ["Disabled", "Enabled"][ToolAttr.OmegaVersion]))
 print _("Language = %s" %(Language))
 
@@ -2943,7 +2945,7 @@ class Compile:
 
 		CustomPythonDial = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
 							(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-		CustomPyBtn = gtk.Button("Choose .py file (default %s.py)" % ToolAttr.Name)
+		CustomPyBtn = gtk.Button("Choose .py file (default Studio.py)")
 		CustomPyBtn.connect("clicked", self.CustomPyDialog.openFile, CustomPythonDial, ["*.py"], False, CustomPyBtn.set_label)
 		vbox.pack_start(CustomPyBtn, False, False, 0)
 
@@ -3585,7 +3587,7 @@ class OmegaSB(Theme, CopyFrom):
 
 		UploadThemeBtn = gtk.Button(_("Upload theme APK"))
 		UploadThemeBtn.connect("clicked", self.UploadTheme)
-		self.ThemeVbox.pack_start(UploadThemeBtn)
+		self.ThemeVbox.pack_start(UploadThemeBtn, False, False)
 
 		self.OmegaNotebook.insert_page(self.ThemeSW, gtk.Label("Theme"), 0)
 		NotificationTypes = ["*com*", "*background*", "*bluetooth*", "*noti*", "*alarm*", "*ringer*", "*gps*", "*warning*", "*usb*"]
@@ -3638,7 +3640,7 @@ class OmegaSB(Theme, CopyFrom):
 		for x in [lClock, self.CenterClockBtn, rClock]:
 			hbox.pack_start(x, True, False)
 			x.connect("toggled", self.CustomClock)
-		self.ThemeVbox.pack_start(hbox, False, False)
+		self.ThemeVbox.pack_end(hbox, True, False)
 
 		# COLORIZE TAB
 		self.vbox = gtk.VBox()
@@ -3662,7 +3664,13 @@ class OmegaSB(Theme, CopyFrom):
 
 		StartButton = gtk.Button( _("Colorize") )
 		StartButton.connect("clicked", self.StartTheming)
-		self.vbox.pack_start(StartButton, True, False)
+		PreviewButton = gtk.Button( _("Preview") )
+		PreviewButton.connect("clicked", self.PreviewTheming)
+		UndoPreviewButton = gtk.Button( _("Undo preview") )
+		UndoPreviewButton.connect("clicked", self.UndoPreview)
+		hbox = gtk.HBox(True)
+		for x in [StartButton, PreviewButton, UndoPreviewButton]:hbox.pack_start(x)
+		self.vbox.pack_end(hbox, True, False)
 		# SET CHECKBUTTONS FOR THEMING
 		self.BatteryCheck = gtk.CheckButton("Battery")
 		self.NotificationCheck = gtk.CheckButton("Notifications")
@@ -3670,6 +3678,12 @@ class OmegaSB(Theme, CopyFrom):
 		self.StatBg = gtk.CheckButton("Statusbar bg")
 		for x in [self.BatteryCheck, self.NotificationCheck, self.SignalCheck, self.StatBg]:
 			vbox1.pack_start(x, False, False)
+		# SET CLOCK COLORS
+		self.BatteryPercColor = "#FFFFFF"
+		self.ClockHourColor = "#FFFFFF"
+		self.ClockDividerColor = "#FFFFFF"
+		self.ClockMinuteColor = "#FFFFFF"
+		self.ClockAMColor = "#FFFFFF"
 		# SET CLOCK CHECKS
 		self.ClockCheck = gtk.CheckButton("Clock")
 		self.BattPercCheck = gtk.CheckButton("Battery percentage")
@@ -3679,12 +3693,6 @@ class OmegaSB(Theme, CopyFrom):
 		self.ClockDividerCheck = gtk.CheckButton("Divider")
 		for x in [self.BattPercCheck, self.ClockAMCheck, self.ClockHourCheck, self.ClockMinuteCheck, self.ClockDividerCheck]:
 			vbox2.pack_start(x, False, False)
-		# SET CLOCK COLORS
-		self.BatteryPercColor = "#FFFFFF"
-		self.ClockHourColor = "#FFFFFF"
-		self.ClockDividerColor = "#FFFFFF"
-		self.ClockMinuteColor = "#FFFFFF"
-		self.ClockAMColor = "#FFFFFF"
 
 		# CUSTOMIZE TAB
 		self.intList = []
@@ -3702,9 +3710,6 @@ class OmegaSB(Theme, CopyFrom):
 		if os.path.exists(os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")):
 			self.StatusbarPic = os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")
 		else: self.StatusbarPic = os.path.join(self.PreviewDir, "status_bar_bg.png")
-		#if
-
-		self.EndTheming(self.OmegaNotebook)
 
 		# BUILD TAB
 		self.BuildVbox = gtk.VBox()
@@ -3958,32 +3963,64 @@ class OmegaSB(Theme, CopyFrom):
 			NewStat = PILImage.new("RGBA", PILImage.open(self.StatusbarPic).size, Clr)
 			NewStat.save(os.path.join(self.SrcDir, "status_bar_bg.png"))
 			self.StatusbarPic = os.path.join(self.SrcDir, "status_bar_bg.png")
-			self.StatusbarColor = Clr
+		self.EndTheming(widget)
+
+	def PreviewTheming(self, widget):
+		Clr = self.ParseColor()
+		images = []
+		if self.BatteryCheck.get_active(): 	self.BattPic = self.image_tint(self.BattPic, Clr)
+		if self.NotificationCheck.get_active():	self.NotiPic = self.image_tint(self.NotiPic, Clr)
+		if self.SignalCheck.get_active():	self.SignPic= self.image_tint(self.SignPic, Clr)
+		self.BattPercCheck.set_active(False)
+		self.ClockAMCheck.set_active(False)
+		self.ClockHourCheck.set_active(False)
+		self.ClockMinuteCheck.set_active(False)
+		self.ClockDividerCheck.set_active(False)
+
+		if self.StatBg.get_active():
+			NewStat = PILImage.new("RGBA", PILImage.open(self.StatusbarPic).size, Clr)
+			self.StatusbarPic = NewStat
+		self.EndTheming(widget)
+
+	def UndoPreview(self, widget):
+		if find_files(self.SrcDir, "*stat_sys_battery_65.png") == []: self.BattPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.BattPic = find_files(self.SrcDir, "*stat_sys_battery_65.png")[0]
+		if find_files(self.SrcDir, "*wifi*4*") == []: self.SignPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.SignPic = find_files(self.SrcDir, "*wifi*4*")[0]
+		self.Pic3 = PILImage.open(os.path.join(self.PreviewDir, "CLOCK.png"))
+		if find_files(self.SrcDir, "*adb*") == []: self.NotiPic = os.path.join(ScriptDir, "images", "Empty.png")
+		else: self.NotiPic = find_files(self.SrcDir, "*adb*")[0]
+		if os.path.exists(os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")):
+			self.StatusbarPic = os.path.join(ScriptDir, "Omega", "Working", "status_bar_bg.png")
+		else: self.StatusbarPic = os.path.join(self.PreviewDir, "status_bar_bg.png")
 		self.EndTheming(widget)
 		
 	def EndTheming(self, widget, event=None, data=0):
 		if event == None: data = self.OmegaNotebook.get_current_page()
-		pageWidget = self.OmegaNotebook.get_nth_page(data)
-		TabName = self.OmegaNotebook.get_tab_label_text(pageWidget)
-		if TabName == _("Colorize"): 
+		TabName = CurrentPageText(self.OmegaNotebook, data)
+		if (TabName == _("Customize")) and not self.intList == None: 
 			Landscape = True
 		else: Landscape = False
 
-		im = PILImage.open(self.StatusbarPic).convert("RGBA")
-		im.load()
+		if isinstance(self.StatusbarPic, str):
+			im = PILImage.open(self.StatusbarPic).convert("RGBA")
+			im.load()
+		else: im = self.StatusbarPic
 		if Landscape == False:
 			Result = im.resize((240, 24), PILImage.ANTIALIAS)
 		else: Result = im.resize((480, 24), PILImage.ANTIALIAS)
 		self.usedRight = 0
 		self.usedLeft = 0
-
+		
+		# RETREIVE CLOCK SIZE
 		if not self.intList == []:
 			for x in self.intList: 
 				if x[0] == "digital_clock_text_size": 
 					size = int(x[2]())
 					break
 		else:
-			size = 18
+			size = 14
+		# SET CLOCK TEXT TO CUSTOM SIZE
 		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), size)
 		img=PILImage.new("RGBA", (4*size,22))
 		draw = PILImageDraw.Draw(img)
@@ -3997,18 +4034,50 @@ class OmegaSB(Theme, CopyFrom):
 		ClockLoc = [self.pasteLeft, self.pasteCenter, self.pasteRight][["Left clock", "Center clock", "Right clock"].index([r for r in self.CenterClockBtn.get_group() if r.get_active()][0].get_label())]
 		Result = ClockLoc(Result, [img])
 
-		Result = self.pasteRight(Result, [self.BattPic, self.SignPic])
+		#<!-- 22 GRID SPACES (1-2-3-4-5-6-7-8    *9-10-11-12-13-14*    15-16-17-18-19-20-21-22)-->
+		if Landscape == True:
+			StatusPadding = [val[2]() for val in self.intList if "statusbar_content_padding" in val][0]
+			for val in [intv for intv in self.intList if "location" in intv[0] and 15 <= intv[2]() <= 22]:
+				RightLoc = [7,6,5,4,3,2,1,0][val[2]() - 15]
+				icon = self.ParseIcon(val[0])
+				if not icon == None:
+					self.pasteRight(Result, [icon], RightLoc*(24+StatusPadding))
 
-		Result = self.pasteLeft(Result, [self.NotiPic])
-		Result.load()
+			for val in [intv for intv in self.intList if "location" in intv[0] and 1 <= intv[2]() <= 8]:
+				LeftLoc = val[2]() - 1
+				icon = self.ParseIcon(val[0])
+				if not icon == None:
+					self.pasteLeft(Result, [icon], LeftLoc*(24+StatusPadding))
+		else:
+			Result = self.pasteRight(Result, [self.BattPic, self.SignPic])
+
+			Result = self.pasteLeft(Result, [self.NotiPic])
+			Result.load()	
 		
 		self.ThemeImage.set_from_pixbuf(image2pixbuf(Result))
 		
+	def ParseIcon(self, value):
+		try:
+			if "gps" in value:		icon = find_files(self.SrcDir, "stat_sys_gps*")[0]
+			elif "battery" in value: 	icon = find_files(self.SrcDir, "stat_sys_battery_65.png")[0]
+			elif "wifi" in value: 		icon = find_files(self.SrcDir, "stat_sys_wifi_signal_3_fully.png")[0]
+			elif "network_grid" in value:	icon = find_files(self.SrcDir, "stat_sys_signal_3_fully.png")[0]
+			elif "network_type" in value:	icon = find_files(self.SrcDir, "stat_sys_data_fully_connected_h.png")[0]
+			elif "headset" in value:	icon = find_files(self.SrcDir, "stat_sys_headset_no_mic.png")[0]
+			elif "alarm" in value:		icon = find_files(self.SrcDir, "stat_sys_alarm.png")[0]
+			elif "ringer" in value:		icon = find_files(self.SrcDir, "stat_sys_ringer_silent.png")[0]
+			elif "bluetooth" in value:	icon = find_files(self.SrcDir, "stat_sys_data_bluetooth.png")[0]
+			elif "adb" in value:		icon = find_files(self.SrcDir, "stat_sys_adb.png")[0]
+			elif "usb" in value: 		icon = find_files(self.SrcDir, "stat_sys_data_usb.png")[0]	
+			else: icon = None
+		except: icon = None
+		return icon
 
-
-	def pasteLeft(self, im, imList):
+	def pasteLeft(self, im, imList, padding="standard"):
 		w, h = im.size
 		for x in imList:
+			if padding == "standard": usePadding = self.usedLeft
+			else: usePadding = padding
 			if PILImage.isStringType(x):  # file path?
 				pasteImage = PILImage.open(x)
 			else:
@@ -4023,9 +4092,10 @@ class OmegaSB(Theme, CopyFrom):
 				pasteImage = pasteImage.resize((int(perc * width), int(perc * height)), PILImage.ANTIALIAS)
 				pasteImage.load()
 				width, height = pasteImage.size
-			box = (self.usedLeft + 2, int((h - height) / 2), self.usedLeft + width + 2, int(((h - height) / 2) + height))
+			box = (usePadding + 2, int((h - height) / 2), usePadding + width + 2, int(((h - height) / 2) + height))
 			im.paste(pasteImage, box, pasteImage)
-			self.usedLeft += width + 2
+			if padding == "standard":
+				self.usedLeft += width + 2
 		return im
 
 	def pasteCenter(self, im, image):
@@ -4046,9 +4116,11 @@ class OmegaSB(Theme, CopyFrom):
 		im.paste(pasteImage, (int((width / 2) - (w/2)), int((height - h) / 2),  int((width / 2) + (w/2)),   int(((height - h) / 2) + h)), pasteImage)
 		return im
 
-	def pasteRight(self, im, imList):
+	def pasteRight(self, im, imList, padding="standard"):
 		w, h = im.size
 		for x in imList:
+			if padding == "standard": usePadding = self.usedRight
+			else: usePadding = padding
 			if PILImage.isStringType(x):  # file path?
 				pasteImage = PILImage.open(x)
 			else:
@@ -4063,9 +4135,10 @@ class OmegaSB(Theme, CopyFrom):
 				pasteImage = pasteImage.resize((int(perc * width), int(perc * height)), PILImage.ANTIALIAS)
 				pasteImage.load()
 				width, height = pasteImage.size
-			box = (w - self.usedRight - width - 2, int((h - height) / 2), w - self.usedRight - 2, int(((h - height) / 2) + height))
+			box = (w - usePadding - width - 2, int((h - height) / 2), w - usePadding - 2, int(((h - height) / 2) + height))
 			im.paste(pasteImage, box, pasteImage)
-			self.usedRight += width + 2
+			if padding == "standard":
+				self.usedRight += width + 2
 		return im
 
 	def CustomClock(self, widget):
@@ -4132,9 +4205,6 @@ class OmegaSB(Theme, CopyFrom):
 				dual = False
 		Compile()
 
-
-# MISSING TOOLS
-# CHECK PIL, IMAGEMAGICK, 
 
 class MissingTools(Utils):
 	PageTitle = _("Missing tools")
