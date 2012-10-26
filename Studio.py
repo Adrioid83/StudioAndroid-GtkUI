@@ -13,6 +13,7 @@ import fnmatch
 import webbrowser, urllib, urllib2 # BROWSER
 from HTMLParser import HTMLParser
 # REST
+import string
 from itertools import izip
 import array
 import random
@@ -35,20 +36,39 @@ except: Pil = False
 else:	Pil = True
 
 def TogglePil(widget):
-	global Pil  #So the user can toggle PIL usage
+	global Pil  # So the user can toggle PIL usage
 	if widget.get_active():Pil = True
 	else: Pil = False
 	print("PIL = %s" % ["Disabled", "Enabled"][widget.get_active()])
 
+# VARIABLES
+
+ScriptDir=os.path.dirname(os.path.realpath(__file__))
+Home=os.path.expanduser('~')
+ConfDir = os.path.join(Home, ".STUDIO")
+OmegaDir = os.path.join(ScriptDir, "Omega")
+ImageDir = os.path.join(ScriptDir, "Image")
+MyFile = os.path.basename(__file__)
+FullFile = os.path.abspath(os.path.realpath(__file__))
+Cores = str(multiprocessing.cpu_count())
+Python = os.path.abspath(sys.executable)
+PythonDir = os.path.dirname(Python)
+
+Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance", ["ODEX", ["IN", "OUT", "WORKING", "CURRENT"], "PORT", ["ROM", "TO", "WORKING"], "Smali", ["IN", "OUT", "Smali"]], "APK", ["IN", "DEC", "EX", "OUT"], "Image", ["Resized", "Theme"]]
+
 
 # TO FIX OTS <-> SA DEPENDENCIES
 class ToolAttr:
-	VersionFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "version")
-	with open(VersionFile, "r") as f:
-		versionNo = f.readline()
-		toggledVersion = f.readline()
-	if "omega" in toggledVersion:
-		OmegaVersion = True
+	VersionFile = os.path.join(ScriptDir, "version")
+	Changelog = os.path.join(ScriptDir, "changelog")
+	with open(Changelog, "r") as f:
+		versionNo = f.readlines()[-1].replace("\n", "")
+	if os.path.exists(VersionFile):
+		with open(VersionFile, "r") as f:
+			toggledVersion = f.readline()
+		if "omega" in toggledVersion:
+			OmegaVersion = True
+		else: OmegaVersion = False
 	else: OmegaVersion = False
 
 	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
@@ -67,28 +87,13 @@ class ToolAttr:
 def ToggleOmega(widget):
 	if ToolAttr.OmegaVersion == True:
 		with open(ToolAttr.VersionFile, "w") as f:
-			f.writelines([ToolAttr.versionNo, "studio"])
+			f.write("studio")
 		ToolAttr.OmegaVersion = False
 	else:
 		with open(ToolAttr.VersionFile, "w") as f:
-			f.writelines([ToolAttr.versionNo, "omega"])
+			f.write("omega")
 		ToolAttr.OmegaVersion = True
 	Restart(widget)
-
-# VARIABLES
-
-ScriptDir=os.path.dirname(os.path.realpath(__file__))
-Home=os.path.expanduser('~')
-ConfDir = os.path.join(Home, ".STUDIO")
-OmegaDir = os.path.join(ScriptDir, "Omega")
-ImageDir = os.path.join(ScriptDir, "Image")
-MyFile = os.path.basename(__file__)
-FullFile = os.path.abspath(os.path.realpath(__file__))
-Cores = str(multiprocessing.cpu_count())
-Python = os.path.abspath(sys.executable)
-PythonDir = os.path.dirname(Python)
-
-Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance", ["ODEX", ["IN", "OUT", "WORKING", "CURRENT"], "PORT", ["ROM", "TO", "WORKING"], "Smali", ["IN", "OUT", "Smali"]], "APK", ["IN", "DEC", "EX", "OUT"], "Image", ["Resized", "Theme"]]
 
 
 # OS Determination
@@ -975,8 +980,8 @@ def ConvertImage():
 			if not os.path.exists(os.path.join(ImageDir, "Convert")): os.makedirs(os.path.join(ImageDir, "Convert"))
 			ext = [r for r in ExtBtn.get_group() if r.get_active()][0].get_label()
 			if Pil == True:
-				for x in find_files(ConvertFC().out, "*"):
-					Dst = os.path.splitext(x.replace(ConvertFC.out, os.path.join(ImageDir, "Convert")))[0] + ext
+				for x in find_files(ConvertDialog.out, "*"):
+					Dst = os.path.splitext(x.replace(ConvertDialog.out, os.path.join(ImageDir, "Convert")))[0] + ext
 					if os.path.splitext(x)[1] in [".png", ".jpg", ".gif", ".bmp", ".jpeg"] and not os.path.splitext(x)[1] == ext.replace(".", ""):
 						try:
 							im = PILImage.open(x)
@@ -1100,13 +1105,13 @@ class Resize:
 	def StartResize(self, widget):
 			self.ResizeDialog.out
 			DstDir = os.path.join(ImageDir, "Resized", '')
-			if NormalResize.get_active():
-				Perc = ResizePercentageBox.get_text()
+			if self.NormalResize.get_active():
+				Perc = self.ResizePercentageBox.get_text()
 				if not Perc.endswith("%"):
 					Perc = Perc + "%"
-			if EasyResize.get_active():
-				InDPI = InDPIBox.get_text()
-				OutDPI = OutDPIBox.get_text()
+			if self.EasyResize.get_active():
+				InDPI = self.InDPIBox.get_text()
+				OutDPI = self.OutDPIBox.get_text()
 				if InDPI == 'XHDPI':
 					InRes = 720
 				elif InDPI == 'HDPI':
@@ -1128,9 +1133,9 @@ class Resize:
 				else:
 					OutRes = int(OutDPI)
 
-			if ApkResize.get_active():
-				InDPI = ApkInDPIBox.get_text()
-				OutDPI = ApkOutDPIBox.get_text()
+			if self.ApkResize.get_active():
+				InDPI = self.ApkInDPIBox.get_text()
+				OutDPI = self.ApkOutDPIBox.get_text()
 				if InDPI == 'XHDPI':
 					InRes = 720
 					InDir1 = 'xhdpi'
@@ -1166,11 +1171,11 @@ class Resize:
 					shutil.rmtree(FullZipDir)
 				ExZip(self.ResizeDialog.out, FullZipDir)
 				Apk = self.ResizeDialog.out
-				ResizeFC.ResizeAPK = self.ResizeDialog.out
+				self.ResizeFC.ResizeAPK = self.ResizeDialog.out
 				self.ResizeDialog.out = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + InDir1)
 				DstDir = os.path.join(ScriptDir, "Resizing", "res", "drawable-" + OutDir1, '')
 
-			if ApkResize.get_active() or EasyResize.get_active():
+			if self.ApkResize.get_active() or self.EasyResize.get_active():
 				Perc = round(OutRes * 100 / InRes, 2)
 
 			print _("Resize percentage is %s" % str(Perc))
@@ -1205,13 +1210,13 @@ class Resize:
 					h = int(int(Perc * h)  / 100)
 					pixbuf = pixbuf.scale_simple(w,h,gtk.gdk.INTERP_HYPER)
 				pixbuf.save(DstFile, os.path.splitext(image)[1].replace(".", ""))
-			if ApkResize.get_active():
+			if self.ApkResize.get_active():
 				FinDstDir = os.path.join(ImageDir, "Resized")
 				if os.path.exists(FinDstDir):
 					shutil.rmtree(FinDstDir)
 				os.makedirs(FinDstDir)
-				shutil.copy(ResizeFC.ResizeAPK, FinDstDir)
-				DstApk = os.path.join(FinDstDir, os.path.basename(ResizeFC.ResizeAPK))
+				shutil.copy(self.ResizeFC.ResizeAPK, FinDstDir)
+				DstApk = os.path.join(FinDstDir, os.path.basename(self.ResizeFC.ResizeAPK))
 				zipf = zipfile.ZipFile(DstApk, "a")
 				for file in os.listdir(DstDir):
 					fullfile = os.path.join(DstDir, file)
@@ -1228,16 +1233,16 @@ class Resize:
 		sw = gtk.ScrolledWindow()
 		notebook = MainApp.notebook
 
-		NormalResize = gtk.RadioButton(None, "Normal resizing using resize percentage")
-		vbox.pack_start(NormalResize, False, False, 2)
+		self.NormalResize = gtk.RadioButton(None, "Normal resizing using resize percentage")
+		vbox.pack_start(self.NormalResize, False, False, 2)
 
 		NormalResizeTable = gtk.Table(2, 2, True)
 		NormalResizeTable.set_col_spacings(2)
 		NormalResizeTable.set_row_spacings(2)
 
-		ResizePercentageBox = gtk.Entry()
-		ResizePercentageBox.set_text("%")
-		ResizePercentageBox.set_size_request(0, 30)
+		self.ResizePercentageBox = gtk.Entry()
+		self.ResizePercentageBox.set_text("%")
+		self.ResizePercentageBox.set_size_request(0, 30)
 
 		ResizePercentageLabel = gtk.Label( _("Enter the resize percentage 0-100 %") )
 
@@ -1248,26 +1253,26 @@ class Resize:
 		ResizeDirLabel = gtk.Label( _("Choose the directory containing the images"))
 		ResizeDirBtn.connect("clicked", self.ResizeDialog.openFile, ResizeDirDial, [], False, False)
 
-		NormalResizeTable.attach(ResizePercentageBox, 0, 1, 0, 1, xpadding=20)
+		NormalResizeTable.attach(self.ResizePercentageBox, 0, 1, 0, 1, xpadding=20)
 		NormalResizeTable.attach(ResizePercentageLabel, 1, 2, 0, 1)
 		NormalResizeTable.attach(ResizeDirBtn, 0, 1, 1, 2, xpadding=20)
 		NormalResizeTable.attach(ResizeDirLabel, 1, 2, 1, 2)
 		vbox.pack_start(NormalResizeTable, False, False, 0)
 
-		EasyResize = gtk.RadioButton(NormalResize, _("Easy resizing using ..DPI values"))
-		vbox.pack_start(EasyResize, False, False, 2)
+		self.EasyResize = gtk.RadioButton(self.NormalResize, _("Easy resizing using ..DPI values"))
+		vbox.pack_start(self.EasyResize, False, False, 2)
 
 		EasyResizeTable = gtk.Table(2, 2, True)
 	
-		InDPIBox = gtk.Entry()
-		InDPIBox.set_text("..DPI")
-		EasyResizeTable.attach(InDPIBox, 0, 1, 0, 1, xpadding=20)
+		self.InDPIBox = gtk.Entry()
+		self.InDPIBox.set_text("..DPI")
+		EasyResizeTable.attach(self.InDPIBox, 0, 1, 0, 1, xpadding=20)
 		InDPILabel = gtk.Label( _("Give the DPI of the images"))
 		EasyResizeTable.attach(InDPILabel, 1, 2, 0, 1)
 
-		OutDPIBox = gtk.Entry()
-		OutDPIBox.set_text("..DPI")
-		EasyResizeTable.attach(OutDPIBox, 0, 1, 1, 2, xpadding=20)
+		self.OutDPIBox = gtk.Entry()
+		self.OutDPIBox.set_text("..DPI")
+		EasyResizeTable.attach(self.OutDPIBox, 0, 1, 1, 2, xpadding=20)
 		OutDPILabel = gtk.Label( _("Give the Resized DPI"))
 		EasyResizeTable.attach(OutDPILabel, 1, 2, 1, 2)
 
@@ -1282,20 +1287,20 @@ class Resize:
 
 		vbox.pack_start(EasyResizeTable, False, False, 0)
 
-		ApkResize = gtk.RadioButton(NormalResize, _("Resize an APK using DPI values"))
-		vbox.pack_start(ApkResize, False, False, 10)
+		self.ApkResize = gtk.RadioButton(self.NormalResize, _("Resize an APK using DPI values"))
+		vbox.pack_start(self.ApkResize, False, False, 10)
 
 		APKResizeTable = gtk.Table(3, 2, True)
 	
-		ApkInDPIBox = gtk.Entry()
-		ApkInDPIBox.set_text("..DPI")
-		APKResizeTable.attach(ApkInDPIBox, 0, 1, 0, 1, xpadding=20)
+		self.ApkInDPIBox = gtk.Entry()
+		self.ApkInDPIBox.set_text("..DPI")
+		APKResizeTable.attach(self.ApkInDPIBox, 0, 1, 0, 1, xpadding=20)
 		ApkInDPILabel = gtk.Label(_("Give the DPI of the images"))
 		APKResizeTable.attach(ApkInDPILabel, 1, 2, 0, 1)
 
-		ApkOutDPIBox = gtk.Entry()
-		ApkOutDPIBox.set_text("..DPI")
-		APKResizeTable.attach(ApkOutDPIBox, 0, 1, 1, 2, xpadding=20)
+		self.ApkOutDPIBox = gtk.Entry()
+		self.ApkOutDPIBox.set_text("..DPI")
+		APKResizeTable.attach(self.ApkOutDPIBox, 0, 1, 1, 2, xpadding=20)
 		ApkOutDPILabel = gtk.Label("Give the Resized DPI")
 		APKResizeTable.attach(ApkOutDPILabel, 1, 2, 1, 2)
 
@@ -2858,7 +2863,7 @@ def BinaryPort():
 				Version = line.replace("ro.build.version.release=", '')
 				Ver = list(Version)
 				StockVer = Ver[0] + Ver[1] + Ver[2]
-		zipfile.ZipFile(ROM).extractall(path=InDirFrom)
+		ExZip(ROM, InDirFrom)
 
 		buildprop = open(os.path.join(InDirFrom, "system", "build.prop"))
 		for line in buildprop.readlines():
@@ -2902,6 +2907,7 @@ def BinaryPort():
 			Copy(os.path.join(InDirFrom, "system", "lib", "libandroid_runtime.so"), os.path.join(WorkDir, "system", "lib", "libandroid_runtime.so"))
 			for x in os.listdir(BackDir):
 				Copy(os.path.join(BackDir, x), os.path.join(WorkDir, "system", "app", x))
+
 	notebook = MainApp.notebook
 	vbox = gtk.VBox(False, 0)
 	InDirTo = os.path.join(ScriptDir, "Advance", "PORT", "TO")
@@ -4210,7 +4216,7 @@ class MissingTools(Utils):
 	PageTitle = _("Missing tools")
 	LabelText = _("These tools are not found on your system, and quite necessary!\nPlease install them.")
 	if os.getenv("JAVA_HOME") == None: Java = True
-	else: Java = False
+	elif OS == "Win": Java = False
 	if OS == "Win":
 		try: import pywin32
 		except ImportError: PyWin32 = True
@@ -4276,40 +4282,61 @@ def Bug(cmd=''):
 def Update():
 	stablechoose =  ChooseDialog("Update", "What branch do you want?", ["Stable", "Test"])
 	if stablechoose == 1:
-		branch = ToolAttr.UnstableBranch
+		link = ToolAttr.GitLink + ToolAttr.UnstableBranch
 	else:
-		branch = ToolAttr.StableBranch
-	Web.open(ToolAttr.GitLink + branch)
+		LatestTags = os.path.join(ConfDir, "Tags")
+		if os.path.exists(LatestTags): os.remove(LatestTags)
+		urllib.urlretrieve("https://github.com/mDroidd/StudioAndroid-GtkUI/tags", LatestTags)
+		with open(LatestTags) as f:
+			newestTag = [line.split('"', 2)[1] for line in f.readlines() if "/mDroidd/StudioAndroid-GtkUI/zipball/" in line][0]
+		link = "https://github.com" + newestTag
+	Web.open(link)
 
-def About():
-	notebook = MainApp.notebook
-	vbox = gtk.VBox()
+class About:
+	Killable = False
+	def __init__(self):
+		notebook = MainApp.notebook
+		vbox = gtk.VBox()
 
-	image = gtk.Image()
-	image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
-	image.show()
-	vbox.pack_start(image, False)
+		image = gtk.Image()
+		image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
+		image.show()
+		vbox.pack_start(image, False)
 
-	hbox = gtk.HBox()
+		hbox = gtk.HBox()
+		vbox.pack_start(hbox)
 
-	me = gtk.Image()
-	me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
-	me.show()
-	hbox.pack_start(me, False, False, 30)
+		me = gtk.Image()
+		me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
+		me.show()
+		hbox.pack_start(me, False, False, 30)
 
-	label = gtk.Label()
-	label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n\n<a href="https://twitter.com/StudioAndroid">Follow @StudioAndroid!</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>\n\n<a href="http://bit.ly/SA-Donate">Donate to me!</a>')
-	label.set_justify(gtk.JUSTIFY_CENTER)
-	hbox.pack_start(label)
 
-	vbox.pack_start(hbox)
+		vbox1 = gtk.VBox()
+		hbox.pack_start(vbox1, True, False)
+		label = gtk.Label()
+		label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>\n<a href="http://bit.ly/SA-Donate">Donate to me</a>')
+		label.set_justify(gtk.JUSTIFY_CENTER)
+		vbox1.pack_start(label)
+
+		DonateImage = gtk.Image()
+		DonateImage.set_from_file(os.path.join(ScriptDir, "images", "donate.png"))
+		DonateButton = gtk.Button()
+		DonateButton.set_image(DonateImage)
+		DonateButton.set_relief(gtk.RELIEF_NONE)
+		DonateButton.connect("clicked", Donate)
+		vbox1.pack_start(DonateButton)
 	
-	AboutLabel = NewPage("About", vbox)
-	AboutLabel.show_all()
+		if self.Killable == True:AboutLabel = NewPage("About", vbox)
+		else: AboutLabel = gtk.Label("About")
+		AboutLabel.show_all()
 	
-	notebook.insert_page(vbox, AboutLabel)
-	window.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+		notebook.insert_page(vbox, AboutLabel)
+		window.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def Donate(widget):
+	Web.open("http://bit.ly/SA-Donate")
 
 if not os.path.exists(os.path.join(ConfDir, "Language")):
 	window.destroy()
