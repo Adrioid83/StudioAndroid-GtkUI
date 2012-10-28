@@ -58,7 +58,9 @@ PythonDir = os.path.dirname(Python)
 ThemeDir = os.path.join(ScriptDir, "Utils", "Themes", "Theme")
 
 if os.path.exists(ThemeDir):
-	gtk.rc_parse(os.path.join(ThemeDir, "gtk-2.0", "gtkrc"))
+	try:
+		gtk.rc_parse(os.path.join(ThemeDir, "gtk-2.0", "gtkrc"))
+	except:pass
 
 Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance", ["ODEX", ["IN", "OUT", "WORKING", "CURRENT"], "PORT", ["ROM", "TO", "WORKING"], "Smali", ["IN", "OUT", "Smali"]], "APK", ["IN", "DEC", "EX", "OUT"], "Image", ["Resized", "Theme"]]
 
@@ -4231,10 +4233,10 @@ class MissingTools(Utils):
 	i = 0
 	PageTitle = _("Missing tools")
 	LabelText = _("These tools are not found on your system, and quite necessary!\nPlease install them.")
-	if os.getenv("JAVA_HOME") == None: 
+	if not OS == "Win": Java = False
+	elif os.getenv("JAVA_HOME") == None: 
 		Java = True
 		i += 1
-	elif OS == "Win": Java = False
 	if OS == "Win":
 		try: import pywin32
 		except ImportError: 
@@ -4259,9 +4261,10 @@ class MissingTools(Utils):
 class Customize:
 	def __init__(self):
 		vbox = gtk.VBox()
-		MissingButton = gtk.Button(_("Warning! %d missing tools!" % MissingTools.i))
-		MissingButton.connect("clicked", callback, MissingTools)
-		vbox.pack_start(MissingButton, True, False)
+		if not MissingTools.i == 0:
+			MissingButton = gtk.Button(_("Warning! %d missing tools!" % MissingTools.i))
+			MissingButton.connect("clicked", callback, MissingTools)
+			vbox.pack_start(MissingButton, True, False)
 		vbox.pack_start(gtk.Label(_("Use this page to customize the whole tool on-the-go!")))
 		CustomizeLabel = NewPage("Customize", vbox)
 
@@ -4290,10 +4293,12 @@ class Customize:
 		hbox1.pack_start(vbox1)
 		hbox1.pack_start(vbox2)
 		vbox1.pack_start(gtk.Label(_("Set StudioAndroid theme:")))
-		Std = gtk.RadioButton(None, "Theme selection")
+		Stock = gtk.RadioButton(None, _("Stock theme"))
+		Stock.set_active(True)
+		vbox1.pack_start(Stock, False, False)
+		
 		for x in find_files(os.path.join(ScriptDir, "Utils", "Themes"), "*.zip"):
-			NameBtn = gtk.RadioButton(Std, os.path.splitext(os.path.basename(x))[0])
-			NameBtn.set_active(True)
+			NameBtn = gtk.RadioButton(Stock, os.path.splitext(os.path.basename(x))[0])
 			vbox1.pack_start(NameBtn, False, False)
 		ApplyButton = gtk.Button(_("Apply theme!"))
 		ApplyButton.connect("clicked", self.SetTheme, NameBtn)
@@ -4323,13 +4328,14 @@ class Customize:
 		ChooseBtn.connect("clicked", self.PickLanguage, self.EnBtn)
 
 		MainApp.notebook.insert_page(vbox, CustomizeLabel)
-		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
 		window.show_all()
+		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
 
 	def SetTheme(self, widget, group):
 		active = [r for r in group.get_group() if r.get_active()][0].get_label()
 		if os.path.exists(os.path.join(ScriptDir, "Utils", "Themes", "Theme")):shutil.rmtree(os.path.join(ScriptDir, "Utils", "Themes", "Theme"))
-		ExZip(os.path.join(ScriptDir, "Utils", "Themes", active + ".zip"), os.path.join(ScriptDir, "Utils", "Themes"))
+		if not active == _("Stock theme"):
+			ExZip(os.path.join(ScriptDir, "Utils", "Themes", active + ".zip"), os.path.join(ScriptDir, "Utils", "Themes"))
 		Restart(widget)
 
 	def PickLanguage(self, widget, group):

@@ -274,6 +274,10 @@ Updates:
 	[MAIN]
 	Themes support!!
 	After killing a page, you will stay on the same page
+	Customization center: Options > Customize
+		Includes modification of Theme, Language. 
+		Inlcudes switches for PIL, Omega and Debug.
+		Includes MissingTools shortcut
 
 	[INTERNAL]
 	Some fixes for future bugs :P
@@ -288,6 +292,7 @@ Updates:
 
 	[ADVANCED]
 	Compile fix
+	BakSmali fix
 
 	[OMEGA]
 	Bouncing switch (moving an indicator to 
