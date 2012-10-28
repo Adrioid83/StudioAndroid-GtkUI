@@ -2853,24 +2853,28 @@ def BinaryPort():
 	ToDialog = ToFC()
 	FromDialog = FromFC()
 
+	InDirTo = os.path.join(ScriptDir, "Advance", "PORT", "TO")
+	InDirFrom = os.path.join(ScriptDir, "Advance", "PORT", "ROM")
+	WorkDir = os.path.join(ScriptDir, "Advance", "PORT", "WORKING")
+	BackDir = os.path.join(ScriptDir, "Advance", "PORT", "Backup")
+
 	def Start(cmd):
 		ToROM = ToDialog.out
 		ROM = FromDialog.out
-		zipfile.ZipFile(ToROM).extractall(path=InDirTo)
+		ExZip(ToROM, InDirTo)
 		buildprop = open(os.path.join(InDirTo, "system", "build.prop"))
 		for line in buildprop.readlines():
 			if line.startswith("ro.build.version.release="):
 				Version = line.replace("ro.build.version.release=", '')
 				Ver = list(Version)
-				StockVer = Ver[0] + Ver[1] + Ver[2]
+				StockVer = ''.join(Ver[0:3])
 		ExZip(ROM, InDirFrom)
-
 		buildprop = open(os.path.join(InDirFrom, "system", "build.prop"))
 		for line in buildprop.readlines():
 			if line.startswith("ro.build.version.release="):
 				Version = line.replace("ro.build.version.release=", '')
 				Ver = list(Version)
-				ROMVer = Ver[0] + Ver[1] + Ver[2]
+				ROMVer = ''.join(Ver[0:3])
 		if not StockVer == ROMVer:
 			NewDialog( _("Info"), _("Choose a ROM you want to port to your device with version %s.\n\n Version of your BASE: %s\nVersion of the ROM you want to port: %s" %(StockVer, StockVer, ROMVer)) )
 		else:
@@ -2887,17 +2891,53 @@ def BinaryPort():
 						shutil.copytree(From, To)
 					else:
 						shutil.copy(From, To)
-			Copy(InDirTo, WorkDir)
+
+			Copy(InDirFrom, WorkDir)
 			if os.path.exists(BackDir):
 				shutil.rmtree(BackDir)
 			os.mkdir(BackDir)
+			# Copy the device-specific APKs to the WorkingDir
 			for apk in ['Stk.apk', 'VpnServices.apk', 'Camera.apk', 'Bluetooth.apk']:
+				modified = os.path.join(WorkDir, "system", "app", apk)
 				apk = os.path.join(InDirFrom, "system", "app", apk)
 				if os.path.exists(apk):
 					shutil.copy(apk, BackDir)
-					odex = apk.replace('apk', 'odex')
+					shutil.copy(apk, modified)
+					odex = apk.replace('.apk', '.odex')
 					if os.path.exists(odex):
 						shutil.copy(odex, BackDir)
+						shutil.copy(odex, os.path.join(WorkDir, "system", "app", os.path.basename(odex)))
+
+			# Replace kernel with device one
+			for kernel in ["boot.img", "zImage", "kernel.sin"]:
+				original = os.path.join(InDirTo, kernel)
+				ported = os.path.join(WorkDir, kernel)
+				if os.path.exists(ported): os.remove(ported)
+				if os.path.exists(original): shutil.copy(original, ported)
+
+			#
+			for folder in ["cameradata", "tts", "usr", "vendor", "modules"]:
+				original = os.path.join(InDirTo, "system", folder)
+				modified = os.path.join(WorkDir,"system", folder)
+				if os.path.exists(modified): shutil.rmtree(modified)
+				if os.path.exists(original): shutil.copytree(original, modified)
+			shutil.rmtree(os.path.join(WorkDir, "system", "etc", "wifi"))
+			shutil.copytree(os.path.join(InDirTo, "system", "etc", "wifi"), os.path.join(WorkDir, "system", "etc", "wifi"))
+
+			for folder in os.listdir(os.path.join(WorkDir, "system", "etc")):
+				fulldir = os.path.join(WorkDir, "system", "etc", folder)
+				if not folder == "init.d" or folder == "permissions" or folder == "license":
+					shutil.rmtree(fulldir)
+
+			for dir in ["bin", "tts", "lib", "usr", "vendor", "firmware", os.path.join("etc", "wifi"), os.path.join("etc", "firmware"), "xbin"]:
+				if os.path.exists(os.path.join(InDirTo, "system", dir)):
+					CopyTree(os.path.join(InDirTo, "system", dir), os.path.join(WorkDir, "system", dir), True)
+
+			for cert in os.listdir(os.path.join(WorkDir, "META-INF")):
+				fullfile = os.path.join(WorkDir, "META-INF", cert)
+				if not os.path.isdir(fullfile): os.remove(fullfile)
+
+			
 						
 			Copy(os.path.join(InDirFrom, "system", "app"), os.path.join(WorkDir, "system", "app"))
 			Copy(os.path.join(InDirFrom, "system", "framework"), os.path.join(WorkDir, "system", "framework"))
@@ -2910,18 +2950,14 @@ def BinaryPort():
 
 	notebook = MainApp.notebook
 	vbox = gtk.VBox(False, 0)
-	InDirTo = os.path.join(ScriptDir, "Advance", "PORT", "TO")
-	InDirFrom = os.path.join(ScriptDir, "Advance", "PORT", "ROM")
-	WorkDir = os.path.join(ScriptDir, "Advance", "PORT", "WORKING")
-	BackDir = os.path.join(ScriptDir, "Advance", "PORT", "Backup")
 	ToFileDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN,
                                   	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-	ToExtractBtn = gtk.Button( _("Choose ROM you want to port to:"))
-	ToExtractBtn.connect("clicked", ToDialog.openFile, ToFileDial, [], False, ToExtractBtn.set_text)
+	ToExtractBtn = gtk.Button( _("Choose a working ROM for your device:"))
+	ToExtractBtn.connect("clicked", ToDialog.openFile, ToFileDial, [], False, ToExtractBtn.set_label)
 	RomFileDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_OPEN,
                                   	buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 	RomFileBtn = gtk.Button( _("Choose the ROM you want to port") )
-	RomFileBtn.connect("clicked", FromDialog.openFile, RomFileDial, [], False, RomFileBtn.set_text)
+	RomFileBtn.connect("clicked", FromDialog.openFile, RomFileDial, [], False, RomFileBtn.set_label)
 	vbox.pack_start(ToExtractBtn, False, False, 0)
 	vbox.pack_start(RomFileBtn, False, False, 0)
 
@@ -3771,14 +3807,11 @@ class OmegaSB(Theme, CopyFrom):
 
 	def BattNameChanger(self, name):
 		perc = ''.join(filter(lambda x: x.isdigit(), name))
-		filename = "stat_sys_battery_" + perc
-		if "charge" in name or "anim" in name:
-			filename = filename + "_charge"
+		if "charge" or "anim" in name: filename = "stat_sys_battery_charge_anim" + perc
+		else: filename = "stat_sys_battery_" + perc
 		filename = filename + ".png"
-		if perc == '': return name
-		elif filename != name:
-			print "%s -> %s" %(name, filename)
-		if not perc == '': return filename
+		if filename != name:print "%s -> %s" %(name, filename)
+		return filename
 
 	def DownloadTemplate(self, widget, vbox):
 		Zip = self.TemplateZip
@@ -3815,24 +3848,28 @@ class OmegaSB(Theme, CopyFrom):
 			self.Customize = True
 
 	def SetCustomize(self):
-		list = self.intList
 		sw = gtk.ScrolledWindow()
 		hbox = gtk.HBox(True)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
 		hbox.pack_start(vbox1, True, False)
+		self.ShiftCheck = gtk.CheckButton(_("Shift value when changing"))
+		vbox1.pack_start(self.ShiftCheck)
 		hbox.pack_start(vbox2, True, False)
 		sw.add_with_viewport(hbox)
-		for x in list:
+		for x in self.intList:
 			frame = gtk.Frame(x[0])
 			adj = gtk.Adjustment(1.0, 1.0, 22.0, 1.0, 0.0, 0.0)
 			spin = gtk.SpinButton(adj, 0, 0)
 			spin.set_value(float(x[1]))
-			spin.connect("value-changed", self.EndTheming)
 			frame.add(spin)
-			if "location" in x[0]: vbox2.pack_start(frame)
-			else: vbox1.pack_start(frame)
-			list[list.index(x)] += [spin.get_value_as_int, spin]
+			if "location" in x[0]:
+				spin.connect("value-changed", self.SpinChanged, x[0])
+				vbox2.pack_start(frame)
+			else: 
+				spin.connect("value-changed", self.EndTheming)
+				vbox1.pack_start(frame)
+			self.intList[self.intList.index(x)] += [spin.get_value_as_int, spin]
 		self.OmegaNotebook.insert_page(sw, gtk.Label("Customize"), 2)
 		window.show_all()
 
@@ -4028,7 +4065,7 @@ class OmegaSB(Theme, CopyFrom):
 			size = 14
 		# SET CLOCK TEXT TO CUSTOM SIZE
 		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), size)
-		img=PILImage.new("RGBA", (4*size,22))
+		img=PILImage.new("RGBA", (4*size,size))
 		draw = PILImageDraw.Draw(img)
 		draw.text((0, 0),"19", PILImageColor.getrgb(self.ClockHourColor),font=font)
 		draw.text((size + 2, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=font)
@@ -4064,17 +4101,19 @@ class OmegaSB(Theme, CopyFrom):
 		
 	def ParseIcon(self, value):
 		try:
-			if "gps" in value:		icon = find_files(self.SrcDir, "stat_sys_gps*")[0]
-			elif "battery" in value: 	icon = find_files(self.SrcDir, "stat_sys_battery_65.png")[0]
-			elif "wifi" in value: 		icon = find_files(self.SrcDir, "stat_sys_wifi_signal_3_fully.png")[0]
-			elif "network_grid" in value:	icon = find_files(self.SrcDir, "stat_sys_signal_3_fully.png")[0]
-			elif "network_type" in value:	icon = find_files(self.SrcDir, "stat_sys_data_fully_connected_h.png")[0]
+			if "omega_system" in value: 	icon = find_files(self.SrcDir, "stat_sys_warning.png")[0]
+			elif "adb" in value:		icon = find_files(self.SrcDir, "stat_sys_adb.png")[0]	
+			elif "usb" in value: 		icon = find_files(self.SrcDir, "stat_sys_data_usb.png")[0]
+
 			elif "headset" in value:	icon = find_files(self.SrcDir, "stat_sys_headset_no_mic.png")[0]
+			elif "bluetooth" in value:	icon = find_files(self.SrcDir, "stat_sys_data_bluetooth.png")[0]
 			elif "alarm" in value:		icon = find_files(self.SrcDir, "stat_sys_alarm.png")[0]
 			elif "ringer" in value:		icon = find_files(self.SrcDir, "stat_sys_ringer_silent.png")[0]
-			elif "bluetooth" in value:	icon = find_files(self.SrcDir, "stat_sys_data_bluetooth.png")[0]
-			elif "adb" in value:		icon = find_files(self.SrcDir, "stat_sys_adb.png")[0]
-			elif "usb" in value: 		icon = find_files(self.SrcDir, "stat_sys_data_usb.png")[0]	
+			elif "gps" in value:		icon = find_files(self.SrcDir, "stat_sys_gps*")[0]
+			elif "wifi" in value: 		icon = find_files(self.SrcDir, "stat_sys_wifi_signal_3_fully.png")[0]
+			elif "battery" in value: 	icon = find_files(self.SrcDir, "stat_sys_battery_65.png")[0]
+			elif "network_grid" in value:	icon = find_files(self.SrcDir, "stat_sys_signal_3_fully.png")[0]
+			elif "network_type" in value:	icon = find_files(self.SrcDir, "stat_sys_data_fully_connected_h.png")[0]
 			else: icon = None
 		except: icon = None
 		return icon
@@ -4152,6 +4191,25 @@ class OmegaSB(Theme, CopyFrom):
 			val = ["Left clock", "Center clock", "Right clock"].index(widget.get_label())
 			self.ShiftCustom("digital_clock_grid_location", [1,11,22][val], ["plus", "plus", "min"][val])
 		self.EndTheming(widget)
+
+	def SpinChanged(self, widget, valname):
+		if not self.ShiftCheck.get_active(): self.EndTheming(widget)
+		else:
+			currentValue = widget.get_value_as_int()
+			self.EndTheming(widget)
+			rest = range(1, 23)
+			rest.remove(currentValue)
+			current = 40
+			for val in [val for val in self.intList if "location" in val[0]]:
+				if val[2]() in rest: rest.remove(val[2]())
+			print rest
+			for val in rest:
+				dif = val - currentValue
+				if abs(dif) < abs(current):current = dif
+			print current
+			if current < 0: mat="min"
+			elif current > 0: mat="plus"
+			self.ShiftCustom(valname, currentValue, mat)
 
 	def ShiftCustom(self, value, valInt, mat="min"):
 		valList = [val for val in self.intList if val[0] == value][0]
@@ -4324,7 +4382,7 @@ class About:
 		DonateButton = gtk.Button()
 		DonateButton.set_image(DonateImage)
 		DonateButton.set_relief(gtk.RELIEF_NONE)
-		DonateButton.connect("clicked", Donate)
+		DonateButton.connect("clicked", self.Donate)
 		vbox1.pack_start(DonateButton)
 	
 		if self.Killable == True:AboutLabel = NewPage("About", vbox)
@@ -4334,9 +4392,8 @@ class About:
 		notebook.insert_page(vbox, AboutLabel)
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
-
-def Donate(widget):
-	Web.open("http://bit.ly/SA-Donate")
+	def Donate(self, widget):
+		Web.open("http://bit.ly/SA-Donate")
 
 if not os.path.exists(os.path.join(ConfDir, "Language")):
 	window.destroy()
@@ -4344,10 +4401,10 @@ if not os.path.exists(os.path.join(ConfDir, "Language")):
 
 if not FirstRun == False:
 	callback("cmd", "MissingTools")
-	callback("cmd", "About")
 
 
 def main():
+	About()
 	try:
 		gobject.threads_init()
 		gtk.main()

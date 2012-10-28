@@ -1,4 +1,4 @@
-Welcome to OmegaThemeKitchen
+Welcome to StudioAndroid
 I hope you like it!
 
 If you encounter ANY problem, please click "Options > Report Bug" in OmegaAndroid.
@@ -13,7 +13,7 @@ Contact me if so!
 
 HOW TO RUN
 [Easy]
--Linux: double-click "StudioLinux"
+-Unix: double-click "StudioUnix"
 -Windows: double-click "StudioWindows.exe" [Not frequent updated]
 
 [Tech]
@@ -26,4 +26,4 @@ HOW TO COMPILE (TECH):
 - Run Studio.py in python
 - "Advanced > Compile to Exe" ("Omega > Compile to Exe" in Omega version)
 - "Start Compiling"
-- When compiled, please send me your OTS(.exe)!
+- When compiled, please send me your Studio(.exe)!

@@ -253,6 +253,8 @@ Updates:
 	Expanded view @Customize tab
 	Icon location customization live visible in preview (:D)
 	Preview & Undo-Preview @Colorize-tab (Temporarily preview the selected icons without affecting them)
+	Vertically center clock
+	Included bouncing in Customize: when you change a value to a location where already an indicator is, it will bounce
 
 	[Style, Usability & Polish]
 	Converted "Build from Source" to 3-column UI
