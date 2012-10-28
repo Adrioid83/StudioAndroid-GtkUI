@@ -24,6 +24,8 @@ import gettext, locale
 import Source.Src
 _ = gettext.gettext
 
+
+
 # TRY TO IMPORT PIL FOR INTERNAL IMAGE TOOLS
 try: 
 	from PIL import Image as PILImage
@@ -53,13 +55,18 @@ FullFile = os.path.abspath(os.path.realpath(__file__))
 Cores = str(multiprocessing.cpu_count())
 Python = os.path.abspath(sys.executable)
 PythonDir = os.path.dirname(Python)
+ThemeDir = os.path.join(ScriptDir, "Utils", "Themes", "Theme")
+
+if os.path.exists(ThemeDir):
+	gtk.rc_parse(os.path.join(ThemeDir, "gtk-2.0", "gtkrc"))
 
 Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance", ["ODEX", ["IN", "OUT", "WORKING", "CURRENT"], "PORT", ["ROM", "TO", "WORKING"], "Smali", ["IN", "OUT", "Smali"]], "APK", ["IN", "DEC", "EX", "OUT"], "Image", ["Resized", "Theme"]]
 
 
 # TO FIX OTS <-> SA DEPENDENCIES
 class ToolAttr:
-	VersionFile = os.path.join(ScriptDir, "version")
+	if not os.path.exists(ConfDir): os.makedirs(ConfDir)
+	VersionFile = os.path.join(ConfDir, "Custom")
 	Changelog = os.path.join(ScriptDir, "changelog")
 	with open(Changelog, "r") as f:
 		versionNo = f.readlines()[-1].replace("\n", "")
@@ -118,60 +125,12 @@ else: sep = ":"
 for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
 
-# Choose language
-
-if not os.path.exists(os.path.join(ConfDir, "Language")):
-	def delete_event(self, widget, event, data=None):
-		exit()
-		return False
-	def PickLanguage(cmd):
-		f = open(os.path.join(ConfDir, "Language"), "w")
-		f.flush()
-		if FrBtn.get_active(): f.write("fr_FR")
-		elif EnBtn.get_active(): f.write("en_US")
-		elif ItBtn.get_active(): f.write("it_IT")
-		elif NlBtn.get_active(): f.write("nl_NL")
-		else:
-			active = [r for r in FrBtn.get_group() if r.get_active()][0].get_label().replace("--", "_")
-			print active
-			f.write(active)
-		f.flush()
-		window2.destroy()
-		os.execl(sys.executable, sys.executable, * sys.argv)
-	if not os.path.exists(ConfDir):
-		os.makedirs(ConfDir)
-	window2 = gtk.Window(gtk.WINDOW_TOPLEVEL)
-	window2.set_position(gtk.WIN_POS_MOUSE)
-	window2.set_resizable(False)
-	window2.connect("delete_event", delete_event, 0)
-	window2.set_title("Lang")
-	vbox = gtk.VBox(False, 0)
-	window2.add(vbox)
-	EnBtn = gtk.RadioButton(None, "English")
-	FrBtn = gtk.RadioButton(EnBtn, "Francais")
-	ItBtn = gtk.RadioButton(FrBtn, "Italiano")
-	NlBtn = gtk.RadioButton(FrBtn, "Nederlands")
-	RoBtn = gtk.RadioButton(FrBtn, "Romanian")
-	NewLang = []
-	for langd in [r for r in os.listdir(os.path.join(ScriptDir, "lang")) if "_" in r]:
-		if not langd.split("_")[0] in ["fr", "en", "it", "nl", "ro"]:
-			NewBtn = gtk.RadioButton(FrBtn, langd.replace("_", "--"))
-			vbox.pack_start(NewBtn)
-			NewLang.append(langd)
-	vbox.pack_start(EnBtn)
-	vbox.pack_start(FrBtn)
-	vbox.pack_start(ItBtn)
-	vbox.pack_start(NlBtn)
-	
-	ChooseBtn = gtk.Button("Choose Language")
-	vbox.pack_start(ChooseBtn)
-	ChooseBtn.connect("clicked", PickLanguage)
-	window2.show_all()
-	gtk.main()
-	while 1:
-		time.sleep(1)
 
 # APPLY LANGUAGE
+
+if not os.path.exists(os.path.join(ConfDir, "Language")):
+	with open(os.path.join(ConfDir, "Language"), "w") as f:
+		f.write("en_US")
 
 DIR = os.path.join(ScriptDir, "lang")
 APP = 'Studio'
@@ -239,10 +198,13 @@ def Restart(cmd):
 	python = sys.executable
 	os.execl(python, python, * sys.argv)
 
-def DebugOn(cmd):
-	f = open(os.path.join(ConfDir, "debug"), "w")
-	f.close()
-	Restart("cmd")
+def ToggleDebug(widget):
+	if widget.get_active():
+		f = open(os.path.join(ConfDir, "debug"), "w")
+		f.close()
+	else:
+		os.remove(os.path.join(ConfDir, "debug"))
+	Restart(widget)
 
 # Shotcuts 
 
@@ -273,6 +235,7 @@ sz = sz + plus
 
 # MAC OSX Fix
 def ExZip(zipf, expath, type='zip', pattern='*'):
+	if not os.path.exists(expath): os.makedirs(expath)
 	if type == 'zip':
 		Zip = zipfile.ZipFile(zipf, "r")
 		namelist = Zip.namelist()
@@ -340,12 +303,16 @@ def NewDialog(Title, Text):
 
 def KillPage(widget, child, notebook=False):
 	if notebook == False: notebook=MainApp.notebook
+	current = notebook.get_current_page()
+
 	page = notebook.page_num(child)
 	if page == -1:
 		page = notebook.get_n_pages() - 1
 	notebook.remove_page(page)
 	child.destroy()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+	
+	if current == page:
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 # Basic AddToList
 
@@ -609,6 +576,8 @@ window.set_size_request(750,500)
 window.set_resizable(True)
 window.set_position(gtk.WIN_POS_CENTER)
 
+
+
 vbox = gtk.VBox(False, 5)
 hbox = gtk.HBox(False, 5)
 
@@ -661,10 +630,6 @@ class MainApp:
 	MainOptCl.connect("activate", callback, "Clean")
 	Options.append(MainOptCl)
 
-	DebugOption = gtk.MenuItem( _("Debug") )
-	DebugOption.connect("activate", DebugOn)
-	Options.append(DebugOption)
-
 	LogOption = gtk.MenuItem( _("Check the log") )
 	LogOption.connect("activate", callback, "Log")
 	Options.append(LogOption)
@@ -700,9 +665,9 @@ class MainApp:
 	sep = gtk.SeparatorMenuItem()
 	Options.append(sep)
 
-	OmegaToggle = gtk.MenuItem("Toggle Omega")
-	Options.append(OmegaToggle)
-	OmegaToggle.connect("activate", ToggleOmega)
+	CstToggle = gtk.MenuItem("Customize!")
+	Options.append(CstToggle)
+	CstToggle.connect("activate", callback, "Customize")
 
 
 
@@ -722,13 +687,6 @@ class MainApp:
 	UtilVBox = gtk.VBox()
 
 	UtilLabel = gtk.Label( _("Images"))
-
-	hbox = gtk.HBox()
-	PilToggle = gtk.ToggleButton(_("Use PIL (beta)"))
-	if Pil == True: PilToggle.set_active(True)
-	PilToggle.connect("toggled", TogglePil)
-	hbox.pack_end(PilToggle, False, False, 0)
-	UtilVBox.pack_start(hbox, False, False, 0)
 
 	image = gtk.Image()
 	image.set_from_file(os.path.join(ScriptDir, "images", "Images.png"))
@@ -2148,7 +2106,7 @@ class DeCompile:
 						ApkDir = APK.replace('.apk', '')
 						APK = os.path.join(self.InDir, APK)
 						OutDir = os.path.join(self.DecDir, ApkDir)
-						SystemLog("java -jar %s d -f %s %s" %(ApkJar, APK, OutDir))
+						SystemLog("java -jar %s d -f '%s' '%s'" %(ApkJar, APK, OutDir))
 						print _("Decompiled %s" % APK)
 			self.Refresh(widget, self.vbox)
 		if Second:
@@ -2162,7 +2120,7 @@ class DeCompile:
 						ApkFolder = os.path.join(self.DecDir, dec)
 						ApkName = os.path.join(self.OutDir, "Unsigned-" + Dec + ".apk")
 						os.chdir(UtilDir)
-						SystemLog("java -jar %s b -f %s %s " %(ApkJar, ApkFolder, ApkName))
+						SystemLog("java -jar '%s' b -f '%s' '%s'" %(ApkJar, ApkFolder, ApkName))
 						print _("Compiled %s" % ApkName)
 			callback(widget, self.chainFunc)
 
@@ -2587,7 +2545,7 @@ class BakSmali:
 	class BaksmaliFC(FileChooserD):pass
 	BaksmaliDialog = BaksmaliFC()
 
-	def StartSmali(widget, Group):
+	def StartSmali(self, widget, Group):
 		if not CstApi.get_text() == '':
 			Api = "-a %s" % self.CstApi.get_text()
 		else:
@@ -2601,7 +2559,7 @@ class BakSmali:
 		print _("Smaling %s into %s with %s" %(os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 		SystemLog("java -jar %s %s -o %s %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 
-	def StartBakSmali(widget):
+	def StartBakSmali(self, widget):
 		dialog = gtk.FileChooserDialog("Open..",  None, gtk.FILE_CHOOSER_ACTION_OPEN, 
 									   (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 		DexFiles = self.BaksmaliDialog.openFile(widget, dialog, ["*dex"], True, False)
@@ -2627,7 +2585,7 @@ class BakSmali:
 		vbox = gtk.VBox()
 
 		BakSmaliBtn = gtk.Button(_("Choose file(s) to Baksmali"))
-		BakSmaliBtn.connect("clicked", StartBakSmali)
+		BakSmaliBtn.connect("clicked", self.StartBakSmali)
 		vbox.pack_start(BakSmaliBtn, False, False, 3)
 
 		label = gtk.Label( _("\n\n OR choose a Smali folder to Smali:"))
@@ -2645,7 +2603,7 @@ class BakSmali:
 		vbox.pack_start(self.Output, False, False, 0)
 
 		SmaliBtn = gtk.Button("Smali")
-		SmaliBtn.connect("clicked", StartSmali, NameBtn)
+		SmaliBtn.connect("clicked", self.StartSmali, NameBtn)
 		vbox.pack_start(SmaliBtn, False, False, 3)
 
 		space = gtk.Label("")
@@ -3045,7 +3003,7 @@ class Compile:
 
 		CompiledDir = os.path.join(PyInstDir, Name, "dist")
 		compiled = os.path.join(CompiledDir, os.listdir(CompiledDir)[0])
-		if os.path.exists(os.path.join(ScriptDir), os.path.basename(compiled)): os.remove(os.path.join(ScriptDir), os.path.basename(compiled))
+		if os.path.exists(os.path.join(ScriptDir, os.path.basename(compiled))): os.remove(os.path.join(ScriptDir, os.path.basename(compiled)))
 		shutil.copy(compiled, ScriptDir)
 
 def ADBConfig():
@@ -3807,9 +3765,8 @@ class OmegaSB(Theme, CopyFrom):
 
 	def BattNameChanger(self, name):
 		perc = ''.join(filter(lambda x: x.isdigit(), name))
-		if "charge" or "anim" in name: filename = "stat_sys_battery_charge_anim" + perc
-		else: filename = "stat_sys_battery_" + perc
-		filename = filename + ".png"
+		if "charge" in name or "anim" in name: filename = "stat_sys_battery_charge_anim%s.png" % perc
+		else: filename = "stat_sys_battery_%s.png" % perc
 		if filename != name:print "%s -> %s" %(name, filename)
 		return filename
 
@@ -3953,7 +3910,7 @@ class OmegaSB(Theme, CopyFrom):
 			if isinstance(patterns, str):patterns = [patterns]
 			for pattern in patterns:
 				for file in [x for x in find_files(self.SearchDir, pattern) if fnmatch.fnmatch(x, pattern)]:
-					if "battery" in os.path.basename(file):
+					if "stat_sys_battery" in os.path.basename(file):
 						Dest = os.path.join(self.SrcDir, self.BattNameChanger(os.path.basename(file)) )
 					else:
 						Dest = os.path.join(self.SrcDir, os.path.basename(file))
@@ -4057,20 +4014,20 @@ class OmegaSB(Theme, CopyFrom):
 		
 		# RETREIVE CLOCK SIZE
 		if not self.intList == []:
-			for x in self.intList: 
-				if x[0] == "digital_clock_text_size": 
-					size = int(x[2]())
-					break
+			size = int([x for x in self.intList if x[0] == "digital_clock_text_size"][0][2]())
+			dotsize = size#int([x for x in self.intList if x[0] == "digital_clock_period_text_size"][0][2]())
 		else:
-			size = 14
+			size = dotsize = 14
 		# SET CLOCK TEXT TO CUSTOM SIZE
 		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), size)
+		dotfont = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), dotsize)
 		img=PILImage.new("RGBA", (4*size,size))
 		draw = PILImageDraw.Draw(img)
 		draw.text((0, 0),"19", PILImageColor.getrgb(self.ClockHourColor),font=font)
-		draw.text((size + 2, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=font)
-		draw.text((size + 4, 0),"43", PILImageColor.getrgb(self.ClockMinuteColor),font=font)
-		draw.text((size*2 + 6, 0),"pm", PILImageColor.getrgb(self.ClockAMColor),font=font)
+		draw.text((size + size/7, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=dotfont)
+		draw.text((size + dotsize/3, 0),"43", PILImageColor.getrgb(self.ClockMinuteColor),font=font)
+		draw.text((size*2 + size/7 + dotsize/3, 0),"pm", PILImageColor.getrgb(self.ClockAMColor),font=font)
+		totalSize = size 
 		draw = PILImageDraw.Draw(img)
 		draw = PILImageDraw.Draw(img)
 
@@ -4271,24 +4228,120 @@ class OmegaSB(Theme, CopyFrom):
 
 
 class MissingTools(Utils):
+	i = 0
 	PageTitle = _("Missing tools")
 	LabelText = _("These tools are not found on your system, and quite necessary!\nPlease install them.")
-	if os.getenv("JAVA_HOME") == None: Java = True
+	if os.getenv("JAVA_HOME") == None: 
+		Java = True
+		i += 1
 	elif OS == "Win": Java = False
 	if OS == "Win":
 		try: import pywin32
-		except ImportError: PyWin32 = True
+		except ImportError: 
+			PyWin32 = True
+			i += 1
 		else: PyWin = False
 	else: PyWin = False
 	if Pil == True: PIL = False
-	else: PIL = False
+	else: 
+		PIL = True
+		i += 1
 	if os.path.exists(os.path.join(ScriptDir, "test.jpg")): os.remove(os.path.join(ScriptDir, "test.jpg"))
 	os.system("convert %s %s" %(os.path.join(ScriptDir, "images", "Empty.png"), os.path.join(ScriptDir, "test.jpg")))
 	if os.path.exists(os.path.join(ScriptDir, "test.jpg")):
 		IM = False
 		os.remove(os.path.join(ScriptDir, "test.jpg"))
-	else: IM = True
+	else: 
+		IM = True
+		i += 1
 
+
+class Customize:
+	def __init__(self):
+		vbox = gtk.VBox()
+		MissingButton = gtk.Button(_("Warning! %d missing tools!" % MissingTools.i))
+		MissingButton.connect("clicked", callback, MissingTools)
+		vbox.pack_start(MissingButton, True, False)
+		vbox.pack_start(gtk.Label(_("Use this page to customize the whole tool on-the-go!")))
+		CustomizeLabel = NewPage("Customize", vbox)
+
+		hbox = gtk.HBox()
+		vbox.pack_start(hbox, False, False, 0)
+
+		PilToggle = gtk.CheckButton(_("Use PIL (beta)"))
+		if Pil == True: PilToggle.set_active(True)
+		PilToggle.connect("toggled", TogglePil)
+		hbox.pack_start(PilToggle, True, False)
+
+		OmegaToggle = gtk.CheckButton(_("Omega mode"))
+		if ToolAttr.OmegaVersion == True: OmegaToggle.set_active(True)
+		OmegaToggle.connect("toggled", ToggleOmega)
+		hbox.pack_start(OmegaToggle, True, False)
+
+		DebugToggle = gtk.CheckButton(_("Debug mode"))
+		if Debug == True: DebugToggle.set_active(True)
+		DebugToggle.connect("toggled", ToggleDebug)
+		hbox.pack_start(DebugToggle, True, False)
+
+		hbox1 = gtk.HBox()
+		vbox.pack_start(hbox1)
+		vbox1 = gtk.VBox()
+		vbox2 = gtk.VBox()
+		hbox1.pack_start(vbox1)
+		hbox1.pack_start(vbox2)
+		vbox1.pack_start(gtk.Label(_("Set StudioAndroid theme:")))
+		Std = gtk.RadioButton(None, "Theme selection")
+		for x in find_files(os.path.join(ScriptDir, "Utils", "Themes"), "*.zip"):
+			NameBtn = gtk.RadioButton(Std, os.path.splitext(os.path.basename(x))[0])
+			NameBtn.set_active(True)
+			vbox1.pack_start(NameBtn, False, False)
+		ApplyButton = gtk.Button(_("Apply theme!"))
+		ApplyButton.connect("clicked", self.SetTheme, NameBtn)
+		vbox1.pack_end(ApplyButton, False, False)
+
+		vbox2.pack_start(gtk.Label(_("Set language")), True, False)
+		
+		self.EnBtn = gtk.RadioButton(None, "English")
+		self.EnBtn.set_active(True)
+		self.FrBtn = gtk.RadioButton(self.EnBtn, "Francais")
+		self.ItBtn = gtk.RadioButton(self.FrBtn, "Italiano")
+		self.NlBtn = gtk.RadioButton(self.FrBtn, "Nederlands")
+		self.RoBtn = gtk.RadioButton(self.FrBtn, "Romanian")
+		vbox2.pack_start(self.EnBtn, False, False)
+		vbox2.pack_start(self.FrBtn, False, False)
+		vbox2.pack_start(self.ItBtn, False, False)
+		vbox2.pack_start(self.NlBtn, False, False)
+		NewLang = []
+		for langd in [r for r in os.listdir(os.path.join(ScriptDir, "lang")) if "_" in r]:
+			if not langd.split("_")[0] in ["fr", "en", "it", "nl", "ro"]:
+				NewBtn = gtk.RadioButton(self.FrBtn, langd.replace("_", "--"))
+				vbox2.pack_start(NewBtn, False, False)
+				NewLang.append(langd)
+	
+		ChooseBtn = gtk.Button("Choose Language")
+		vbox2.pack_end(ChooseBtn, False, False)
+		ChooseBtn.connect("clicked", self.PickLanguage, self.EnBtn)
+
+		MainApp.notebook.insert_page(vbox, CustomizeLabel)
+		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
+		window.show_all()
+
+	def SetTheme(self, widget, group):
+		active = [r for r in group.get_group() if r.get_active()][0].get_label()
+		if os.path.exists(os.path.join(ScriptDir, "Utils", "Themes", "Theme")):shutil.rmtree(os.path.join(ScriptDir, "Utils", "Themes", "Theme"))
+		ExZip(os.path.join(ScriptDir, "Utils", "Themes", active + ".zip"), os.path.join(ScriptDir, "Utils", "Themes"))
+		Restart(widget)
+
+	def PickLanguage(self, widget, group):
+		with open(os.path.join(ConfDir, "Language"), "w") as f:
+			if self.FrBtn.get_active(): f.write("fr_FR")
+			elif self.EnBtn.get_active(): f.write("en_US")
+			elif self.ItBtn.get_active(): f.write("it_IT")
+			elif self.NlBtn.get_active(): f.write("nl_NL")
+			else:
+				active = [r for r in group.get_group() if r.get_active()][0].get_label().replace("--", "_")
+				f.write(active)
+		Restart(widget)
 
 def Changelog():
 	ChangeWindow = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -4351,7 +4404,7 @@ def Update():
 	Web.open(link)
 
 class About:
-	Killable = False
+	Killable = True
 	def __init__(self):
 		notebook = MainApp.notebook
 		vbox = gtk.VBox()
@@ -4395,12 +4448,8 @@ class About:
 	def Donate(self, widget):
 		Web.open("http://bit.ly/SA-Donate")
 
-if not os.path.exists(os.path.join(ConfDir, "Language")):
-	window.destroy()
-	window2.show_all()
-
 if not FirstRun == False:
-	callback("cmd", "MissingTools")
+	callback("cmd", "Customize")
 
 
 def main():

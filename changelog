@@ -270,6 +270,30 @@ Updates:
 	Added Spanish translation (partial)
 	Upcoming Italian translation ;D
 
+==0.83.3==
+	[MAIN]
+	Themes support!!
+	After killing a page, you will stay on the same page
+
+	[INTERNAL]
+	Some fixes for future bugs :P
+	
+	[IMAGE]
+	Resize fix
+	Convert fix
+
+	[APK]
+	DeCompile fix
+	Newer apktool.jar and aapt versions
+
+	[ADVANCED]
+	Compile fix
+
+	[OMEGA]
+	Bouncing switch (moving an indicator to 
+
+	[OMEGA]
+
 Feature requests are always welcome :)
 Also, if you want to contribute, don't hestitate to contact me!
 Azblankin, KeitlG are already contributing to this project!
