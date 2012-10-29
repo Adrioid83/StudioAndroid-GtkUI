@@ -2530,7 +2530,7 @@ class BakSmali:
 	BaksmaliDialog = BaksmaliFC()
 
 	def StartSmali(self, widget, Group):
-		if not CstApi.get_text() == '':
+		if not self.CstApi.get_text() == '':
 			Api = "-a %s" % self.CstApi.get_text()
 		else:
 			Api = ''
