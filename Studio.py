@@ -80,6 +80,11 @@ class ToolAttr:
 		else: OmegaVersion = False
 	else: OmegaVersion = False
 
+	# Debug
+	if os.path.exists(os.path.join(ConfDir, "debug")):Debug = True
+	else:Debug = False
+
+
 	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 	if OmegaVersion == True:
 		ToolName = "OmegaThemeStudio"
@@ -93,16 +98,6 @@ class ToolAttr:
 		StableBranch = "tags"
 		UnstableBranch = "zipball/master"
 
-def ToggleOmega(widget):
-	if ToolAttr.OmegaVersion == True:
-		with open(ToolAttr.VersionFile, "w") as f:
-			f.write("studio")
-		ToolAttr.OmegaVersion = False
-	else:
-		with open(ToolAttr.VersionFile, "w") as f:
-			f.write("omega")
-		ToolAttr.OmegaVersion = True
-	Restart(widget)
 
 
 # OS Determination
@@ -164,26 +159,17 @@ class Logger(object):
 sys.stdout = Logger()
 sys.stderr = Logger()
 
-# Debug
-
-if os.path.exists(os.path.join(ConfDir, "debug")):
-	Debug = True
-	bug = "ON"
-else:
-	Debug = False
-	bug = "OFF"
-
 # External Output redirection
 
-def SystemLog(cmd, Debug=Debug):
-	if Debug == True:
+def SystemLog(cmd, Debug=ToolAttr.Debug):
+	if ToolAttr.Debug == True:
 		print(cmd)
 		pr = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True)
 		while True:
 			line = pr.stdout.readline()
 			if not line: break
 			print line.replace("\n", "")
-	elif Debug == False:
+	elif ToolAttr.Debug == False:
 		os.system(cmd)
 
 
@@ -199,14 +185,6 @@ def destroy(self, widget, data=None):
 def Restart(cmd):
 	python = sys.executable
 	os.execl(python, python, * sys.argv)
-
-def ToggleDebug(widget):
-	if widget.get_active():
-		f = open(os.path.join(ConfDir, "debug"), "w")
-		f.close()
-	else:
-		os.remove(os.path.join(ConfDir, "debug"))
-	Restart(widget)
 
 # Shotcuts 
 
@@ -303,7 +281,7 @@ def NewDialog(Title, Text):
 	dialog.run()
 	dialog.destroy()
 
-def KillPage(widget, child, notebook=False):
+def KillPage(widget, child, notebook=False, Destroy=True):
 	if notebook == False: notebook=MainApp.notebook
 	current = notebook.get_current_page()
 
@@ -311,19 +289,19 @@ def KillPage(widget, child, notebook=False):
 	if page == -1:
 		page = notebook.get_n_pages() - 1
 	notebook.remove_page(page)
-	child.destroy()
-	
+	if Destroy:
+		child.destroy()
+
 	if current == page:
 		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 # Basic AddToList
-
-def AddToList(cmd, List, name, NameBtn, Single=False):
-	if Single==False:
-		if not name in List:
-			List.append(name)
-		if not NameBtn.get_active():
-			List.remove(name)
+def AddToList(widget, List, name):
+	if widget.get_active():
+		List.append(name)
+	else:
+		List.remove(name)
+	return List
 
 def DirChoose(DirChooser, filtern=None):
 	if not filtern == None:
@@ -393,8 +371,23 @@ class FileChooserD:
 			else:Chosen = FileChooser.get_filenames()
 		return Chosen
 
-	def printIt(self): return self.out
+class FileChooserFile(FileChooserD):
+	def openFile(self, widget, title="Open...", filters=[], multiple=False, SetTo=False):
+		FileChooser = gtk.FileChooserDialog(title, None, gtk.FILE_CHOOSER_ACTION_OPEN, 
+						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		self.out = self.run(FileChooser, filters, multiple) # run FileChooserDialog with the given arguments
+		if self.out == None and SetTo:
+			SetTo(self.out) # set button label to OUT if Btn is given
+		return self.out
 
+class FileChooserDir(FileChooserD):
+	def openFile(self, widget, title="Open...", filters=[], multiple=False, SetTo=False):
+		FileChooser = gtk.FileChooserDialog(title,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+		self.out = self.run(FileChooser, filters, multiple) # run FileChooserDialog with the given arguments
+		if self.out == None and SetTo:
+			SetTo(self.out) # set button label to OUT if Btn is given
+		return self.out
 
 def ParseTree(base, tree, start=[]):
 	for x in tree:
@@ -506,17 +499,15 @@ def CopyTree(src, dst, overwrite=True, filter="*"):
 	dst = os.path.join(dst, '')
 	if not os.path.exists(dst):
 		os.makedirs(dst)
-	for file in find_files(src, "*"):
-		dir = os.path.dirname(os.path.normpath(file))
+	for file in find_files(src, filter):
+		dir = os.path.dirname(file).replace(src, dst)
 		if not os.path.exists(dir):
 			os.makedirs(dir)
-		if not os.path.exists(str(file).replace(src, dst)):
-			if fnmatch.fnmatch(file, filter):
-				shutil.copy(file, str(file).replace(src, dst))
-		if os.path.exists(str(file).replace(src, dst)) and overwrite == True:
-			if fnmatch.fnmatch(file, filter):
-				os.remove(str(file).replace(src, dst))
-				shutil.copy(file, str(file).replace(src, dst))
+		if not os.path.exists(file.replace(src, dst)):
+			shutil.copy(file, str(file).replace(src, dst))
+		if os.path.exists(file.replace(src, dst)) and overwrite == True:
+			os.remove(file.replace(src, dst))
+			shutil.copy(file, file.replace(src, dst))
 			
 		
 
@@ -560,13 +551,6 @@ else:
 	if not UtilDir in PATH:
 		SystemLog('PATH %s;%s;' % (UtilDir, PythonDir) + r'%path%')
 
-
-if not os.path.exists(os.path.join(ConfDir, "ran")):
-	FirstRun = True
-	open(os.path.join(ConfDir, "ran"), "w").flush()
-else:
-	FirstRun = False
-
 # DEFINE WINDOW
 
 
@@ -603,7 +587,9 @@ print _("PythonDir = %s" %(PythonDir))
 print _("Cores = %s" %(Cores))
 print _("Home = %s" %(Home))
 print _("ScriptDir = %s" %(ScriptDir))
-print ("Debug = %s, PIL = %s, Omega = %s" %(["Disabled", "Enabled"][Debug], ["Disabled", "Enabled"][Pil], ["Disabled", "Enabled"][ToolAttr.OmegaVersion]))
+on = _("Enabled")
+off = _("Disabled")
+print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
 print _("Language = %s" %(Language))
 
 
@@ -725,7 +711,7 @@ class MainApp:
 		MainOpt9.connect("clicked", callback, "AddGovernor")
 		DevelopVBox.pack_start(MainOpt9, True, False)
 
-	for opt in [[_("Install Android-SDK"), "SDK"], [("Install Java JDK"), "JDK"], [_("Install Eclipse"), "Eclipse"], [_("Port a ROM (without source)"), "BinaryPort"]]:
+	for opt in [[_("Install Android-SDK"), "SDK"], [("Install Java JDK"), "JDK"], [_("Install Eclipse"), "Eclipse"], [_("Port a ROM (DO NOT USE)"), "BinaryPort"]]:
 		OptBtn = gtk.Button(opt[0])
 		OptBtn.connect("clicked", callback, opt[1])
 		DevelopVBox.pack_start(OptBtn, True, False)
@@ -805,17 +791,13 @@ class MainApp:
 	OmegaVbox = gtk.VBox()
 	OmegaLabel = gtk.Label(_("Omega"))
 
-	OmegaBtn = gtk.Button("Omega Statusbar")
-	OmegaBtn.connect("clicked", callback, "OmegaSB")
-	OmegaVbox.pack_start(OmegaBtn, True, False)
-
-	CompileBtn = gtk.Button(_("Compile to an exe"))
-	CompileBtn.connect("clicked", callback, "Compile")
-	OmegaVbox.pack_start(CompileBtn, True, False)
+	for x in [[_("Omega Statusbar"), "OmegaSB"], [_("Compile to an exe"), "Compile"]]:
+		OmegaBtn = gtk.Button(x[0])
+		OmegaBtn.connect("clicked", callback, x[1])
+		OmegaVbox.pack_start(OmegaBtn, True, False)
 
 	if ToolAttr.OmegaVersion == True:
 		notebook.insert_page(OmegaVbox, OmegaLabel)
-
 
 	# END, show main tab
 	window.add(vbox)
@@ -2147,7 +2129,7 @@ class DeCompile:
 		for apk in find_files(self.InDir, '*.apk'):
 			name = os.path.basename(apk)
 			NameBtn = gtk.CheckButton(name)
-			NameBtn.connect("toggled", AddToList, decname, name, NameBtn)
+			NameBtn.connect("toggled", AddToList, decname, name)
 			self.vbox.pack_start(NameBtn, False, False, 0)
 
 		if self.Dual == True:
@@ -2156,7 +2138,7 @@ class DeCompile:
 			for dec in os.listdir(self.DecDir):
 				name = os.path.join(self.DecDir, dec)
 				NameBtn = gtk.CheckButton(dec)
-				NameBtn.connect("toggled", AddToList, comname, dec, NameBtn)
+				NameBtn.connect("toggled", AddToList, comname, dec)
 				self.vbox.pack_start(NameBtn, False, False, 0)
 
 		self.StartButton = gtk.Button(self.startBtnText)
@@ -2254,7 +2236,7 @@ def OptimizeInside():
 	for apk in find_files(os.path.join(ScriptDir , "APK", "IN"), "*.apk"):
 		name = os.path.basename(apk)
 		NameBtn = gtk.CheckButton(name)
-		NameBtn.connect("toggled", AddToList, apkname, name, NameBtn)
+		NameBtn.connect("toggled", AddToList, apkname, name)
 		vbox.pack_start(NameBtn, False, False, 0)
 
 	StartButton = gtk.Button(_("Do Optimize Inside APK"))
@@ -2346,7 +2328,7 @@ class Sign:
 		for apk in find_files(self.InDir, "*.apk"):
 			NameBtn = gtk.CheckButton(os.path.join(apk.split(os.sep)[-2], apk.split(os.sep)[-1]))
 			NameBtn.APKpath = apk
-			NameBtn.connect("clicked", AddToList, self.sign, apk, NameBtn)
+			NameBtn.connect("clicked", AddToList, self.sign, apk)
 			vbox.pack_start(NameBtn, False, False, 0)
 
 		if NameBtn == None: label.set_text(InfoLabel.get_text())
@@ -2492,7 +2474,7 @@ def Zipalign():
 	for APK in find_files(os.path.join(ScriptDir, "APK"), "*.apk"):
 		Name = APK.replace(os.path.join(ScriptDir, "APK", ''), '')
 		NameBtn = gtk.CheckButton(Name)
-		NameBtn.connect("toggled", AddToList, zipapk, Name, NameBtn)
+		NameBtn.connect("toggled", AddToList, zipapk, Name)
 		vbox.pack_start(NameBtn, False, False, 0)
 
 	StartBtn = gtk.Button(_("Zipalign"))
@@ -2528,7 +2510,7 @@ def Install():
 	for APK in find_files(os.path.join(ScriptDir, "APK"), "*.apk"):
 		Name = APK
 		NameBtn = gtk.CheckButton(Name)
-		NameBtn.connect("toggled", AddToList, apk, Name, NameBtn)
+		NameBtn.connect("toggled", AddToList, apk, Name)
 		vbox.pack_start(NameBtn, False, False, 0)
 
 	StartBtn = gtk.Button(_("Install"))
@@ -2557,7 +2539,6 @@ class BakSmali:
 		if not OutputText.endswith(".dex"):
 			OutputText = Output + ".dex"
 		Out = os.path.join(ScriptDir, "Advance", "Smali", "OUT", OutputText)
-		if Debug==True: print("java -jar %s %s -o %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out))
 		print _("Smaling %s into %s with %s" %(os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 		SystemLog("java -jar %s %s -o %s %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 
@@ -2665,7 +2646,7 @@ def Deodex():
 
 			classes = os.path.join(WorkDir, "classes.dex")
 			if os.path.exists(classes):
-				if Debug == True: print _("Adding %s to %s" %(classes, apk))
+				print _("Adding %s to %s" %(classes, apk))
 				zipf = zipfile.ZipFile(apk, "a")
 				zipf.write(classes, "classes.dex")
 				zipf.close()
@@ -2693,7 +2674,7 @@ def Deodex():
 				NameBtn = gtk.CheckButton(files)
 				NameBtn.set_active(1)
 				deo.append(filea)
-				NameBtn.connect("toggled", AddToList, deo, files, NameBtn)
+				NameBtn.connect("toggled", AddToList, deo, files)
 				vbox.pack_start(NameBtn, False, False, 0)
 		StartButton = gtk.Button("Start deodex!")
 		StartButton.connect("clicked", DoDeodex, deo, bootclass)
@@ -2776,7 +2757,7 @@ def Odex():
 				NameBtn = gtk.CheckButton(files)
 				NameBtn.set_active(1)
 				odex.append(filea)
-				NameBtn.connect("toggled", AddToList, odex, files, NameBtn)
+				NameBtn.connect("toggled", AddToList, odex, files)
 				vbox.pack_start(NameBtn, False, False, 0)
 		StartButton = gtk.Button("Start Odex!")
 		StartButton.connect("clicked", DoOdex, odex, bootclass)
@@ -2827,14 +2808,14 @@ def BinaryPort():
 			if line.startswith("ro.build.version.release="):
 				Version = line.replace("ro.build.version.release=", '')
 				Ver = list(Version)
-				StockVer = ''.join(Ver[0:3])
+				StockVer = float(''.join(Ver[0:3]))
 		ExZip(ROM, InDirFrom)
 		buildprop = open(os.path.join(InDirFrom, "system", "build.prop"))
 		for line in buildprop.readlines():
 			if line.startswith("ro.build.version.release="):
 				Version = line.replace("ro.build.version.release=", '')
 				Ver = list(Version)
-				ROMVer = ''.join(Ver[0:3])
+				ROMVer = float(''.join(Ver[0:3]))
 		if not StockVer == ROMVer:
 			NewDialog( _("Info"), _("Choose a ROM you want to port to your device with version %s.\n\n Version of your BASE: %s\nVersion of the ROM you want to port: %s" %(StockVer, StockVer, ROMVer)) )
 		else:
@@ -2852,59 +2833,57 @@ def BinaryPort():
 					else:
 						shutil.copy(From, To)
 
-			Copy(InDirFrom, WorkDir)
 			if os.path.exists(BackDir):
 				shutil.rmtree(BackDir)
 			os.mkdir(BackDir)
-			# Copy the device-specific APKs to the WorkingDir
-			for apk in ['Stk.apk', 'VpnServices.apk', 'Camera.apk', 'Bluetooth.apk']:
-				modified = os.path.join(WorkDir, "system", "app", apk)
-				apk = os.path.join(InDirFrom, "system", "app", apk)
-				if os.path.exists(apk):
-					shutil.copy(apk, BackDir)
-					shutil.copy(apk, modified)
-					odex = apk.replace('.apk', '.odex')
-					if os.path.exists(odex):
-						shutil.copy(odex, BackDir)
-						shutil.copy(odex, os.path.join(WorkDir, "system", "app", os.path.basename(odex)))
-
+			# START EDIT!
 			# Replace kernel with device one
 			for kernel in ["boot.img", "zImage", "kernel.sin"]:
 				original = os.path.join(InDirTo, kernel)
 				ported = os.path.join(WorkDir, kernel)
 				if os.path.exists(ported): os.remove(ported)
 				if os.path.exists(original): shutil.copy(original, ported)
+			
 
-			#
-			for folder in ["cameradata", "tts", "usr", "vendor", "modules"]:
+			# Copy the device-specific APKs
+			for apk in ['Stk.apk', 'VpnServices.apk', 'Camera.apk', 'Bluetooth.apk']:
+				modified = os.path.join(WorkDir, "system", "app", apk)
+				apk = os.path.join(InDirFrom, "system", "app", apk)
+				if os.path.exists(apk):
+					shutil.copy(apk, modified)
+					odex = apk.replace('.apk', '.odex')
+					if os.path.exists(odex):
+						shutil.copy(odex, os.path.join(WorkDir, "system", "app", os.path.basename(odex)))
+
+
+			# 
+			for folder in ["cameradata", "tts", "usr", "vendor", "modules", os.path.join("etc", "wifi"), os.path.join("etc", "firmware")]:
 				original = os.path.join(InDirTo, "system", folder)
 				modified = os.path.join(WorkDir,"system", folder)
 				if os.path.exists(modified): shutil.rmtree(modified)
-				if os.path.exists(original): shutil.copytree(original, modified)
-			shutil.rmtree(os.path.join(WorkDir, "system", "etc", "wifi"))
-			shutil.copytree(os.path.join(InDirTo, "system", "etc", "wifi"), os.path.join(WorkDir, "system", "etc", "wifi"))
+				if os.path.exists(original): CopyTree(original, modified, True)
 
-			for folder in os.listdir(os.path.join(WorkDir, "system", "etc")):
+			for folder in [file for file in os.listdir(os.path.join(WorkDir,"system", "etc")) if os.path.isdir(os.path.join(WorkDir, "system", "etc", file))]:
 				fulldir = os.path.join(WorkDir, "system", "etc", folder)
 				if not folder == "init.d" or folder == "permissions" or folder == "license":
 					shutil.rmtree(fulldir)
+			CopyTree(os.path.join(InDirTo, "system", "etc"), os.path.join(WorkDir, "system", "etc"), True)
 
-			for dir in ["bin", "tts", "lib", "usr", "vendor", "firmware", os.path.join("etc", "wifi"), os.path.join("etc", "firmware"), "xbin"]:
-				if os.path.exists(os.path.join(InDirTo, "system", dir)):
-					CopyTree(os.path.join(InDirTo, "system", dir), os.path.join(WorkDir, "system", dir), True)
+			if ROMVer >= 4.0:
+				for x in ["LMprec_508.emd", "PFFprec_600.emd"]:
+					original = os.path.join(InDirTo, "system", "media", x)
+					modified = os.path.join(WorkDir, "system", "media", x)
+					if os.path.exists(modified):os.remove(modified)
+					if os.path.exists(original):shutil.copy(original, modified)
+
+			# CERTIFICATIONS
+			os.remove(os.path.join(WorkDir, "META-INF", "com", "google", "android", "update-binary"))
+			shutil.copy(os.path.join(InDirTo, "META-INF", "com", "google", "android", "update-binary"), os.path.join(WorkDir, "META-INF", "com", "google", "android", "update-binary"))
 
 			for cert in os.listdir(os.path.join(WorkDir, "META-INF")):
 				fullfile = os.path.join(WorkDir, "META-INF", cert)
 				if not os.path.isdir(fullfile): os.remove(fullfile)
-
-			
-						
-			Copy(os.path.join(InDirFrom, "system", "app"), os.path.join(WorkDir, "system", "app"))
-			Copy(os.path.join(InDirFrom, "system", "framework"), os.path.join(WorkDir, "system", "framework"))
-			Copy(os.path.join(InDirFrom, "system", "media"), os.path.join(WorkDir, "system", "media"))
-			Copy(os.path.join(InDirFrom, "system", "fonts"), os.path.join(WorkDir, "system", "fonts"))
-			Copy(os.path.join(InDirFrom, "data"), os.path.join(WorkDir, "data"))
-			Copy(os.path.join(InDirFrom, "system", "lib", "libandroid_runtime.so"), os.path.join(WorkDir, "system", "lib", "libandroid_runtime.so"))
+					
 			for x in os.listdir(BackDir):
 				Copy(os.path.join(BackDir, x), os.path.join(WorkDir, "system", "app", x))
 
@@ -3755,10 +3734,11 @@ class OmegaSB(Theme, CopyFrom):
 	def ExBatt(self, zipf, expath, pattern = "*", ign=""):
 		zip_file = zipfile.ZipFile(zipf, 'r')
 		for member in zip_file.namelist():
-			filename = self.BattNameChanger(os.path.basename(member))
-			if not filename:continue
+			File = os.path.basename(member)
+			if not File:continue
 			source = zip_file.open(member)
-			if fnmatch.fnmatch(filename, pattern) and not fnmatch.fnmatch(filename, ign):
+			if fnmatch.fnmatch(File, pattern) and not fnmatch.fnmatch(File, ign):
+				filename = self.BattNameChanger(os.path.basename(member))
 				target = file(os.path.join(expath, filename), "wb")
 				shutil.copyfileobj(source, target)
 			source.close()
@@ -4278,20 +4258,20 @@ class Customize:
 
 		OmegaToggle = gtk.CheckButton(_("Omega mode"))
 		if ToolAttr.OmegaVersion == True: OmegaToggle.set_active(True)
-		OmegaToggle.connect("toggled", ToggleOmega)
+		OmegaToggle.connect("toggled", self.ToggleOmega)
 		hbox.pack_start(OmegaToggle, True, False)
 
 		DebugToggle = gtk.CheckButton(_("Debug mode"))
-		if Debug == True: DebugToggle.set_active(True)
-		DebugToggle.connect("toggled", ToggleDebug)
+		if ToolAttr.Debug == True: DebugToggle.set_active(True)
+		DebugToggle.connect("toggled", self.ToggleDebug)
 		hbox.pack_start(DebugToggle, True, False)
 
-		hbox1 = gtk.HBox()
-		vbox.pack_start(hbox1)
+		hbox1 = gtk.HBox(True)
+		vbox.pack_start(hbox1, True, True, 40)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
-		hbox1.pack_start(vbox1)
-		hbox1.pack_start(vbox2)
+		hbox1.pack_start(vbox1, True, True, 20)
+		hbox1.pack_start(vbox2, True, True,  20)
 		vbox1.pack_start(gtk.Label(_("Set StudioAndroid theme:")))
 		Stock = gtk.RadioButton(None, _("Stock theme"))
 		Stock.set_active(True)
@@ -4349,6 +4329,38 @@ class Customize:
 				f.write(active)
 		Restart(widget)
 
+	def ToggleOmega(self, widget):
+		if widget.get_active():
+			with open(ToolAttr.VersionFile, "w") as f:
+				f.write("omega")
+			ToolAttr.OmegaVersion = False
+			KillPage(widget, MainApp.AndroidVBox, False, False)
+			KillPage(widget, MainApp.AdvanceVBox, False, False)
+			MainApp.notebook.insert_page(MainApp.OmegaVbox, MainApp.OmegaLabel, 3)
+		else:
+			with open(ToolAttr.VersionFile, "w") as f:
+				f.write("studio")
+			ToolAttr.OmegaVersion = True
+			KillPage(widget, MainApp.OmegaVbox, False, False)
+			MainApp.notebook.insert_page(MainApp.AdvanceVBox, MainApp.AdvanceLabel, 3)
+			MainApp.notebook.insert_page(MainApp.AndroidVBox, MainApp.AndroidLabel, 4)
+		window.show_all()
+
+		on = _("Enabled")
+		off = _("Disabled")
+		print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
+
+	def ToggleDebug(self, widget):
+		if widget.get_active():
+			open(os.path.join(ConfDir, "debug"), "w").close()
+			ToolAttr.Debug = True
+		else:
+			os.remove(os.path.join(ConfDir, "debug"))
+			ToolAttr.Debug = False
+		on = _("Enabled")
+		off = _("Disabled")
+		print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
+
 def Changelog():
 	ChangeWindow = gtk.Window(gtk.WINDOW_TOPLEVEL)
 	ChangeWindow.set_size_request(700, 600)
@@ -4387,16 +4399,16 @@ def Log():
 	vbox.show_all()
 	LogWindow.show_all()
 
-def Bug(cmd=''):
+def Bug(widget):
 	text = "[QUOTE=log]%s[/QUOTE]\nHere is my log!" % open(os.path.join(ScriptDir, "log"), "r").read()
 	clipboard = gtk.Clipboard()
 	clipboard.set_text(text)
 	NewDial = NewDialog("BUGREPORT", _("The log content has been copied to the clipboard"
 				"\nPlease paste it in the reply that will be opened now!"))
-
 	webbrowser.open("http://forum.xda-developers.com/newreply.php?do=newreply&noquote=1&p=22414621")
 
 def Update():
+	os.remove(ToolAttr.VersionFile)
 	stablechoose =  ChooseDialog("Update", "What branch do you want?", ["Stable", "Test"])
 	if stablechoose == 1:
 		link = ToolAttr.GitLink + ToolAttr.UnstableBranch
@@ -4454,7 +4466,7 @@ class About:
 	def Donate(self, widget):
 		Web.open("http://bit.ly/SA-Donate")
 
-if not FirstRun == False:
+if not os.path.exists(ToolAttr.VersionFile):
 	callback("cmd", "Customize")
 
 

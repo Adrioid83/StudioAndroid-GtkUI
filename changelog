@@ -278,9 +278,13 @@ Updates:
 		Includes modification of Theme, Language. 
 		Inlcudes switches for PIL, Omega and Debug.
 		Includes MissingTools shortcut
+	Support switching versions/modes without restart
+	Support switching debug mode without restart
+	Customize tab is more polished now
 
 	[INTERNAL]
 	Some fixes for future bugs :P
+	New filechooser classes
 	
 	[IMAGE]
 	Resize fix
@@ -295,9 +299,7 @@ Updates:
 	BakSmali fix
 
 	[OMEGA]
-	Bouncing switch (moving an indicator to 
-
-	[OMEGA]
+	Bouncing switch (moving an indicator to an open space when other value is set to it)
 
 Feature requests are always welcome :)
 Also, if you want to contribute, don't hestitate to contact me!
