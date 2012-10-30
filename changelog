@@ -281,6 +281,7 @@ Updates:
 	Support switching versions/modes without restart
 	Support switching debug mode without restart
 	Customize tab is more polished now
+	Finally fixed all recompile bugs!
 
 	[INTERNAL]
 	Some fixes for future bugs :P

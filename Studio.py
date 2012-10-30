@@ -192,7 +192,6 @@ sz = os.path.join(ScriptDir, "Utils", "7za")
 UtilDir = os.path.join(ScriptDir, "Utils")
 SourceDir = os.path.join(ScriptDir, "Source")
 ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
-aapt = os.path.join(ScriptDir, "Utils", "aapt")
 adb = os.path.join(ScriptDir, "Utils", "adb")
 SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
 ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
@@ -201,16 +200,6 @@ BaksmaliJar = os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar")
 OptPng = os.path.join(ScriptDir, "Utils", "optipng")
 Web = webbrowser.get()
 GovDir = os.path.join(UtilDir, "Gov")
-
-if OS == "Win": plus = "-w.exe"
-elif OS == "Lin": plus = "-l"
-elif OS == "Mac": plus = "-m"
-
-OptPng = OptPng + plus
-aapt = aapt + plus
-adb = adb + plus
-ZipalignFile = ZipalignFile + plus
-sz = sz + plus
 
 
 # MAC OSX Fix
@@ -247,8 +236,9 @@ def ExTo(zipf, expath, type='zip', pattern="*", ign=""):
 			target.close()
 		source.close()
 	zip_file.close()
-# EXTRACT UTILS.ZIP AND REMOVE UNNECESSARY FILES
+# EXTRACT UTILS.ZIP AND PLATFORM_DEPENDENT UTILS.ZIP
 ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
+ExZip(os.path.join(ScriptDir, "Utils-%s.zip" %(OS)), ScriptDir)
 
 
 def callback(widget, option):
@@ -540,7 +530,8 @@ for Dir in ParseTree(ScriptDir, Trees):
 
 # FIX PERMISSIONS
 if not OS == "Win":
-	for filen in find_files(UtilDir, "*"):
+	for filen in os.listdir(UtilDir):
+		filen = os.path.join(UtilDir, filen)
 		os.chmod(filen, 0755)
 	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
 else:
