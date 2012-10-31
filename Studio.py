@@ -1,13 +1,15 @@
 
-## IMPORTS
+#############
+## IMPORTS ##
+#############
 from __future__ import division
 # BASE IMPORTS
 import os, sys, platform, commands
 from distutils.sysconfig import get_python_lib
-# GUI IMPORTS
+# GUI
 import gtk, pygtk, gobject
 pygtk.require('2.0')
-# UTIL IMPORTS
+# UTILITIES
 import shutil
 import fnmatch
 import webbrowser, urllib, urllib2 # BROWSER
@@ -19,14 +21,16 @@ import array
 import random
 import time
 import zipfile, tarfile # ARCHIVE
-import threading, multiprocessing, subprocess # OS TOOLS, MULTI PROCESS
-import gettext, locale
+# THREADING
+import threading, multiprocessing, subprocess
+# TRANSLATION
+import gettext,locale
 import Source.Src
 _ = gettext.gettext
 
 
 
-# TRY TO IMPORT PIL FOR INTERNAL IMAGE TOOLS
+# TRY TO IMPORT PIL FOR INTERNAL IMAGE MODIFICATION
 try: 
 	from PIL import Image as PILImage
 	from PIL import ImageOps as PILImageOps
@@ -43,8 +47,8 @@ def TogglePil(widget):
 	else: Pil = False
 	print("PIL = %s" % ["Disabled", "Enabled"][widget.get_active()])
 
-# VARIABLES
 
+# VARIABLES
 ScriptDir=os.path.dirname(os.path.realpath(__file__))
 Home=os.path.expanduser('~')
 ConfDir = os.path.join(Home, ".STUDIO")
@@ -57,7 +61,7 @@ Python = os.path.abspath(sys.executable)
 PythonDir = os.path.dirname(Python)
 ThemeDir = os.path.join(ScriptDir, "Utils", "Themes", "Theme")
 
-if os.path.exists(ThemeDir):
+if os.path.exists(ThemeDir): # IF ANY THEME IS EXTRACTED, APPLY IT
 	try:
 		gtk.rc_parse(os.path.join(ThemeDir, "gtk-2.0", "gtkrc"))
 	except:pass
@@ -86,12 +90,12 @@ class ToolAttr:
 
 
 	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
+	DropboxLink = "http://dl.dropbox.com/u/61466577/"
 	if OmegaVersion == True:
 		ToolName = "OmegaThemeStudio"
 		Name = "OTS"
 		StableBranch = "tags"
 		UnstableBranch = "zipball/master"
-		DropboxLink = "http://dl.dropbox.com/u/61466577/"
 	else:
 		ToolName = "StudioAndroid"
 		Name = "SA"
@@ -117,7 +121,7 @@ if (sys.maxsize > 2**32) == True: bit = 64
 else: bit = 32
 
 PATH = []
-if OS == "WIN": sep = ";"
+if OS == "Win": sep = ";"
 else: sep = ":"
 for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
@@ -185,129 +189,6 @@ def destroy(self, widget, data=None):
 def Restart(cmd):
 	python = sys.executable
 	os.execl(python, python, * sys.argv)
-
-# Shotcuts 
-
-sz = os.path.join(ScriptDir, "Utils", "7za")
-UtilDir = os.path.join(ScriptDir, "Utils")
-SourceDir = os.path.join(ScriptDir, "Source")
-ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
-adb = os.path.join(ScriptDir, "Utils", "adb")
-SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
-ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
-SmaliJar = os.path.join(ScriptDir, "Utils", "smali-1.3.2.jar")
-BaksmaliJar = os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar")
-OptPng = os.path.join(ScriptDir, "Utils", "optipng")
-Web = webbrowser.get()
-GovDir = os.path.join(UtilDir, "Gov")
-
-
-# MAC OSX Fix
-def ExZip(zipf, expath, type='zip', pattern='*'):
-	if not os.path.exists(expath): os.makedirs(expath)
-	if type == 'zip':
-		Zip = zipfile.ZipFile(zipf, "r")
-		namelist = Zip.namelist()
-	else:
-		Zip = tarfile.open(zipf, "r")
-		namelist = Zip.getnames()
-	for f in namelist:
-		if f.endswith(os.sep):
-			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
-		else: 
-			if fnmatch.fnmatch(f, pattern):
-				try:Zip.extract(f, path=expath)
-				except IOError: 
-					os.remove(os.path.join(expath, f))
-					Zip.extract(f, path=expath)
-
-def ExTo(zipf, expath, type='zip', pattern="*", ign=""):
-	if isinstance(ign, str): ign=[ign]
-	zip_file = zipfile.ZipFile(zipf, 'r')
-	for member in zip_file.namelist():
-		filename = os.path.basename(member)
-		# skip directories
-		if not filename:continue
-		# copy file (taken from zipfile's extract)
-		source = zip_file.open(member)
-		if fnmatch.fnmatch(filename, pattern) and [match for match in ign if fnmatch.fnmatch(filename, match)] == []: 
-			target = file(os.path.join(expath, filename), "wb")
-			shutil.copyfileobj(source, target)
-			target.close()
-		source.close()
-	zip_file.close()
-# EXTRACT UTILS.ZIP AND PLATFORM_DEPENDENT UTILS.ZIP
-ExZip(os.path.join(ScriptDir, "Utils.zip"), ScriptDir)
-ExZip(os.path.join(ScriptDir, "Utils-%s.zip" %(OS)), ScriptDir)
-
-
-def callback(widget, option):
-	if not option == None:
-		# REDIRECTS THE BUTTON OPTION TO A FUNCTION
-		try: globals()[option]
-		except KeyError: 
-			try:
-				option()
-			except:
-				print _("%s is not defined yet, SORRY!" % option)
-		else:
-			#threading.Thread(None, globals()[option]).start()
-			globals()[option]()
-
-
-def StartThread(widget, function, args=(), merge=True):
-	if merge == True: arg = (widget,)+args
-	else: arg = args
-	thread = threading.Thread(None, function, args=arg)
-	thread.start()
-	return thread
-
-# New dialog
-
-def NewDialog(Title, Text):
-	dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK)
-	dialog.set_markup("<b>%s</b>" % Title)
-	dialog.format_secondary_markup("%s" % Text)
-	dialog.run()
-	dialog.destroy()
-
-def KillPage(widget, child, notebook=False, Destroy=True):
-	if notebook == False: notebook=MainApp.notebook
-	current = notebook.get_current_page()
-
-	page = notebook.page_num(child)
-	if page == -1:
-		page = notebook.get_n_pages() - 1
-	notebook.remove_page(page)
-	if Destroy:
-		child.destroy()
-
-	if current == page:
-		notebook.set_current_page(notebook.get_n_pages() - 1)
-
-# Basic AddToList
-def AddToList(widget, List, name):
-	if widget.get_active():
-		List.append(name)
-	else:
-		List.remove(name)
-	return List
-
-def DirChoose(DirChooser, filtern=None):
-	if not filtern == None:
-		filter = gtk.FileFilter()
-		filter.set_name(filtern)
-		filter.add_mime_type(filtern)
-		filter.add_pattern("*" + filtern)
-		DirChooser.add_filter(filter)
-	DirChooser.set_select_multiple(False)
-	DirChooser.set_current_folder(ScriptDir)
-	response = DirChooser.run()
-	if response == gtk.RESPONSE_OK:
-		Chosen = DirChooser.get_filename()
-	DirChooser.hide()
-	return Chosen
-
 
 def FileChoose(FileChooser, filtern=None, multiple=False):
 	if not filtern == None:
@@ -379,13 +260,12 @@ class FileChooserDir(FileChooserD):
 			SetTo(self.out) # set button label to OUT if Btn is given
 		return self.out
 
-def ParseTree(base, tree, start=[]):
-	for x in tree:
-		if isinstance(x, str):
-			start.append(os.path.join(base, x, ''))
-		else:
-			ParseTree(os.path.join(base, tree[tree.index(x) - 1], ''), x, start)
-	return start
+def NewDialog(Title, Text):
+	dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, type=gtk.MESSAGE_INFO, buttons=gtk.BUTTONS_OK)
+	dialog.set_markup("<b>%s</b>" % Title)
+	dialog.format_secondary_markup("%s" % Text)
+	dialog.run()
+	dialog.destroy()
 
 def ChooseDialog(Title, Text, Btns=[]):
 	BtnTup = ()
@@ -401,18 +281,131 @@ def ChooseDialog(Title, Text, Btns=[]):
 	dialog.destroy()
 	return response
 
-def UpdateProgress(pbar, fileLoc, totalSize):
-	pbar.set_fraction(float(os.path.getsize(fileLoc) / totalSize, 3))
+def KillPage(widget, child, notebook=False, Destroy=True):
+	if notebook == False: notebook=MainApp.notebook
+	current = notebook.get_current_page()
+
+	page = notebook.page_num(child)
+	if page == -1:
+		page = notebook.get_n_pages() - 1
+	notebook.remove_page(page)
+	if Destroy:
+		child.destroy()
+
+	if current == page:
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+
+def NewPage(Label, parent):
+	box = gtk.HBox()
+	closebtn = gtk.Button()
+	image = gtk.Image()
+	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+	closebtn.connect("clicked", KillPage, parent)
+	closebtn.set_image(image)
+	image.set_size_request(10, 10)
+	closebtn.set_relief(gtk.RELIEF_NONE)
+	box.pack_start(gtk.Label(Label), False, False)
+	box.pack_end(closebtn, False, False)
+	box.show_all()
+	return box
+
+def CurrentPageText(notebook, data):
+	TabName = notebook.get_tab_label_text(notebook.get_nth_page(data))
+	return TabName
+
+# Shotcuts 
+sz = os.path.join(ScriptDir, "Utils", "7za")
+UtilDir = os.path.join(ScriptDir, "Utils")
+SourceDir = os.path.join(ScriptDir, "Source")
+ApkJar = os.path.join(ScriptDir, "Utils", "apktool.jar")
+adb = os.path.join(ScriptDir, "Utils", "adb")
+SignJar = os.path.join(ScriptDir, "Utils", "signapk.jar")
+ZipalignFile = os.path.join(ScriptDir, "Utils", "zipalign")
+SmaliJar = os.path.join(ScriptDir, "Utils", "smali-1.3.2.jar")
+BaksmaliJar = os.path.join(ScriptDir, "Utils", "baksmali-1.3.2.jar")
+OptPng = os.path.join(ScriptDir, "Utils", "optipng")
+Web = webbrowser.get()
+GovDir = os.path.join(UtilDir, "Gov")
+
+# MAC OSX Fix
+def ExZip(zipf, expath, type='zip', pattern='*', Overwrite=True):
+	if not os.path.exists(expath): os.makedirs(expath)
+	if type == 'zip':
+		Zip = zipfile.ZipFile(zipf, "r")
+		namelist = Zip.namelist()
+	else:
+		Zip = tarfile.open(zipf, "r")
+		namelist = Zip.getnames()
+	for f in namelist:
+		if f.endswith(os.sep):
+			if not os.path.exists(os.path.join(expath, f)):os.makedirs(os.path.join(expath, f))
+		else: 
+			if fnmatch.fnmatch(f, pattern):
+				filename = os.path.join(expath, f)
+				if Overwrite == True and os.path.exists(filename): os.remove(filename)
+				if not os.path.exists(filename):
+					Zip.extract(f, path=expath)
+
+def ExTo(zipf, expath, type='zip', pattern="*", ign=[]):
+	if isinstance(ign, str): ign=[ign]
+	zip_file = zipfile.ZipFile(zipf, 'r')
+	for member in zip_file.namelist():
+		filename = os.path.basename(member)
+		# skip directories
+		if not filename:continue
+		# copy file (taken from zipfile's extract)
+		source = zip_file.open(member)
+		if fnmatch.fnmatch(filename, pattern) and [match for match in ign if fnmatch.fnmatch(filename, match)] == []: 
+			target = file(os.path.join(expath, filename), "wb")
+			shutil.copyfileobj(source, target)
+			target.close()
+		source.close()
+	zip_file.close()
+
+try:
+	for x in ["", "-" + OS]:
+		if not os.path.exists(os.path.join(ScriptDir, "Utils%s.zip" %(x))):
+			print _("Downloading Utils%s.zip" %(x))
+			urllib.urlretrieve(ToolAttr.DropboxLink + "Utils%s.zip" %(x), os.path.join(ScriptDir, "Utils%s.zip" %(x)))
+		ExZip(os.path.join(ScriptDir, "Utils%s.zip" %(x)), ScriptDir, Overwrite=False)
+	# FIX PERMISSIONS
+	if not OS == "Win":
+		for filen in os.listdir(UtilDir):
+			filen = os.path.join(UtilDir, filen)
+			os.chmod(filen, 0755)
+		os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
+except:
+	print _("Downloading Utils.zip failed...")
 
 
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
+def callback(widget, option):
+	if not option == None:
+		# REDIRECTS THE BUTTON OPTION TO A FUNCTION
+		try: globals()[option]
+		except KeyError: 
+			try:
+				option()
+			except:
+				print _("%s is not defined yet, SORRY!" % option)
+		else:
+			#threading.Thread(None, globals()[option]).start()
+			globals()[option]()
+
+
+def StartThread(widget, function, args=(), merge=True):
+	if merge == True: arg = (widget,)+args
+	else: arg = args
+	thread = threading.Thread(None, function, args=arg)
+	thread.start()
+	return thread
+
+# Basic AddToList
+def AddToList(widget, List, name):
+	if widget.get_active():
+		List.append(name)
+	else:
+		List.remove(name)
+	return List
 
 def SetXml(File, list):
 	file = open(File, "r")
@@ -433,13 +426,22 @@ def SetXml(File, list):
 	writeFile = open(File, "w")
 	writeFile.write('\n'.join(newLines))
 	writeFile.close()
-		
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
 
 def remove_tags(html):
     s = MLStripper()
     s.feed(html)
     return s.get_data()
 
+# IMAGE TOOLS
 def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
     hexcolor = '#%02x%02x%02x' % rgb_tuple
@@ -447,7 +449,7 @@ def RGBToHTMLColor(rgb_tuple):
     return hexcolor
 # (C) ActivateState
 
-# FOR CONVERTING PIL IMAGES
+
 def pallette_convert(image):
 	pb = gtk.gdk.pixbuf_new_from_file(image)
 	pb.save(image, image.rsplit('.', 1)[-1])
@@ -484,6 +486,8 @@ def find_files(directory, pattern):
     return names
 # FindFiles (C) StackOverflow
 
+
+
 def CopyTree(src, dst, overwrite=True, filter="*"):
 	src = os.path.join(src, '')
 	dst = os.path.join(dst, '')
@@ -500,26 +504,13 @@ def CopyTree(src, dst, overwrite=True, filter="*"):
 			shutil.copy(file, file.replace(src, dst))
 			
 		
-
-
-def NewPage(Label, parent):
-	box = gtk.HBox()
-	closebtn = gtk.Button()
-	image = gtk.Image()
-	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-	closebtn.connect("clicked", KillPage, parent)
-	closebtn.set_image(image)
-	image.set_size_request(10, 10)
-	closebtn.set_relief(gtk.RELIEF_NONE)
-	box.pack_start(gtk.Label(Label), False, False)
-	box.pack_end(closebtn, False, False)
-	box.show_all()
-	return box
-
-def CurrentPageText(notebook, data):
-	TabName = notebook.get_tab_label_text(notebook.get_nth_page(data))
-	return TabName
-
+def ParseTree(base, tree, start=[]):
+	for x in tree:
+		if isinstance(x, str):
+			start.append(os.path.join(base, x, ''))
+		else:
+			ParseTree(os.path.join(base, tree[tree.index(x) - 1], ''), x, start)
+	return start
 
 for Dir in ParseTree(ScriptDir, Trees):
 	if not os.path.isdir(Dir):
@@ -527,24 +518,10 @@ for Dir in ParseTree(ScriptDir, Trees):
 			os.makedirs(Dir)
 		except: print Dir
 
-
-# FIX PERMISSIONS
-if not OS == "Win":
-	for filen in os.listdir(UtilDir):
-		filen = os.path.join(UtilDir, filen)
-		os.chmod(filen, 0755)
-	os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
-else:
-	if " " in ScriptDir:
-		print _("You extracted %s to a path with spaces!\nPlease move it somewhere without spaces." % ToolAttr.ToolName)
-		exit()
-	# ADD PYTHON AND UTILS TO THE PATH
-	if not UtilDir in PATH:
-		SystemLog('PATH %s;%s;' % (UtilDir, PythonDir) + r'%path%')
+if " " in ScriptDir:
+	print _("You extracted %s in a path with spaces!\nI'm not responsible for your errors now!" % ToolAttr.ToolName)
 
 # DEFINE WINDOW
-
-
 window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 window.set_title("%s" %(ToolAttr.ToolName,))
 window.connect("delete_event", delete_event, 0)
@@ -4272,7 +4249,7 @@ class Customize:
 			NameBtn = gtk.RadioButton(Stock, os.path.splitext(os.path.basename(x))[0])
 			vbox1.pack_start(NameBtn, False, False)
 		ApplyButton = gtk.Button(_("Apply theme!"))
-		ApplyButton.connect("clicked", self.SetTheme, NameBtn)
+		ApplyButton.connect("clicked", self.SetTheme, Stock)
 		vbox1.pack_end(ApplyButton, False, False)
 
 		vbox2.pack_start(gtk.Label(_("Set language")), True, False)

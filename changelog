@@ -282,6 +282,7 @@ Updates:
 	Support switching debug mode without restart
 	Customize tab is more polished now
 	Finally fixed all recompile bugs!
+	Reduced UTILS size with 1,5+ MB
 
 	[INTERNAL]
 	Some fixes for future bugs :P
