@@ -309,6 +309,21 @@ def NewPage(Label, parent):
 	box.show_all()
 	return box
 
+def NewPageBox():
+	vbox = gtk.VBox()
+	box = gtk.HBox()
+	vbox.pack_start(box, False, False)
+	closebtn = gtk.Button()
+	image = gtk.Image()
+	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
+	closebtn.connect("clicked", KillPage, vbox)
+	closebtn.set_image(image)
+	image.set_size_request(10, 10)
+	closebtn.set_relief(gtk.RELIEF_NONE)
+	box.pack_end(closebtn, False, False)
+	vbox.show_all()
+	return vbox
+
 def CurrentPageText(notebook, data):
 	TabName = notebook.get_tab_label_text(notebook.get_nth_page(data))
 	return TabName
@@ -632,6 +647,7 @@ class MainApp:
 	vbox.pack_start(menu, False, False, 0)
 
 	notebook = gtk.Notebook()
+	notebook.popup_enable()
 	notebook.set_tab_pos(gtk.POS_TOP)
 	vbox.pack_start(notebook)
 	notebook.set_scrollable(True)
@@ -1031,7 +1047,7 @@ class Resize:
 				elif InDPI == 'LDPI':
 					InRes = 240
 				else:
-					InRes = InDPI
+					InRes = int(InDPI)
 				if OutDPI == 'XHDPI':
 					OutRes = 720
 				elif OutDPI == 'HDPI':
@@ -1132,9 +1148,12 @@ class Resize:
 					fullfile = os.path.join(DstDir, file)
 					zipf.write(fullfile, os.path.join("res", "drawable-%s" % OutDir1, file))
 				zipf.close()
-			if os.path.exists(os.path.join(ScriptDir, "Resizing")) and not Debug == True:
-				shutil.rmtree(os.path.join(ScriptDir, "Resizing"))
-			NewDialog( _("Resized") , _("You can find the resized images in %s" % os.path.join(os.path.basename(ImageDir), "Resized")) )
+				shutil.copy(DstApk, os.path.join(ScriptDir, "APK", "IN", "Unsigned-%s-%s.apk" %(os.path.basename(DstApk).replace(".apk", ""),OutDir1)))
+				callback(widget, "Sign")
+			else:
+				if os.path.exists(os.path.join(ScriptDir, "Resizing")) and not ToolAttr.Debug == True:
+					shutil.rmtree(os.path.join(ScriptDir, "Resizing"))
+				NewDialog( _("Resized") , _("You can find the resized images in %s" % os.path.join(os.path.basename(ImageDir), "Resized")) )
 		
 	def __init__(self):
 		ResizeWindow = window
@@ -3031,51 +3050,75 @@ def ADBConfig():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def LogCat():
-	notebook = MainApp.notebook
-	vbox = gtk.VBox()
-	sw = gtk.ScrolledWindow()
-	sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+class LogCat:
+	READ = True
+	def __init__(self):
+		notebook = MainApp.notebook
+		vbox = gtk.VBox()
+		sw = gtk.ScrolledWindow()
+		sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 
-	encoding = locale.getpreferredencoding()
-	utf8conv = lambda x : unicode(x, encoding).encode('utf8')
+		gobject.threads_init()
+		gtk.gdk.threads_init()
 
+		LogCatLabel = NewPage("Logcat",vbox)
 
-	gobject.threads_init()
-	gtk.gdk.threads_init()
+		TextBox = gtk.TextView()
+		buff = TextBox.get_buffer()
+		TextBox.set_wrap_mode(gtk.WRAP_WORD)
+		TextBox.set_editable(False)
+		TextBox.set_cursor_visible(True)
 
-	LogCatLabel = NewPage("Logcat",vbox)
+		command = "'%s' logcat" % adb
+		thr = threading.Thread(target=self.read_output, args=(TextBox, buff, command))
+	
+		sw.add(TextBox)
+		vbox.pack_start(sw)
 
-	def read_output(view, buffer, command):
+		hbox = gtk.HBox()
+		SaveBtn = gtk.Button(_("Save logcat"))
+		SaveBtn.connect("clicked", self.SaveLogcat, buff)
+		hbox.pack_start(SaveBtn, True, True, 10)
+		PauseBtn = gtk.Button(_("Pause"))
+		PauseBtn.connect("clicked", self.PauseLogcat, thr)
+		hbox.pack_start(PauseBtn, True, True, 10)
+		vbox.pack_start(hbox, False, False, 0)
+
+		notebook.insert_page(vbox, LogCatLabel)
+		window.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+
+		thr.start()
+
+	def SaveLogcat(self, widget, buffer):
+		start = buffer.get_start_iter()
+		end = buffer.get_end_iter()
+		text = buffer.get_text(start, end)
+		with open(os.path.join(ScriptDir, "ADB", "Logcat-%s%s" %(date(), ['', '.txt'][OS == "Win"])), "w") as f:
+			f.write(text)
+		print _("Logcat saved")
+
+	def PauseLogcat(self, widget, thread):
+		widget.set_label([_("Pause"), _("Resume")][self.READ])
+		self.READ = [True, False][self.READ]
+
+	def read_output(self, view, buffer, command):
+		encoding = locale.getpreferredencoding()
+		utf8conv = lambda x : unicode(x, encoding).encode('utf8')
 		stdin, stdouterr = os.popen4(command)
 		while 1:
-			line = stdouterr.readline()
-			if not line:
-				break
-			gtk.gdk.threads_enter()
-			iter = buffer.get_end_iter()
-			buffer.place_cursor(iter)
-			buffer.insert(iter, utf8conv(line))
-			view.scroll_to_mark(buffer.get_insert(), 0.1)
-			gtk.gdk.threads_leave()
+			while self.READ == True:
+				line = stdouterr.readline()
+				if not line:
+					break
+				gtk.gdk.threads_enter()
+				iter = buffer.get_end_iter()
+				buffer.place_cursor(iter)
+				buffer.insert(iter, utf8conv(line))
+				view.scroll_to_mark(buffer.get_insert(), 0.1)
+				gtk.gdk.threads_leave()
 
 
-	TextBox = gtk.TextView()
-	buff = TextBox.get_buffer()
-	TextBox.set_wrap_mode(gtk.WRAP_WORD)
-	TextBox.set_editable(False)
-	TextBox.set_cursor_visible(True)
-	
-	sw.add(TextBox)
-	vbox.pack_start(sw)
-
-	notebook.insert_page(vbox, LogCatLabel)
-	window.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
-
-	command = "'%s' logcat" % adb
-	thr = threading.Thread(target= read_output, args=(TextBox, buff, command))
-	thr.start()
 
 def BuildProp():
 	def Save(cmd):
@@ -4208,13 +4251,12 @@ class MissingTools(Utils):
 
 class Customize:
 	def __init__(self):
-		vbox = gtk.VBox()
+		vbox = NewPageBox()
 		if not MissingTools.i == 0:
 			MissingButton = gtk.Button(_("Warning! %d missing tools!" % MissingTools.i))
 			MissingButton.connect("clicked", callback, MissingTools)
 			vbox.pack_start(MissingButton, True, False)
 		vbox.pack_start(gtk.Label(_("Use this page to customize the whole tool on-the-go!")))
-		CustomizeLabel = NewPage("Customize", vbox)
 
 		hbox = gtk.HBox()
 		vbox.pack_start(hbox, False, False, 0)
@@ -4235,19 +4277,23 @@ class Customize:
 		hbox.pack_start(DebugToggle, True, False)
 
 		hbox1 = gtk.HBox(True)
-		vbox.pack_start(hbox1, True, True, 40)
+		vbox.pack_start(hbox1, True, True, 20)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
-		hbox1.pack_start(vbox1, True, True, 20)
-		hbox1.pack_start(vbox2, True, True,  20)
-		vbox1.pack_start(gtk.Label(_("Set StudioAndroid theme:")))
+		hbox1.pack_start(vbox1, True, True, 10)
+		hbox1.pack_start(vbox2, True, True,  10)
+		vbox1.pack_start(gtk.Label(_("Set StudioAndroid theme:")), False, False, 0)
 		Stock = gtk.RadioButton(None, _("Stock theme"))
 		Stock.set_active(True)
 		vbox1.pack_start(Stock, False, False)
 		
+		sw = gtk.ScrolledWindow()
+		vbox1.pack_start(sw, True, True, 0)
+		swvbox = gtk.VBox()
+		sw.add_with_viewport(swvbox)
 		for x in find_files(os.path.join(ScriptDir, "Utils", "Themes"), "*.zip"):
 			NameBtn = gtk.RadioButton(Stock, os.path.splitext(os.path.basename(x))[0])
-			vbox1.pack_start(NameBtn, False, False)
+			swvbox.pack_start(NameBtn, False, False)
 		ApplyButton = gtk.Button(_("Apply theme!"))
 		ApplyButton.connect("clicked", self.SetTheme, Stock)
 		vbox1.pack_end(ApplyButton, False, False)
@@ -4275,7 +4321,7 @@ class Customize:
 		vbox2.pack_end(ChooseBtn, False, False)
 		ChooseBtn.connect("clicked", self.PickLanguage, self.EnBtn)
 
-		MainApp.notebook.insert_page(vbox, CustomizeLabel)
+		MainApp.notebook.insert_page(vbox, gtk.Label("Customize"))
 		window.show_all()
 		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
 
@@ -4390,10 +4436,9 @@ def Update():
 	Web.open(link)
 
 class About:
-	Killable = True
 	def __init__(self):
 		notebook = MainApp.notebook
-		vbox = gtk.VBox()
+		vbox = NewPageBox()
 
 		image = gtk.Image()
 		image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
@@ -4424,11 +4469,8 @@ class About:
 		DonateButton.connect("clicked", self.Donate)
 		vbox1.pack_start(DonateButton)
 	
-		if self.Killable == True:AboutLabel = NewPage("About", vbox)
-		else: AboutLabel = gtk.Label("About")
-		AboutLabel.show_all()
 	
-		notebook.insert_page(vbox, AboutLabel)
+		notebook.insert_page(vbox, gtk.Label("About"))
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
 	def Donate(self, widget):
