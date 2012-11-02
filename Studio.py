@@ -4007,38 +4007,42 @@ class OmegaSB(Theme, CopyFrom):
 		
 		# RETREIVE CLOCK SIZE
 		if not self.intList == []:
-			size = int([x for x in self.intList if x[0] == "digital_clock_text_size"][0][2]())
-			dotsize = size#int([x for x in self.intList if x[0] == "digital_clock_period_text_size"][0][2]())
+			ClockFontSize = ClockDotSize = int([x for x in self.intList if x[0] == "digital_clock_text_size"][0][2]())
+			#int([x for x in self.intList if x[0] == "digital_clock_period_text_size"][0][2]())
 		else:
-			size = dotsize = 14
+			ClockFontSize = ClockDotSize = 14
 		# SET CLOCK TEXT TO CUSTOM SIZE
-		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), size)
-		dotfont = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), dotsize)
-		img=PILImage.new("RGBA", (4*size,size))
-		draw = PILImageDraw.Draw(img)
+		font = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), ClockFontSize)
+		dotfont = PILImageFont.truetype(os.path.join(ScriptDir, "Utils", "Roboto-Regular.ttf"), ClockDotSize)
+		ClockImage=PILImage.new("RGBA", (4*ClockFontSize,ClockFontSize))
+		draw = PILImageDraw.Draw(ClockImage)
 		draw.text((0, 0),"19", PILImageColor.getrgb(self.ClockHourColor),font=font)
-		draw.text((size + size/7, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=dotfont)
-		draw.text((size + dotsize/3, 0),"43", PILImageColor.getrgb(self.ClockMinuteColor),font=font)
-		draw.text((size*2 + size/7 + dotsize/3, 0),"pm", PILImageColor.getrgb(self.ClockAMColor),font=font)
-		totalSize = size 
-		draw = PILImageDraw.Draw(img)
-		draw = PILImageDraw.Draw(img)
+		draw.text((ClockFontSize*8 /7, 0),".", PILImageColor.getrgb(self.ClockDividerColor),font=dotfont)
+		draw.text((ClockFontSize + ClockDotSize/3, 0),"43", PILImageColor.getrgb(self.ClockMinuteColor),font=font)
+		draw.text((ClockFontSize*15 /7 + ClockDotSize/3, 0),"pm", PILImageColor.getrgb(self.ClockAMColor),font=font)
+		draw = PILImageDraw.Draw(ClockImage)
+		draw = PILImageDraw.Draw(ClockImage)
 
 		ClockLoc = [self.pasteLeft, self.pasteCenter, self.pasteRight][["Left clock", "Center clock", "Right clock"].index([r for r in self.CenterClockBtn.get_group() if r.get_active()][0].get_label())]
-		Result = ClockLoc(Result, [img])
+		Result = ClockLoc(Result, [ClockImage])
 
 		#<!-- 22 GRID SPACES (1-2-3-4-5-6-7-8    *9-10-11-12-13-14*    15-16-17-18-19-20-21-22)-->
 		if Landscape == True:
 			StatusPadding = [val[2]() for val in self.intList if "statusbar_content_padding" in val][0]
+			ClockLocation = [val[2]() for val in self.intList if "digital_clock_grid_location" in val][0]
+
 			for val in [intv for intv in self.intList if "location" in intv[0] and 15 <= intv[2]() <= 22]:
 				RightLoc = [7,6,5,4,3,2,1,0][val[2]() - 15]
-				icon = self.ParseIcon(val[0])
+				Padding = RightLoc*(24+StatusPadding)
+				if val[2]() < ClockLocation:
+					Padding += 4*ClockFontSize
+				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
-					self.pasteRight(Result, [icon], RightLoc*(24+StatusPadding))
+					self.pasteRight(Result, [icon], Padding)
 
 			for val in [intv for intv in self.intList if "location" in intv[0] and 1 <= intv[2]() <= 8]:
 				LeftLoc = val[2]() - 1
-				icon = self.ParseIcon(val[0])
+				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
 					self.pasteLeft(Result, [icon], LeftLoc*(24+StatusPadding))
 		else:
@@ -4049,12 +4053,13 @@ class OmegaSB(Theme, CopyFrom):
 		
 		self.ThemeImage.set_from_pixbuf(image2pixbuf(Result))
 		
-	def ParseIcon(self, value):
+	def ParseIcon(self, value, ClockIcon):
 		try:
 			if "omega_system" in value: 	icon = find_files(self.SrcDir, "stat_sys_warning.png")[0]
 			elif "adb" in value:		icon = find_files(self.SrcDir, "stat_sys_adb.png")[0]	
 			elif "usb" in value: 		icon = find_files(self.SrcDir, "stat_sys_data_usb.png")[0]
 
+			elif "digital_clock" in value:	icon = ClockIcon
 			elif "headset" in value:	icon = find_files(self.SrcDir, "stat_sys_headset_no_mic.png")[0]
 			elif "bluetooth" in value:	icon = find_files(self.SrcDir, "stat_sys_data_bluetooth.png")[0]
 			elif "alarm" in value:		icon = find_files(self.SrcDir, "stat_sys_alarm.png")[0]
@@ -4152,11 +4157,9 @@ class OmegaSB(Theme, CopyFrom):
 			current = 40
 			for val in [val for val in self.intList if "location" in val[0]]:
 				if val[2]() in rest: rest.remove(val[2]())
-			print rest
 			for val in rest:
 				dif = val - currentValue
 				if abs(dif) < abs(current):current = dif
-			print current
 			if current < 0: mat="min"
 			elif current > 0: mat="plus"
 			self.ShiftCustom(valname, currentValue, mat)
@@ -4478,7 +4481,6 @@ class About:
 
 if not os.path.exists(ToolAttr.VersionFile):
 	callback("cmd", "Customize")
-
 
 def main():
 	About()
