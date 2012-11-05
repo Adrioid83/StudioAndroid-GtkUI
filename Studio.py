@@ -1655,7 +1655,7 @@ g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i3
 		Button64.set_active(True)
 	Button1204.connect("toggled", SetButton64)
 	if (sys.maxsize > 2**32) == True:
-		Button64.set_active()
+		Button64.set_active(True)
 	if platform.dist()[1] == 12.04: Button1204.set_active(True)
 	elif platform.dist()[1] == 11.10: Button1110.set_active(True)
 	elif platform.dist()[1] == 10.10: Button1010.set_active(True)
