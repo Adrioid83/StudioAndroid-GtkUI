@@ -285,6 +285,7 @@ Updates:
 	Reduced UTILS size with 1,5+ MB
 	Right click tabs is now supported > Shows all tabs
 	Some tabs now have the X (close) button in the tab itsself, so that the TabName will appear right
+	Home tab will open first - PayPal donation button and Customize button.
 
 	[INTERNAL]
 	Some fixes for future bugs :P
@@ -293,6 +294,12 @@ Updates:
 	[IMAGE]
 	Resize fix (2x)
 	Convert fix
+
+	[DEVELOP]
+	Prepare Building fix
+	Build fix
+	Prepare Building support for Fedora (possibly incomplete)
+	Building support for Fedora (^^)
 
 	[APK]
 	DeCompile fix
@@ -309,12 +316,13 @@ Updates:
 
 	[OMEGA]
 	Bouncing switch (moving an indicator to an open space when other value is set to it)
+	Clock location done
+	A lot of bugfixes
 
 	[OPTIONS]
 	Customize theme chooser is now in a scrolled window, more space for more themes ;D
 
 Feature requests are always welcome :)
 Also, if you want to contribute, don't hestitate to contact me!
-Azblankin, KeitlG are already contributing to this project!
 
-0.83.26
+0.83.30

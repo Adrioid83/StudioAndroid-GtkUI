@@ -281,17 +281,19 @@ def ChooseDialog(Title, Text, Btns=[]):
 	dialog.destroy()
 	return response
 
-def KillPage(widget, child, notebook=False, Destroy=True):
+def KillPage(widget, child=False,notebook=False, Destroy=True):
 	if notebook == False: notebook=MainApp.notebook
-	current = notebook.get_current_page()
+	if not child == False: widget = child
 
-	page = notebook.page_num(child)
-	if page == -1:
-		page = notebook.get_n_pages() - 1
+	current = notebook.get_current_page()
+	page = notebook.page_num(widget)
+
+	pagewidget = notebook.get_nth_page(page)
+
+	if page == -1:page = notebook.get_n_pages() - 1
 	notebook.remove_page(page)
 	if Destroy:
-		child.destroy()
-
+		pagewidget.destroy()
 	if current == page:
 		notebook.set_current_page(notebook.get_n_pages() - 1)
 
@@ -300,7 +302,7 @@ def NewPage(Label, parent):
 	closebtn = gtk.Button()
 	image = gtk.Image()
 	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-	closebtn.connect("clicked", KillPage, parent)
+	closebtn.connect("clicked", KillPage)
 	closebtn.set_image(image)
 	image.set_size_request(10, 10)
 	closebtn.set_relief(gtk.RELIEF_NONE)
@@ -572,7 +574,7 @@ print _("Home = %s" %(Home))
 print _("ScriptDir = %s" %(ScriptDir))
 on = _("Enabled")
 off = _("Disabled")
-print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
+print ("Debug = %s, PIL = %s, Omega = %s" %([off, on][ToolAttr.Debug], [off, on][Pil], [off, on][ToolAttr.OmegaVersion]))
 print _("Language = %s" %(Language))
 
 
@@ -625,13 +627,6 @@ class MainApp:
 	RestartOption = gtk.MenuItem( _("Restart"))
 	RestartOption.connect("activate", Restart)
 	Options.append(RestartOption)
-
-	sep = gtk.SeparatorMenuItem()
-	Options.append(sep)
-
-	AboutOption = gtk.MenuItem("About")
-	Options.append(AboutOption)
-	AboutOption.connect("activate", callback, "About")
 
 	sep = gtk.SeparatorMenuItem()
 	Options.append(sep)
@@ -839,7 +834,7 @@ class Utils:
 
 		OtherVbox = gtk.VBox()
 		hbox.pack_start(OtherVbox)
-		self.JavaBtn = gtk.CheckButton("JAVA")
+		self.JavaBtn = gtk.CheckButton("Java")
 		if self.Java == True:
 			self.JavaBtn.set_active(True)
 			OtherVbox.pack_start(self.JavaBtn)
@@ -852,7 +847,7 @@ class Utils:
 		buttonInstall.connect("clicked", StartThread, self.Install)
 		vbox.pack_start(buttonInstall, False, False, 0)
 
-		UtilsLabel = NewPage( self.PageTitle , vbox)
+		UtilsLabel = NewPage(self.PageTitle , vbox)
 		UtilsLabel.show_all()
 
 		notebook.insert_page(vbox, UtilsLabel)
@@ -876,10 +871,15 @@ class Utils:
 						SystemLog('echo "%s" >> %s' %(msg, os.path.join(Home, ".profile")))
 			if self.PILBtn.get_active():
 				SystemLog("sudo easy_install pip")
-				SystemLog("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
+				if platform.linux_distribution()[0] == "Fedora": SystemLog("sudo yum -y install python-devel")
+				else: SystemLog("sudo apt-get install python-dev")
+				out = commands.getoutput("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
+				if not out.endswith("0"):
+					SystemLog("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
+					
 			if self.JavaBtn.get_active():
 				Web.open("http://www.oracle.com/technetwork/java/javase/downloads/index.html")
-			if self.PyWin32Bt.get_active():
+			if self.PyWin32Btn.get_active():
 				urllib.urlretrieve("http://sourceforge.net/projects/pywin32/files/pywin32/Build%20217/pywin32-217.win32-py2.7.exe/download", os.path.join(ConfDir, "PyWin32.exe"))
 				os.system("start %s" % os.path.join(ConfDir, "PyWin32.exe"))
 
@@ -1472,25 +1472,40 @@ class Rename:
 		NewDialog(_("Undo Rename"), _("Un-named %d files" % i))	
 	
 
-def PrepareBuilding():
-	def Prepare(cmd):
-		NewDialog("Info", _("Please check the terminal for further progress."))
-		SystemLog("""sudo add-apt-repository ppa:fkrull/deadsnakes
-sudo apt-get update &
-sudo apt-get upgrade &
-sudo apt-get install python2.5 &
+class PrepareBuilding():
+	def Prepare(self, widget):
+		cmds = """sudo add-apt-repository ppa:fkrull/deadsnakes
+sudo {0} update
+sudo {0} upgrade
+sudo {0} install python2.5
 sudo add-apt-repository "deb http://archive.canonical.com/ lucid partner"
 sudo add-apt-repository "deb-src http://archive.canonical.com/ubuntu lucid partner"
-sudo apt-get update &
-sudo apt-get install sun-java6-jdk &
-sudo apt-get update &
-sudo apt-get upgrade &
-sudo apt-get install git-core &
-sudo apt-get install valgrind &
-sudo apt-get install git-core gnupg flex bison gperf build-essential \
+sudo {0} update
+sudo {0} install sun-java6-jdk
+sudo {0} update
+sudo {0} upgrade
+sudo {0} install git-core
+sudo {0} install valgrind
+sudo {0} install git-core gnupg flex bison gperf build-essential \
 zip curl zlib1g-dev libc6-dev lib64ncurses5-dev \
 x11proto-core-dev libx11-dev lib64readline-gplv2-dev lib64z1-dev \
-libgl1-mesa-dev g++-multilib tofrodos &
+libgl1-mesa-dev g++-multilib tofrodos"""
+		NewDialog("Info", _("Please check the terminal for further progress."))
+		distr = platform.linux_distribution()
+		if distr[0] == "Fedora":
+			os.system("sudo yum -y update")
+			os.system("sudo yum -y install glibc.i686 glibc-devel.i686 libstdc++.i686 zlib-devel.i686 ncurses-devel.i686 libX11-devel.i686 libXrender.i686 libXrandr.i686")
+			os.system("sudo yum -y install gcc gcc-c++ gperf flex bison glibc-devel.{x86_64,i686} zlib-devel.{x86_64,i686} ncurses-devel.i686 libsx-devel readline-devel.i386")
+			os.system("sudo yum -y install perl-Switch")
+			urllib.urlretrieve("https://fedoraproject.org/static/E8E40FDE.txt", os.path.join(ScriptDir, "E8E40FDE.txt"))
+			os.system("sudo rpm --import %s" %(os.path.join(ScriptDir, "E8E40FDE.txt")))
+			os.system("sudo um downgrade make --releasever=13")
+			os.system("sudo echo 'exclude=make*' >> /etc/yum.conf")
+			cmds = cmds.format("yum")
+		else:
+			cmds = cmds.format("apt-get")
+		os.system(cmds)
+		os.system("""
 mkdir -p ~/bin
 mkdir -p ~/android/system
 curl https://dl-ssl.google.com/dl/googlesource/git-repo/repo > ~/bin/repo
@@ -1611,64 +1626,40 @@ echo '-----BEGIN PGP PUBLIC KEY BLOCK-----
     -----END PGP PUBLIC KEY BLOCK-----' > ~/gpgimport
 gpg --import ~/gpgimport
 rm ~/gpgimport""")
-		SystemLog("""sudo apt-get install git-core gnupg flex bison gperf build-essential \
-zip curl zlib1g-dev libc6-dev tofrodos python-markdown \
-libxml2-utils xsltproc x11proto-core-dev libgl1-mesa-dev libx11-dev""")
-		if Button64.get_active():
-			SystemLog("""sudo apt-get install lib32ncurses5-dev ia32-libs lib32readline5-dev lib32z-dev g++-multilib mingw32""")
-		if Button32.get_active():
-			SystemLog("sudo apt-get install libncurses5-dev libreadline6-dev")
-		if Button1010.get_active():
-			SystemLog("sudo ln -s /usr/lib32/mesa/libGL.so.1 /usr/lib32/mesa/libGL.so")
-		if Button1110.get_active():
-			SystemLog("sudo apt-get install libx11-dev:i386")
-		if Button1204.get_active():
-			SystemLog("""sudo apt-get install libncurses5-dev:i386 libx11-dev:i386 libreadline6-dev:i386 libgl1-mesa-dev:i386 \
-g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i386""")
-		KillPage("cmd", box)
 
-	PrepareWindow = window
-	notebook = MainApp.notebook
+		if distr[0] == "Ubuntu":
+			if (sys.maxsize > 2**32) == True:
+				SystemLog("""sudo apt-get install lib32ncurses5-dev ia32-libs lib32readline5-dev lib32z-dev g++-multilib mingw32""")
+			else:
+				SystemLog("sudo apt-get install libncurses5-dev libreadline6-dev")
 
-	box = gtk.VBox()
+			if distr[1] == 12.04: 
+				SystemLog("""sudo apt-get install libncurses5-dev:i386 libx11-dev:i386 libreadline6-dev:i386 libgl1-mesa-dev:i386 \
+	g++-multilib mingw32 openjdk-6-jdk tofrodos libxml2-utils xsltproc zlib1g-dev:i386""")
+			elif distr[1] == 11.10: 
+				SystemLog("sudo apt-get install libx11-dev:i386")
+			elif distr[1] == 10.10: 
+				SystemLog("sudo ln -s /usr/lib32/mesa/libGL.so.1 /usr/lib32/mesa/libGL.so")
+		KillPage(widget)
+	def __init__(self):
+		PrepareWindow = window
+		notebook = MainApp.notebook
+
+		box = gtk.VBox()
 
 	
 
-	label=gtk.Label( _("You need this option before you can build.\nPlease select your OS..."))
-	box.pack_start(label, False, False, 10)
-
-	Button1004 = gtk.RadioButton(None, "Ubuntu 10.04")
-	box.pack_start(Button1004, False, False, 10)
-	Button1010 = gtk.RadioButton(Button1004, "Ubuntu 10.10")
-	box.pack_start(Button1010, False, False, 10)
-	Button1110 = gtk.RadioButton(Button1004, "Ubuntu 11.10")
-	box.pack_start(Button1110, False, False, 10)
-	Button1204 = gtk.RadioButton(Button1004, "Ubuntu 12.04")
-	box.pack_start(Button1204, False, False, 10)
-	separator = gtk.HSeparator()
-	box.pack_start(separator, False, True, 0)
-	Button32 = gtk.RadioButton(None, "32-bits")
-	box.pack_start(Button32, False, False, 10)
-	Button64 = gtk.RadioButton(Button32, "64-bits")	
-	Button64.set_active(True)
-	def SetButton64(cmd):
-		Button64.set_active(True)
-	Button1204.connect("toggled", SetButton64)
-	if (sys.maxsize > 2**32) == True:
-		Button64.set_active(True)
-	if platform.dist()[1] == 12.04: Button1204.set_active(True)
-	elif platform.dist()[1] == 11.10: Button1110.set_active(True)
-	elif platform.dist()[1] == 10.10: Button1010.set_active(True)
-	elif platform.dist()[1] == 10.04: Button1004.set_active(True)
-	box.pack_start(Button64, False, False, 10)
-	ButtonPrepare = gtk.Button("Prepare to Build")
-	ButtonPrepare.connect("clicked", Prepare)
-	box.pack_start(ButtonPrepare, False, False, 20)
-	PrepareLabel = NewPage("Prepare", box)
-	PrepareLabel.show_all()
-	notebook.insert_page(box, PrepareLabel)
-	PrepareWindow.show_all()
-	notebook.set_current_page(notebook.get_n_pages() - 1)
+		label=gtk.Label( _("You need this option before you can build.\n"))
+		box.pack_start(label, False, False, 10)
+		box.pack_start(gtk.Label(_("Your OS seems to be %s %s-bits, is this right?" % (platform.dist()[0].capitalize(), ["32", "64"][sys.maxsize > 2**32]))) , False, False, 10)
+		ButtonPrepare = gtk.Button("Prepare to Build")
+		ButtonPrepare.connect("clicked", self.Prepare)
+		box.pack_start(ButtonPrepare, False, False, 20)
+		PrepareLabel = NewPage("Prepare", box)
+		PrepareLabel.show_all()
+		notebook.insert_page(box, PrepareLabel)
+		PrepareWindow.show_all()
+		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def SDK():
 	print _("Retrieving SDK")
@@ -1873,7 +1864,7 @@ class BuildSource:
 		if self.repocmd == '': init = "done"
 		else: init = "init"
 		BuildScript = os.path.join(ScriptDir, "Source", "Build.sh")
-		os.system(BuildScript + ' sync' + init)
+		os.system(BuildScript + ' sync ' + init)
 		self.StartBuild(widget)
 
 	def StartBuild(self, widget):
@@ -2096,7 +2087,7 @@ class DeCompile:
 			callback(widget, self.chainFunc)
 
 	def Refresh(self, widget, vbox):
-		KillPage(widget, vbox)
+		KillPage(widget)
 		self.__init__()
 
 	def __init__(self):
@@ -2372,7 +2363,7 @@ class Sign:
 
 
 	def Refresh(self, vbox):
-		KillPage("cmd", vbox)
+		KillPage(vbox)
 		self.__init__()
 
 	def StartSign(self, widget, Std):
@@ -3564,7 +3555,8 @@ class OmegaSB(Theme, CopyFrom):
 
 	def __init__(self):
 		notebook = MainApp.notebook
-		self.OmegaVbox = gtk.VBox()
+		window.set_size_request(750, 550)
+		self.OmegaVbox = NewPageBox()
 		self.OmegaNotebook = gtk.Notebook()
 		self.OmegaNotebook.set_tab_pos(gtk.POS_LEFT)
 		self.OmegaVbox.pack_start(self.OmegaNotebook)
@@ -3640,7 +3632,6 @@ class OmegaSB(Theme, CopyFrom):
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
 		self.OmegaNotebook.insert_page(self.vbox, gtk.Label("Colorize"), 1)
-		OmegaLabel = NewPage(_("Omega"), self.vbox)
 		self.colorsel = gtk.ColorSelection()
 		self.colorsel.set_current_color(gtk.gdk.Color("#33b5e5"))
 
@@ -3717,7 +3708,7 @@ class OmegaSB(Theme, CopyFrom):
 		BuildBtn.connect("clicked", self.BuildTheme)
 		hbox.pack_start(BuildBtn)
 		self.BuildVbox.pack_end(hbox, True, False)
-		notebook.insert_page(self.OmegaVbox, OmegaLabel)
+		notebook.insert_page(self.OmegaVbox, gtk.Label(_("Omega")))
 		self.OmegaNotebook.connect("switch-page", self.EndTheming)
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
@@ -3797,12 +3788,18 @@ class OmegaSB(Theme, CopyFrom):
 			self.SetCustomize()
 			self.Customize = True
 
+	def ResetValues(self, widget):
+		for value in self.intList:value[3].set_value(float(value[1]))
+
 	def SetCustomize(self):
 		sw = gtk.ScrolledWindow()
 		hbox = gtk.HBox(True)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
 		hbox.pack_start(vbox1, True, False)
+		ResetBtn = gtk.Button(_("Reset custom values"))
+		ResetBtn.connect("clicked", self.ResetValues)
+		vbox1.pack_start(ResetBtn, False, False)
 		self.ShiftCheck = gtk.CheckButton(_("Shift value when changing"))
 		vbox1.pack_start(self.ShiftCheck)
 		hbox.pack_start(vbox2, True, False)
@@ -3834,7 +3831,7 @@ class OmegaSB(Theme, CopyFrom):
 		ThemeVbox.pack_start(self.BatteryImportBtn, False, False, 0)
 		SelectApkBtn = gtk.Button("Select theme APK")
 		SelectApkBtn.connect("clicked", self.ImportTheme)
-		SelectApkBtn.connect("clicked", KillPage, ThemeVbox, self.OmegaNotebook)
+		SelectApkBtn.connect("clicked", KillPage, self.OmegaNotebook)
 		ThemeVbox.pack_start(SelectApkBtn, True, False)
 		self.OmegaNotebook.insert_page(ThemeVbox, gtk.Label("Upload APK"), 1)
 		window.show_all()
@@ -4035,16 +4032,19 @@ class OmegaSB(Theme, CopyFrom):
 				RightLoc = [7,6,5,4,3,2,1,0][val[2]() - 15]
 				Padding = RightLoc*(24+StatusPadding)
 				if val[2]() < ClockLocation:
-					Padding += 4*ClockFontSize
+					Padding += 4*ClockFontSize  - 24
 				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
 					self.pasteRight(Result, [icon], Padding)
 
 			for val in [intv for intv in self.intList if "location" in intv[0] and 1 <= intv[2]() <= 8]:
 				LeftLoc = val[2]() - 1
+				Padding = LeftLoc*(24+StatusPadding)
+				if val[2]() > ClockLocation:
+					Padding += 4*ClockFontSize  - 24
 				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
-					self.pasteLeft(Result, [icon], LeftLoc*(24+StatusPadding))
+					self.pasteLeft(Result, [icon], Padding)
 		else:
 			Result = self.pasteRight(Result, [self.BattPic, self.SignPic])
 
@@ -4151,6 +4151,8 @@ class OmegaSB(Theme, CopyFrom):
 		if not self.ShiftCheck.get_active(): self.EndTheming(widget)
 		else:
 			currentValue = widget.get_value_as_int()
+			Values = [val[0] for val in self.intList if val[2]() == currentValue and "location" in val[0] and not val[0] == valname]
+			print Values
 			self.EndTheming(widget)
 			rest = range(1, 23)
 			rest.remove(currentValue)
@@ -4171,9 +4173,19 @@ class OmegaSB(Theme, CopyFrom):
 		for val in [intv for intv in self.intList if "location" in intv[0]]:
 			if val[0] != value and val[2]() == valInt:AlreadySet.append(val[0])
 		valList[3].set_value(valInt)
+
 		if not AlreadySet == []:
 			if mat == "min":self.ShiftCustom(AlreadySet[0], valInt - 1)
 			elif mat == "plus":self.ShiftCustom(AlreadySet[0], valInt + 1)
+			self.ShiftCheck.set_active(False)
+			for SameSet in AlreadySet[1:]:
+				if mat == "min":self.SetCustom(SameSet, valInt - 1)
+				elif mat == "plus":self.SetCustom(SameSet, valInt + 1)
+			self.ShiftCheck.set_active(True)
+
+	def SetCustom(self, value, valInt):
+		val = [val for val in self.intList if val[0] == value][0]
+		val[3].set_value(valInt)
 
 	def BuildTheme(self, cmd):
 		self.CurrentBuildDir = os.path.join(self.BuildDir, self.Name, date())
@@ -4456,11 +4468,14 @@ class About:
 		me.show()
 		hbox.pack_start(me, False, False, 30)
 
-
 		vbox1 = gtk.VBox()
 		hbox.pack_start(vbox1, True, False)
+
+		CustomizeButton = gtk.Button(_("Customize StudioAndroid!"))
+		CustomizeButton.connect("clicked", lambda w: Customize())
+		vbox1.pack_start(CustomizeButton, False, False, 0)
 		label = gtk.Label()
-		label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid @ XDA</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">Email me: martijn.ruijzendaal@gmail.com</a>\n<a href="http://bit.ly/SA-Donate">Donate to me</a>')
+		label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid - XDA</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">martijn.ruijzendaal@gmail.com</a>')
 		label.set_justify(gtk.JUSTIFY_CENTER)
 		vbox1.pack_start(label)
 
@@ -4469,18 +4484,16 @@ class About:
 		DonateButton = gtk.Button()
 		DonateButton.set_image(DonateImage)
 		DonateButton.set_relief(gtk.RELIEF_NONE)
-		DonateButton.connect("clicked", self.Donate)
+		DonateButton.connect("clicked", lambda w: Web.open("http://bit.ly/SA-Donate"))
 		vbox1.pack_start(DonateButton)
 	
 	
-		notebook.insert_page(vbox, gtk.Label("About"))
+		notebook.insert_page(vbox, gtk.Label("Home"), 0)
 		window.show_all()
-		notebook.set_current_page(notebook.get_n_pages() - 1)
-	def Donate(self, widget):
-		Web.open("http://bit.ly/SA-Donate")
+		notebook.set_current_page(0)
 
 if not os.path.exists(ToolAttr.VersionFile):
-	callback("cmd", "Customize")
+	Customize()
 
 def main():
 	About()
