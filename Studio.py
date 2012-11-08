@@ -30,6 +30,7 @@ _ = gettext.gettext
 
 
 
+
 # TRY TO IMPORT PIL FOR INTERNAL IMAGE MODIFICATION
 try: 
 	from PIL import Image as PILImage
@@ -46,6 +47,27 @@ def TogglePil(widget):
 	if widget.get_active():Pil = True
 	else: Pil = False
 	print("PIL = %s" % ["Disabled", "Enabled"][widget.get_active()])
+
+
+# OS Determination
+if sys.platform == 'linux2':
+	OS = 'Lin'
+elif sys.platform == 'win32':
+	OS = 'Win'
+elif sys.platform == 'win64':
+	OS = 'Win'
+elif sys.platform == 'darwin':
+	OS = 'Mac'
+else:
+	OS = 'Default'
+
+if (sys.maxsize > 2**32) == True: bit = 64
+else: bit = 32
+
+PATH = []
+if OS == "Win": sep = ";"
+else: sep = ":"
+for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
 
 # VARIABLES
@@ -91,39 +113,17 @@ class ToolAttr:
 
 	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 	DropboxLink = "http://dl.dropbox.com/u/61466577/"
+	UnstableBranch = "zipball/master"
+	StableBranch = "tags"
+	if not OS == "Win":
+		PM = ["apt-get", "yum"][platform.linux_distribution()[0] == "Fedora"]
 	if OmegaVersion == True:
 		ToolName = "OmegaThemeStudio"
 		Name = "OTS"
-		StableBranch = "tags"
-		UnstableBranch = "zipball/master"
 	else:
 		ToolName = "StudioAndroid"
 		Name = "SA"
-		StableBranch = "tags"
-		UnstableBranch = "zipball/master"
 
-
-
-# OS Determination
-
-if sys.platform == 'linux2':
-	OS = 'Lin'
-elif sys.platform == 'win32':
-	OS = 'Win'
-elif sys.platform == 'win64':
-	OS = 'Win'
-elif sys.platform == 'darwin':
-	OS = 'Mac'
-else:
-	OS = 'Default'
-
-if (sys.maxsize > 2**32) == True: bit = 64
-else: bit = 32
-
-PATH = []
-if OS == "Win": sep = ";"
-else: sep = ":"
-for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
 
 
@@ -180,8 +180,16 @@ def SystemLog(cmd, Debug=ToolAttr.Debug):
 # GTK TOOLS
 
 def delete_event(self, widget, event, data=None):
-	gtk.main_quit()
-	return False
+	quit = ChooseDialog(_("Quit?"), _("Do you really want to quit?"), ["Yes", "No", "Maybe"])
+	if quit == 0:
+		gtk.main_quit()
+		return False
+	elif quit == 2:
+		if random.randint(0, 1) == 1:
+			gtk.main_quit()
+			return False
+		else: return True
+	else: return True
 
 def destroy(self, widget, data=None):
 	gtk.main_quit()
@@ -271,7 +279,7 @@ def ChooseDialog(Title, Text, Btns=[]):
 	BtnTup = ()
 	for x in Btns:
 		BtnTup += (x, range(0,10)[Btns.index(x)])
-	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,BtnTup)
+	dialog = gtk.Dialog(Title, None, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, BtnTup)
 	label = gtk.Label(Text)
 	dialog.vbox.pack_start(label)
 	label.show()
@@ -359,7 +367,9 @@ def ExZip(zipf, expath, type='zip', pattern='*', Overwrite=True):
 		else: 
 			if fnmatch.fnmatch(f, pattern):
 				filename = os.path.join(expath, f)
-				if Overwrite == True and os.path.exists(filename): os.remove(filename)
+				if Overwrite == True and os.path.exists(filename):
+					if os.path.isdir(filename): shutil.rmtree(filename)
+					else:os.remove(filename)
 				if not os.path.exists(filename):
 					Zip.extract(f, path=expath)
 
@@ -1500,11 +1510,8 @@ libgl1-mesa-dev g++-multilib tofrodos"""
 			urllib.urlretrieve("https://fedoraproject.org/static/E8E40FDE.txt", os.path.join(ScriptDir, "E8E40FDE.txt"))
 			os.system("sudo rpm --import %s" %(os.path.join(ScriptDir, "E8E40FDE.txt")))
 			os.system("sudo um downgrade make --releasever=13")
-			os.system("sudo echo 'exclude=make*' >> /etc/yum.conf")
-			cmds = cmds.format("yum")
-		else:
-			cmds = cmds.format("apt-get")
-		os.system(cmds)
+			os.system("sudo touch /etc/yum.conf && echo 'exclude=make*' >> /etc/yum.conf")
+		os.system(cmds.format(ToolAttr.PM))
 		os.system("""
 mkdir -p ~/bin
 mkdir -p ~/android/system
@@ -1689,7 +1696,10 @@ def SDK():
 
 def JDK():
 	if OS == 'Lin':
-		SystemLog('gksudo "apt-get -y install openjdk-7-jdk"')
+		if not platform.linux_distribution()[0] == "Fedora":
+			SystemLog('sudo "apt-get -y install openjdk-7-jdk"')
+		else:
+			SystemLog('sudo yum install -y java-1.7.0-openjdk.{0}'.format(platform.machine()))
 	else:
 		Web.open('http://www.oracle.com/technetwork/java/javase/downloads/jdk-7u4-downloads-1591156.html')
 
@@ -2051,12 +2061,9 @@ class DeCompile:
 	secondText = _("Compile")
 	startBtnText = _("Start (De)Compiling")
 	chainFunc = "Sign"
-	Dual = True
 
 	def StartDeCompile(self, widget, firstnames, secnames):
-		First = self.FirstButton.get_active()
-		Second = self.SecondButton.get_active()
-		if First:
+		if self.FirstButton.get_active():
 			Number = len(firstnames)
 			if Number == 0:
 				NewDialog(_("ERROR"), _("No APKs selected!"))
@@ -2071,7 +2078,7 @@ class DeCompile:
 						SystemLog("java -jar %s d -f '%s' '%s'" %(ApkJar, APK, OutDir))
 						print _("Decompiled %s" % APK)
 			self.Refresh(widget, self.vbox)
-		if Second:
+		if self.SecondButton.get_active():
 			Number = len(secnames)
 			if Number == 0:
 				NewDialog(_("ERROR"), _("No APKs selected!" % os.path.join("APK", "IN") ))
@@ -2110,18 +2117,16 @@ class DeCompile:
 			NameBtn.connect("toggled", AddToList, decname, name)
 			self.vbox.pack_start(NameBtn, False, False, 0)
 
-		if self.Dual == True:
-			self.SecondButton = gtk.RadioButton(self.FirstButton, self.secondText)
-			self.vbox.pack_start(self.SecondButton, False, False, 10)
-			for dec in os.listdir(self.DecDir):
-				name = os.path.join(self.DecDir, dec)
-				NameBtn = gtk.CheckButton(dec)
-				NameBtn.connect("toggled", AddToList, comname, dec)
-				self.vbox.pack_start(NameBtn, False, False, 0)
+		self.SecondButton = gtk.RadioButton(self.FirstButton, self.secondText)
+		self.vbox.pack_start(self.SecondButton, False, False, 10)
+		for dec in os.listdir(self.DecDir):
+			name = os.path.join(self.DecDir, dec)
+			NameBtn = gtk.CheckButton(dec)
+			NameBtn.connect("toggled", AddToList, comname, dec)
+			self.vbox.pack_start(NameBtn, False, False, 0)
 
 		self.StartButton = gtk.Button(self.startBtnText)
 		self.StartButton.connect("clicked", self.StartDeCompile, decname, comname)
-		#self.StartButton.connect("clicked", StartThread, self.StartDeCompile, (comname, decname,))
 		self.vbox.pack_start(self.StartButton, False, False, 15)
 
 
@@ -3758,7 +3763,7 @@ class OmegaSB(Theme, CopyFrom):
 		Zip = self.TemplateZip
 		if not os.path.exists(Zip):
 			urllib.urlretrieve(ToolAttr.DropboxLink + self.Name + ".zip", Zip)
-		ExZip(Zip, os.path.dirname(Zip))
+		ExZip(Zip, os.path.dirname(Zip), Overwrite=False)
 		stringFile = find_files(os.path.dirname(Zip), "strings.xml")[0]
 		strings = open(stringFile, "r")
 		i = 0
@@ -4231,7 +4236,6 @@ class OmegaSB(Theme, CopyFrom):
 				InDir = os.path.join(self.BuildDir, "OUT")
 				DecDir = os.path.join(os.path.join(self.BuildDir, self.Name))
 				OutDir = os.path.join(ScriptDir, "APK", "OUT")
-				dual = False
 		Compile()
 
 
@@ -4452,24 +4456,23 @@ def Update():
 
 class About:
 	def __init__(self):
+
 		notebook = MainApp.notebook
 		vbox = NewPageBox()
 
-		image = gtk.Image()
-		image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
-		image.show()
-		vbox.pack_start(image, False)
-
 		hbox = gtk.HBox()
-		vbox.pack_start(hbox)
-
-		me = gtk.Image()
-		me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
-		me.show()
-		hbox.pack_start(me, False, False, 30)
-
+		vbox.pack_start(hbox, True, True)
+	
 		vbox1 = gtk.VBox()
-		hbox.pack_start(vbox1, True, False)
+		hbox.pack_start(vbox1, False, False, 0)
+
+		DonateImage = gtk.Image()
+		DonateImage.set_from_file(os.path.join(ScriptDir, "images", "donate.png"))
+		DonateButton = gtk.Button()
+		DonateButton.set_image(DonateImage)
+		DonateButton.set_relief(gtk.RELIEF_NONE)
+		DonateButton.connect("clicked", lambda w: Web.open("http://bit.ly/SA-Donate"))
+		vbox1.pack_start(DonateButton)
 
 		CustomizeButton = gtk.Button(_("Customize StudioAndroid!"))
 		CustomizeButton.connect("clicked", lambda w: Customize())
@@ -4479,13 +4482,31 @@ class About:
 		label.set_justify(gtk.JUSTIFY_CENTER)
 		vbox1.pack_start(label)
 
-		DonateImage = gtk.Image()
-		DonateImage.set_from_file(os.path.join(ScriptDir, "images", "donate.png"))
-		DonateButton = gtk.Button()
-		DonateButton.set_image(DonateImage)
-		DonateButton.set_relief(gtk.RELIEF_NONE)
-		DonateButton.connect("clicked", lambda w: Web.open("http://bit.ly/SA-Donate"))
-		vbox1.pack_start(DonateButton)
+
+		image = gtk.Image()
+		image.set_from_file(os.path.join(ScriptDir, "images", "Logo.png"))
+		image.show()
+		hbox.pack_start(image, False)
+
+		me = gtk.Image()
+		me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
+		me.show()
+		#hbox.pack_start(me, False, False, 30)
+
+
+
+		# ADS!
+		try:
+			import webkitt
+		except: 
+			pass#Web.open(os.path.join(ScriptDir, "Advertisement.html"))
+		else:
+			web = webkit.WebView()
+			settings = web.get_settings()
+			settings.set_property('enable-file-access-from-file-uris', 1)
+			web.open("file://%s" %(os.path.join(ScriptDir, "Advertisement.html")))
+			vbox.pack_start(web, False, False, 0)
+			web.show()
 	
 	
 		notebook.insert_page(vbox, gtk.Label("Home"), 0)
