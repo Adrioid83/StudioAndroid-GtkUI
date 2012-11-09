@@ -42,12 +42,6 @@ try:
 except: Pil = False
 else:	Pil = True
 
-def TogglePil(widget):
-	global Pil  # So the user can toggle PIL usage
-	if widget.get_active():Pil = True
-	else: Pil = False
-	print("PIL = %s" % ["Disabled", "Enabled"][widget.get_active()])
-
 
 # OS Determination
 if sys.platform == 'linux2':
@@ -92,38 +86,56 @@ Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance
 
 
 # TO FIX OTS <-> SA DEPENDENCIES
-class ToolAttr:
-	if not os.path.exists(ConfDir): os.makedirs(ConfDir)
-	VersionFile = os.path.join(ConfDir, "Custom")
-	Changelog = os.path.join(ScriptDir, "changelog")
-	with open(Changelog, "r") as f:
-		versionNo = f.readlines()[-1].replace("\n", "")
-	if os.path.exists(VersionFile):
-		with open(VersionFile, "r") as f:
-			toggledVersion = f.readline()
-		if "omega" in toggledVersion:
-			OmegaVersion = True
-		else: OmegaVersion = False
-	else: OmegaVersion = False
+class Attr:
+	def ParseSettings(self):
+		with open(self.SettingsFile, "r") as f:
+			self.OmegaVersion, self.PIL, self.Debug = [int(x) for x in f.readlines()][:3]
+			return self.OmegaVersion, self.PIL, self.Debug
 
-	# Debug
-	if os.path.exists(os.path.join(ConfDir, "debug")):Debug = True
-	else:Debug = False
+	def SetSettings(self):
+		with open(self.SettingsFile, "w") as f:
+			f.write("%s\n%s\n%s" %(self.OmegaVersion, self.PIL, self.Debug))
+		on = _("Enabled")
+		off = _("Disabled")
+		print ("Debug = %s, PIL = %s, Omega = %s" %([off, on][self.Debug], [off, on][self.PIL], [off, on][self.OmegaVersion]))
 
+	def SetSetting(self, settings):
+		OmegaVersion, PIL, Debug = settings
+		with open(self.SettingsFile, "w") as f:
+			f.write("%s\n%s\n%s" %(OmegaVersion, PIL, Debug))
 
-	GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
-	DropboxLink = "http://dl.dropbox.com/u/61466577/"
-	UnstableBranch = "zipball/master"
-	StableBranch = "tags"
-	if not OS == "Win":
-		PM = ["apt-get", "yum"][platform.linux_distribution()[0] == "Fedora"]
-	if OmegaVersion == True:
-		ToolName = "OmegaThemeStudio"
-		Name = "OTS"
-	else:
-		ToolName = "StudioAndroid"
-		Name = "SA"
+	def __init__(self):	
+		if not os.path.exists(ConfDir):
+			os.makedirs(ConfDir)
 
+		self.SettingsFile = os.path.join(ConfDir, "settings")
+		self.Changelog = os.path.join(ScriptDir, "changelog")
+
+		with open(self.Changelog, "r") as f:
+			self.versionNo = f.read().split("##")[-2]
+
+		if not os.path.exists(self.SettingsFile):
+			self.FirstRun = True
+			self.SetSetting((0, [0,1][Pil==True], 1,))
+		else: self.FirstRun = False
+
+		self.PILInstalled = Pil
+		self.OmegaVersion, self.PIL, self.Debug = self.ParseSettings()
+
+		self.GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
+		self.DropboxLink = "http://dl.dropbox.com/u/61466577/"
+		self.UnstableBranch = "zipball/master"
+		self.StableBranch = "tags"
+		if not OS == "Win":
+			self.PM = ["apt-get", "yum"][platform.linux_distribution()[0] == "Fedora"]
+
+		if self.OmegaVersion == True:
+			self.ToolName = "OmegaThemeStudio"
+			self.Name = "OTS"
+		else:
+			self.ToolName = "StudioAndroid"
+			self.Name = "SA"
+ToolAttr = Attr()
 
 
 
@@ -630,7 +642,7 @@ class MainApp:
 	Options.append(ChangelogOption)
 
 	UpdateOption = gtk.MenuItem( _("Update"))
-	UpdateOption.connect("activate", callback, "Update")
+	UpdateOption.connect("activate", lambda w: threading.Thread(target=Update().PrepareUpdate).start())
 	Options.append(UpdateOption)
 
 
@@ -840,7 +852,7 @@ class Utils:
 		self.PILBtn = gtk.CheckButton("Python Image Library")
 		if self.PIL == True:
 			ImageVbox.pack_start(self.PILBtn)
-			if Pil == False: self.PILBtn.set_active(True)
+			if ToolAttr.PIL == False: self.PILBtn.set_active(True)
 
 		OtherVbox = gtk.VBox()
 		hbox.pack_start(OtherVbox)
@@ -915,7 +927,7 @@ def ConvertImage():
 		else:
 			if not os.path.exists(os.path.join(ImageDir, "Convert")): os.makedirs(os.path.join(ImageDir, "Convert"))
 			ext = [r for r in ExtBtn.get_group() if r.get_active()][0].get_label()
-			if Pil == True:
+			if ToolAttr.PIL == True:
 				for x in find_files(ConvertDialog.out, "*"):
 					Dst = os.path.splitext(x.replace(ConvertDialog.out, os.path.join(ImageDir, "Convert")))[0] + ext
 					if os.path.splitext(x)[1] in [".png", ".jpg", ".gif", ".bmp", ".jpeg"] and not os.path.splitext(x)[1] == ext.replace(".", ""):
@@ -1330,7 +1342,7 @@ class Theme:
 		print(Clr)
 		for image in find_files(self.SrcDir, "*.png"):
 			Image1 = str(image)
-			if Pil == True:
+			if ToolAttr.PIL == True:
 				img = self.image_tint(Image1, Clr)
 				img.save("%s" % Image1)
 			else:
@@ -3559,6 +3571,7 @@ class OmegaSB(Theme, CopyFrom):
 	msg = _("Choose the color you want to theme with!")
 
 	def __init__(self):
+		assert ToolAttr.PILInstalled == True
 		notebook = MainApp.notebook
 		window.set_size_request(750, 550)
 		self.OmegaVbox = NewPageBox()
@@ -3621,15 +3634,6 @@ class OmegaSB(Theme, CopyFrom):
 			if find_files(os.path.join(self.PreviewDir), type[1]) != []:
 				self.ThemeVbox.pack_start(ThemesFrame, True, False)		
 		#
-
-		hbox = gtk.HBox()
-		self.CenterClockBtn = gtk.RadioButton(None, "Center clock")
-		lClock = gtk.RadioButton(self.CenterClockBtn, "Left clock")
-		rClock = gtk.RadioButton(self.CenterClockBtn, "Right clock")
-		for x in [lClock, self.CenterClockBtn, rClock]:
-			hbox.pack_start(x, True, False)
-			x.connect("toggled", self.CustomClock)
-		self.ThemeVbox.pack_end(hbox, True, False)
 
 		# COLORIZE TAB
 		self.vbox = gtk.VBox()
@@ -3713,7 +3717,7 @@ class OmegaSB(Theme, CopyFrom):
 		BuildBtn.connect("clicked", self.BuildTheme)
 		hbox.pack_start(BuildBtn)
 		self.BuildVbox.pack_end(hbox, True, False)
-		notebook.insert_page(self.OmegaVbox, gtk.Label(_("Omega")))
+		notebook.insert_page(self.OmegaVbox, gtk.Label(_("Statusbar")))
 		self.OmegaNotebook.connect("switch-page", self.EndTheming)
 		window.show_all()
 		notebook.set_current_page(notebook.get_n_pages() - 1)
@@ -3725,7 +3729,6 @@ class OmegaSB(Theme, CopyFrom):
 		activeText = cb.get_active_text().lower()
 		pattern = startpatt+activeText
 		link = "https://dl.dropbox.com/u/22147062/Omega_Theme_Styles/StatusBar/%s/%s%s.zip" % (name.capitalize(), startpatt, activeText)
-		print link
 		Zip = os.path.join(self.DownloadDir, pattern + ".zip")
 		if not os.path.exists(Zip):
 			urllib.urlretrieve(link, Zip)
@@ -3798,7 +3801,19 @@ class OmegaSB(Theme, CopyFrom):
 
 	def SetCustomize(self):
 		sw = gtk.ScrolledWindow()
+		vbox = gtk.VBox()
+
+		hbox = gtk.HBox()
+		self.CenterClockBtn = gtk.RadioButton(None, "Center clock")
+		self.LeftClockBtn = gtk.RadioButton(self.CenterClockBtn, "Left clock")
+		self.RightClockBtn = gtk.RadioButton(self.CenterClockBtn, "Right clock")
+		for x in [self.LeftClockBtn, self.CenterClockBtn, self.RightClockBtn]:
+			hbox.pack_start(x, True, False)
+			x.connect("toggled", self.CustomClock)
+		vbox.pack_start(hbox, True, False)
+
 		hbox = gtk.HBox(True)
+		vbox.pack_start(hbox, True, False)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
 		hbox.pack_start(vbox1, True, False)
@@ -3808,7 +3823,7 @@ class OmegaSB(Theme, CopyFrom):
 		self.ShiftCheck = gtk.CheckButton(_("Shift value when changing"))
 		vbox1.pack_start(self.ShiftCheck)
 		hbox.pack_start(vbox2, True, False)
-		sw.add_with_viewport(hbox)
+		sw.add_with_viewport(vbox)
 		for x in self.intList:
 			frame = gtk.Frame(x[0])
 			adj = gtk.Adjustment(1.0, 1.0, 22.0, 1.0, 0.0, 0.0)
@@ -3948,7 +3963,7 @@ class OmegaSB(Theme, CopyFrom):
 
 		for image in images:
 			Image1 = str(image)
-			if Pil == True:
+			if ToolAttr.PIL == True:
 				img = self.image_tint(Image1, Clr)
 				img.save("%s" % Image1)
 			else:
@@ -4025,18 +4040,16 @@ class OmegaSB(Theme, CopyFrom):
 		draw = PILImageDraw.Draw(ClockImage)
 		draw = PILImageDraw.Draw(ClockImage)
 
-		ClockLoc = [self.pasteLeft, self.pasteCenter, self.pasteRight][["Left clock", "Center clock", "Right clock"].index([r for r in self.CenterClockBtn.get_group() if r.get_active()][0].get_label())]
-		Result = ClockLoc(Result, [ClockImage])
-
 		#<!-- 22 GRID SPACES (1-2-3-4-5-6-7-8    *9-10-11-12-13-14*    15-16-17-18-19-20-21-22)-->
 		if Landscape == True:
 			StatusPadding = [val[2]() for val in self.intList if "statusbar_content_padding" in val][0]
 			ClockLocation = [val[2]() for val in self.intList if "digital_clock_grid_location" in val][0]
+			SameAsClock = [val[0] for val in self.intList if val[2]() == ClockLocation]
 
 			for val in [intv for intv in self.intList if "location" in intv[0] and 15 <= intv[2]() <= 22]:
 				RightLoc = [7,6,5,4,3,2,1,0][val[2]() - 15]
 				Padding = RightLoc*(24+StatusPadding)
-				if val[2]() < ClockLocation:
+				if val[2]() < ClockLocation and self.ShiftCheck.get_active():
 					Padding += 4*ClockFontSize  - 24
 				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
@@ -4050,7 +4063,12 @@ class OmegaSB(Theme, CopyFrom):
 				icon = self.ParseIcon(val[0], ClockImage)
 				if not icon == None:
 					self.pasteLeft(Result, [icon], Padding)
+
+			if not ClockLocation <= 8 and not ClockLocation >= 15:
+				Result = self.pasteCenter(Result, [ClockImage])
 		else:
+			ClockLoc = [self.pasteLeft, self.pasteCenter, self.pasteRight][["Left clock", "Center clock", "Right clock"].index([r for r in self.CenterClockBtn.get_group() if r.get_active()][0].get_label())]
+			Result = ClockLoc(Result, [ClockImage])
 			Result = self.pasteRight(Result, [self.BattPic, self.SignPic])
 
 			Result = self.pasteLeft(Result, [self.NotiPic])
@@ -4147,17 +4165,19 @@ class OmegaSB(Theme, CopyFrom):
 		return im
 
 	def CustomClock(self, widget):
-		if not self.Customize == False:
+		if widget.get_active():
 			val = ["Left clock", "Center clock", "Right clock"].index(widget.get_label())
-			self.ShiftCustom("digital_clock_grid_location", [1,11,22][val], ["plus", "plus", "min"][val])
-		self.EndTheming(widget)
+			ClockLoc = [r[2]() for r in self.intList if r[0] == "digital_clock_grid_location"][0]
+			print ClockLoc, val, (15 <= ClockLoc <= 22 and val == 2)
+			if not (1 <= ClockLoc <= 8 and val == 0) and not (9 <= ClockLoc <= 14 and val == 1) and not (15 <= ClockLoc <= 22 and val == 2): 
+				self.ShiftCustom("digital_clock_grid_location", [1,11,22][val], ["plus", "plus", "min"][val])
+			self.EndTheming(widget)
 
 	def SpinChanged(self, widget, valname):
 		if not self.ShiftCheck.get_active(): self.EndTheming(widget)
 		else:
 			currentValue = widget.get_value_as_int()
 			Values = [val[0] for val in self.intList if val[2]() == currentValue and "location" in val[0] and not val[0] == valname]
-			print Values
 			self.EndTheming(widget)
 			rest = range(1, 23)
 			rest.remove(currentValue)
@@ -4167,9 +4187,19 @@ class OmegaSB(Theme, CopyFrom):
 			for val in rest:
 				dif = val - currentValue
 				if abs(dif) < abs(current):current = dif
+				elif abs(dif) == abs(current):
+					if currentValue < 11 and dif < current: current = dif
+					if currentValue >= 11 and dif > current: current = dif
+
 			if current < 0: mat="min"
 			elif current > 0: mat="plus"
 			self.ShiftCustom(valname, currentValue, mat)
+		if valname == "digital_clock_grid_location":
+			val = widget.get_value_as_int()
+			if 1 <= val <= 8:use = 0
+			elif 15 <= val <= 22: use = 2
+			else: use = 1
+			[self.LeftClockBtn, self.CenterClockBtn, self.RightClockBtn][use].set_active(True)
 
 	def ShiftCustom(self, value, valInt, mat="min"):
 		valList = [val for val in self.intList if val[0] == value][0]
@@ -4179,6 +4209,8 @@ class OmegaSB(Theme, CopyFrom):
 			if val[0] != value and val[2]() == valInt:AlreadySet.append(val[0])
 		valList[3].set_value(valInt)
 
+		PreviousSet = self.ShiftCheck.get_active()
+
 		if not AlreadySet == []:
 			if mat == "min":self.ShiftCustom(AlreadySet[0], valInt - 1)
 			elif mat == "plus":self.ShiftCustom(AlreadySet[0], valInt + 1)
@@ -4186,7 +4218,7 @@ class OmegaSB(Theme, CopyFrom):
 			for SameSet in AlreadySet[1:]:
 				if mat == "min":self.SetCustom(SameSet, valInt - 1)
 				elif mat == "plus":self.SetCustom(SameSet, valInt + 1)
-			self.ShiftCheck.set_active(True)
+			self.ShiftCheck.set_active(PreviousSet)
 
 	def SetCustom(self, value, valInt):
 		val = [val for val in self.intList if val[0] == value][0]
@@ -4254,7 +4286,7 @@ class MissingTools(Utils):
 			i += 1
 		else: PyWin = False
 	else: PyWin = False
-	if Pil == True: PIL = False
+	if ToolAttr.PIL == True: PIL = False
 	else: 
 		PIL = True
 		i += 1
@@ -4281,8 +4313,10 @@ class Customize:
 		vbox.pack_start(hbox, False, False, 0)
 
 		PilToggle = gtk.CheckButton(_("Use PIL (beta)"))
-		if Pil == True: PilToggle.set_active(True)
-		PilToggle.connect("toggled", TogglePil)
+		if ToolAttr.PIL == True:
+			PilToggle.set_active(True)
+			if ToolAttr.PILInstalled == True:
+				PilToggle.connect("toggled", self.TogglePil)
 		hbox.pack_start(PilToggle, True, False)
 
 		OmegaToggle = gtk.CheckButton(_("Omega mode"))
@@ -4362,37 +4396,30 @@ class Customize:
 				f.write(active)
 		Restart(widget)
 
+	def TogglePil(self, widget):
+		if widget.get_active():
+			ToolAttr.PIL = 1
+		else: 
+			ToolAttr.PIL = False
+		ToolAttr.SetSettings()
+
 	def ToggleOmega(self, widget):
 		if widget.get_active():
-			with open(ToolAttr.VersionFile, "w") as f:
-				f.write("omega")
-			ToolAttr.OmegaVersion = False
+			ToolAttr.OmegaVersion = 1
 			KillPage(widget, MainApp.AndroidVBox, False, False)
 			KillPage(widget, MainApp.AdvanceVBox, False, False)
 			MainApp.notebook.insert_page(MainApp.OmegaVbox, MainApp.OmegaLabel, 3)
 		else:
-			with open(ToolAttr.VersionFile, "w") as f:
-				f.write("studio")
-			ToolAttr.OmegaVersion = True
+			ToolAttr.OmegaVersion = 0
 			KillPage(widget, MainApp.OmegaVbox, False, False)
 			MainApp.notebook.insert_page(MainApp.AdvanceVBox, MainApp.AdvanceLabel, 3)
 			MainApp.notebook.insert_page(MainApp.AndroidVBox, MainApp.AndroidLabel, 4)
+		ToolAttr.SetSettings()
 		window.show_all()
 
-		on = _("Enabled")
-		off = _("Disabled")
-		print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
-
 	def ToggleDebug(self, widget):
-		if widget.get_active():
-			open(os.path.join(ConfDir, "debug"), "w").close()
-			ToolAttr.Debug = True
-		else:
-			os.remove(os.path.join(ConfDir, "debug"))
-			ToolAttr.Debug = False
-		on = _("Enabled")
-		off = _("Disabled")
-		print ("Debug = %s, PIL = %s, Omega = %s" %([on, off][ToolAttr.Debug], [on, off][Pil], [on, off][ToolAttr.OmegaVersion]))
+		ToolAttr.Debug = [0,1][widget.get_active()]
+		ToolAttr.SetSettings()
 
 def Changelog():
 	ChangeWindow = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -4440,19 +4467,92 @@ def Bug(widget):
 				"\nPlease paste it in the reply that will be opened now!"))
 	webbrowser.open("http://forum.xda-developers.com/newreply.php?do=newreply&noquote=1&p=22414621")
 
-def Update():
-	os.remove(ToolAttr.VersionFile)
-	stablechoose =  ChooseDialog("Update", "What branch do you want?", ["Stable", "Test"])
-	if stablechoose == 1:
-		link = ToolAttr.GitLink + ToolAttr.UnstableBranch
-	else:
-		LatestTags = os.path.join(ConfDir, "Tags")
-		if os.path.exists(LatestTags): os.remove(LatestTags)
-		urllib.urlretrieve("https://github.com/mDroidd/StudioAndroid-GtkUI/tags", LatestTags)
-		with open(LatestTags) as f:
-			newestTag = [line.split('"', 2)[1] for line in f.readlines() if "/mDroidd/StudioAndroid-GtkUI/zipball/" in line][0]
-		link = "https://github.com" + newestTag
-	Web.open(link)
+class Update():
+	def PrepareUpdate(self):
+		os.remove(ToolAttr.SettingsFile)
+		UpdateWindow = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		UpdateWindow.set_position(gtk.WIN_POS_CENTER)
+		UpdateWindow.set_size_request(700,600)
+		UpdateVbox = gtk.VBox()
+		UpdateHbox = gtk.HBox(True)
+		UpdateVbox.pack_start(UpdateHbox)
+		UpdateWindow.add(UpdateVbox)
+		StableVbox = gtk.VBox()
+		UnstableVbox = gtk.VBox()
+		UpdateHbox.pack_start(StableVbox)
+		UpdateHbox.pack_start(UnstableVbox)
+
+		self.StableButton = gtk.RadioButton(None,_("Stable update"))
+		self.UnstableButton = gtk.RadioButton(self.StableButton,_("Unstable update"))
+		StableVbox.pack_start(self.StableButton, False, False)
+		UnstableVbox.pack_start(self.UnstableButton, False, False)
+
+		UnstableSW = gtk.ScrolledWindow()
+		UnstableVbox.pack_start(UnstableSW)
+		StableSW = gtk.ScrolledWindow()
+		StableVbox.pack_start(StableSW)
+
+		DownloadBtn = gtk.Button(_("Download Update!"))
+		DownloadBtn.connect("clicked", self.OpenUpdate)
+		UpdateVbox.pack_start(DownloadBtn, False, False, 20)
+		
+	
+		###################
+		#     UNSTABLE    #
+		###################
+		self.UnstableLink = ToolAttr.GitLink + ToolAttr.UnstableBranch
+		NewestChangelog = urllib.urlopen("https://raw.github.com/mDroidd/StudioAndroid-GtkUI/master/changelog")
+		changelog = '\n'.join(NewestChangelog.read().split("##")[-2:])
+		UnstableText = gtk.TextView()
+		buff = UnstableText.get_buffer()
+		buff.set_text(changelog)
+		UnstableText.set_buffer(buff)
+		UnstableSW.add_with_viewport(UnstableText)
+		NewestChangelog.close()
+
+		###################
+		#      STABLE     #
+		###################
+
+		LatestTags = urllib.urlopen("https://github.com/mDroidd/StudioAndroid-GtkUI/tags")
+		newestTag = [line for line in LatestTags.readlines() if "/mDroidd/StudioAndroid-GtkUI/archive/" in line][0].split('"')[3]
+		LatestTags.close()
+		self.StableLink = "https://github.com/mDroidd/StudioAndroid-GtkUI/archive/%s.zip" % newestTag
+		changelogLink = "https://raw.github.com/mDroidd/StudioAndroid-GtkUI/%s/changelog" % newestTag
+		TagChangelog = urllib.urlopen("https://raw.github.com/mDroidd/StudioAndroid-GtkUI/%s/changelog" % newestTag)
+
+		changelog = '\n'.join(TagChangelog.read().split("##")[-2:])
+		StableText = gtk.TextView()
+		buff = StableText.get_buffer()
+		buff.set_text(changelog)
+		StableText.set_buffer(buff)
+		StableSW.add_with_viewport(StableText)
+		TagChangelog.close()
+
+		UpdateWindow.show_all()
+
+	def OpenUpdate(self, widget):
+		if self.StableButton.get_active():
+			Web.open(self.StableLink)
+		elif self.UnstableButton.get_active():
+			Web.open(self.UnstableLink)
+
+	def CheckForUpdates(self):
+		LatestTags = urllib.urlopen("https://github.com/mDroidd/StudioAndroid-GtkUI/tags")
+		newestTag = [line for line in LatestTags.readlines() if "/mDroidd/StudioAndroid-GtkUI/archive/" in line][0].split('"')[3]
+		LatestTags.close()
+		NewestChangelog = urllib.urlopen("https://raw.github.com/mDroidd/StudioAndroid-GtkUI/master/changelog")
+		NewestChanges = len(NewestChangelog.read().split("##")[-2:])
+		NewestChangelog.close()
+		with open(os.path.join(ScriptDir, "changelog"), "r") as f:
+			text = f.read()
+			currentChangelog = len(text.split("##")[-2:])
+			currentTag = text.split("##")[-2]
+
+		if NewestChanges != currentChangelog or currentTag != newestTag:
+			UpdateQ = ChooseDialog("Update", "An update is available, do you want to update?", ["No", "Yes"])
+			if UpdateQ == 1: self.PrepareUpdate()
+		return True
 
 class About:
 	def __init__(self):
@@ -4497,14 +4597,21 @@ class About:
 
 		# ADS!
 		try:
-			import webkitt
+			import webkit
 		except: 
-			pass#Web.open(os.path.join(ScriptDir, "Advertisement.html"))
+			if ToolAttr.FirstRun == True:
+				webbrowser.open_new(os.path.join(ScriptDir, "Utils", "Block.html"))
+				window.hide()
+				time.sleep(2)
+				window.show_all()
+			AdsButton = gtk.Button(_("Click to open browser window.\nThis will keep this project running!"))
+			AdsButton.connect("clicked", lambda w: webbrowser.open_new(os.path.join(ScriptDir, "Utils", "Block.html")))
+			vbox.pack_start(AdsButton, False, False, 0)
 		else:
 			web = webkit.WebView()
 			settings = web.get_settings()
 			settings.set_property('enable-file-access-from-file-uris', 1)
-			web.open("file://%s" %(os.path.join(ScriptDir, "Advertisement.html")))
+			web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
 			vbox.pack_start(web, False, False, 0)
 			web.show()
 	
@@ -4513,11 +4620,12 @@ class About:
 		window.show_all()
 		notebook.set_current_page(0)
 
-if not os.path.exists(ToolAttr.VersionFile):
+if not os.path.exists(ToolAttr.SettingsFile):
 	Customize()
 
 def main():
 	About()
+	threading.Thread(target=Update().CheckForUpdates).start()
 	try:
 		gobject.threads_init()
 		gtk.main()

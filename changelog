@@ -242,7 +242,7 @@ Updates:
 	Landscape (+) bar in Colorize Tab
 	Locations are now on the right @ Customize tab
 
-==v0.83.2==
+##v0.83.2##
 	[INTERNAL]
 	TOTAL review of all code
 	converted some more functions to classes
@@ -270,7 +270,7 @@ Updates:
 	Added Spanish translation (partial)
 	Upcoming Italian translation ;D
 
-==0.83.3==
+##0.83.3##
 	[MAIN]
 	Themes support!!
 	After killing a page, you will stay on the same page
@@ -284,8 +284,10 @@ Updates:
 	Finally fixed all recompile bugs!
 	Reduced UTILS size with 1,5+ MB
 	Right click tabs is now supported > Shows all tabs
-	Some tabs now have the X (close) button in the tab itsself, so that the TabName will appear right
-	Home tab will open first - PayPal donation button and Customize button.
+	Some tabs now have the X (close) button in the tab itsself
+	Home tab will open first
+	AUTO update check
+	Updating updated (LOL)
 
 	[INTERNAL]
 	Some fixes for future bugs :P
@@ -298,7 +300,7 @@ Updates:
 	[DEVELOP]
 	Prepare Building fix
 	Build fix
-	Prepare Building support for Fedora (possibly incomplete)
+	Prepare Building support for Fedora
 	Building support for Fedora (^^)
 
 	[APK]
@@ -315,14 +317,14 @@ Updates:
 	Logcat pause/resume
 
 	[OMEGA]
-	Bouncing switch (moving an indicator to an open space when other value is set to it)
+	Bouncing switch (moving indicators when any set to occupied space)
 	Clock location done
-	A lot of bugfixes
+	A LOT of bugfixes
 
 	[OPTIONS]
-	Customize theme chooser is now in a scrolled window, more space for more themes ;D
+	Customize theme chooser is now in a scrolled window - more themes
 
 Feature requests are always welcome :)
 Also, if you want to contribute, don't hestitate to contact me!
 
-0.83.30
+0.83.31
