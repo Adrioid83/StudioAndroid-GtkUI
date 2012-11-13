@@ -4621,7 +4621,7 @@ class Update():
 		with open(os.path.join(ScriptDir, "changelog"), "r") as f:
 			currentTag = f.read().split("##")[-2]
 
-		if float(currentTag.replace("v0.", "")) < float(newestTag.replace("v0.", "")):
+		if float(currentTag.replace("0.", "")) < float(newestTag.replace("0.", "")):
 			print '"%s"' %currentTag, '"%s"'%newestTag
 			UpdateQ = ChooseDialog("Update", "An update is available, do you want to update?", ["No", "Yes"])
 			if UpdateQ == 1: self.PrepareUpdate()
