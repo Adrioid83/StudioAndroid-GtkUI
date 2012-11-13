@@ -89,8 +89,14 @@ Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance
 class Attr:
 	def ParseSettings(self):
 		with open(self.SettingsFile, "r") as f:
-			self.OmegaVersion, self.PIL, self.Debug = [int(x) for x in f.readlines()][:3]
-			return self.OmegaVersion, self.PIL, self.Debug
+			self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = (0, [0,1][Pil==True], 1,1,)
+			try:
+				self.OmegaVersion = int(f.readline())
+				self.PIL = int(f.readline())
+				self.Debug = int(f.readline())
+				self.FirstRun = int(f.readline())
+			except:pass
+			return self.OmegaVersion, self.PIL, self.Debug, self.FirstRun
 
 	def SetSettings(self):
 		with open(self.SettingsFile, "w") as f:
@@ -100,9 +106,8 @@ class Attr:
 		print ("Debug = %s, PIL = %s, Omega = %s" %([off, on][self.Debug], [off, on][self.PIL], [off, on][self.OmegaVersion]))
 
 	def SetSetting(self, settings):
-		OmegaVersion, PIL, Debug = settings
 		with open(self.SettingsFile, "w") as f:
-			f.write("%s\n%s\n%s" %(OmegaVersion, PIL, Debug))
+			f.write("%s\n%s\n%s\n%s" %(settings))
 
 	def __init__(self):	
 		if not os.path.exists(ConfDir):
@@ -115,17 +120,23 @@ class Attr:
 			self.versionNo = f.read().split("##")[-2]
 
 		if not os.path.exists(self.SettingsFile):
-			self.FirstRun = True
-			self.SetSetting((0, [0,1][Pil==True], 1,))
-		else: self.FirstRun = False
+			self.SetSetting((0, [0,1][Pil==True], 1,1,))
 
 		self.PILInstalled = Pil
-		self.OmegaVersion, self.PIL, self.Debug = self.ParseSettings()
+		self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = self.ParseSettings()
+
+		if self.FirstRun == True:	self.SetSetting((0, [0,1][Pil==True], 1,0,))
 
 		self.GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 		self.DropboxLink = "http://dl.dropbox.com/u/61466577/"
 		self.UnstableBranch = "zipball/master"
 		self.StableBranch = "tags"
+		try:import webkit
+		except: self.Webkit = False
+		else: 
+			self.webkit = webkit
+			self.Webkit = True
+
 		if not OS == "Win":
 			self.PM = ["apt-get", "yum"][platform.linux_distribution()[0] == "Fedora"]
 
@@ -267,7 +278,7 @@ class FileChooserFile(FileChooserD):
 		FileChooser = gtk.FileChooserDialog(title, None, gtk.FILE_CHOOSER_ACTION_OPEN, 
 						(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
 		self.out = self.run(FileChooser, filters, multiple) # run FileChooserDialog with the given arguments
-		if self.out == None and SetTo:
+		if self.out and SetTo:
 			SetTo(self.out) # set button label to OUT if Btn is given
 		return self.out
 
@@ -322,7 +333,7 @@ def NewPage(Label, parent):
 	closebtn = gtk.Button()
 	image = gtk.Image()
 	image.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_MENU)
-	closebtn.connect("clicked", KillPage)
+	closebtn.connect("clicked", KillPage, parent)
 	closebtn.set_image(image)
 	image.set_size_request(10, 10)
 	closebtn.set_relief(gtk.RELIEF_NONE)
@@ -712,10 +723,14 @@ class MainApp:
 		MainOpt9.connect("clicked", callback, "AddGovernor")
 		DevelopVBox.pack_start(MainOpt9, True, False)
 
-	for opt in [[_("Install Android-SDK"), "SDK"], [("Install Java JDK"), "JDK"], [_("Install Eclipse"), "Eclipse"], [_("Port a ROM (DO NOT USE)"), "BinaryPort"]]:
-		OptBtn = gtk.Button(opt[0])
-		OptBtn.connect("clicked", callback, opt[1])
-		DevelopVBox.pack_start(OptBtn, True, False)
+	DevToolsBtn = gtk.Button(_("Install development tools"))
+	DevToolsBtn.connect("clicked", callback, "DevTools")
+	DevelopVBox.pack_start(DevToolsBtn, True, False)
+
+	PortBtn = gtk.Button(_("Port a ROM (DO NOT USE)"))
+	PortBtn.connect("clicked", callback, "BinaryPort")
+	DevelopVBox.pack_start(PortBtn, True, False)
+
 
 	notebook.insert_page(DevelopVBox, DevelopLabel, 2)
 
@@ -826,9 +841,15 @@ def Clean():
 		try:os.remove(x)
 		except:pass
 
+def CleanTree(Dir):
+	for full in [os.path.join(Dir, f) for f in os.listdir(Dir)]:
+		if os.path.isdir(full):shutil.rmtree(full)
+		else:os.remove(full)
+
 class Utils:
 	LabelText = _("ImageMagick is needed for all image tools I included.\nIn future releases I will use PIL more. So install PIL too!")
 	PageTitle = _("Install Image Tools")
+	WebKit = True
 	Java = False
 	PyWin = False
 	PIL = True
@@ -856,6 +877,10 @@ class Utils:
 
 		OtherVbox = gtk.VBox()
 		hbox.pack_start(OtherVbox)
+		self.WebkitBtn = gtk.CheckButton("Webkit")
+		if self.WebKit == True:
+			self.WebkitBtn.set_active(True)
+			OtherVbox.pack_start(self.WebkitBtn)
 		self.JavaBtn = gtk.CheckButton("Java")
 		if self.Java == True:
 			self.JavaBtn.set_active(True)
@@ -898,14 +923,16 @@ class Utils:
 				out = commands.getoutput("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
 				if not out.endswith("0"):
 					SystemLog("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
-					
-			if self.JavaBtn.get_active():
-				Web.open("http://www.oracle.com/technetwork/java/javase/downloads/index.html")
+			if self.WebkitBtn.get_active():
+				if platform.linux_distribution()[0] == "Fedora":
+					os.system("sudo yum -y install pywebkitgtk")
+				else:
+					os.system("sudo apt-get install python-webkitgtk libwebkit-1.0-1 libwebkit-dev")
+
+		if OS == 'Win':
 			if self.PyWin32Btn.get_active():
 				urllib.urlretrieve("http://sourceforge.net/projects/pywin32/files/pywin32/Build%20217/pywin32-217.win32-py2.7.exe/download", os.path.join(ConfDir, "PyWin32.exe"))
 				os.system("start %s" % os.path.join(ConfDir, "PyWin32.exe"))
-
-		if OS == 'Win':
 			if self.ImageBtn.get_active():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
 				ln = open(os.path.join(ConfDir, "index.html"), "r").readlines()[10]
@@ -918,6 +945,43 @@ class Utils:
 			if self.PILBtn.get_active():
 				urllib.urlretrieve("https://www.dropbox.com/s/x7okd0u4e8uk5po/PIL-fork-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
+			if self.WebkitBtn.get_active():
+				urllib.urlretrieve("http://builds.nightly.webkit.org/files/trunk/win/WebKit-SVN-r131444.zip", os.path.join(ConfDir, "Webkit.exe"))
+				os.system("open %s" % os.path.join(ConfDir, "Webkit.exe"))
+			if self.JavaBtn.get_active():
+				Web.open("http://www.oracle.com/technetwork/java/javase/downloads/index.html")
+
+class MissingTools(Utils):
+	i = 0
+	PageTitle = _("Missing tools")
+	LabelText = _("These tools are not found on your system, and quite necessary!\nPlease install them.")
+	if ToolAttr.Webkit == False:
+		WebKit = True
+		i += 1
+	else: WebKit = False
+	try:
+		subprocess.Popen(["java"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+	except: Java = True
+	else: Java = False
+	if OS == "Win":
+		try: import pywin32
+		except ImportError: 
+			PyWin32 = True
+			i += 1
+		else: PyWin = False
+	else: PyWin = False
+	if ToolAttr.PIL == True: PIL = False
+	else: 
+		PIL = True
+		i += 1
+	if os.path.exists(os.path.join(ScriptDir, "test.jpg")): os.remove(os.path.join(ScriptDir, "test.jpg"))
+	os.system("convert %s %s" %(os.path.join(ScriptDir, "images", "Empty.png"), os.path.join(ScriptDir, "test.jpg")))
+	if os.path.exists(os.path.join(ScriptDir, "test.jpg")):
+		IM = False
+		os.remove(os.path.join(ScriptDir, "test.jpg"))
+	else: 
+		IM = True
+		i += 1
 	
 def ConvertImage():
 	class ConvertFC(FileChooserD):pass
@@ -1285,7 +1349,6 @@ class Theme:
 	SrcDir =  os.path.join(ScriptDir, "Image", "Theme")
 	msg = _("Place the images you want to theme inside %s" % SrcDir)
 		
-
 	# (C) MARTINEAU @ StackOverflow
 	def image_tint(self, im, tint="#33b5e5"):
 		if isinstance(im, str):  # file path?
@@ -1316,8 +1379,8 @@ class Theme:
 			a.putdata(src.getdata(3))
 			merge_args = (src.mode, (l, l, l, a))  # for RGBA verion of grayscale
 			luts += range(256)  # for 1:1 mapping of copied alpha values
-
 		return PILImage.merge(*merge_args).point(luts)
+
 	def ParseColor(self):
 		CurCol = str(self.colorsel.get_current_color())
 		ColCode = CurCol.replace("#", '')
@@ -1348,14 +1411,28 @@ class Theme:
 			else:
 				SystemLog('convert %s -colorspace gray %s' %(Image1, Image1) )
 				SystemLog('mogrify -fill "%s" -tint 100 %s' %(Clr, Image1))
+		if not self.APK == None:
+			DstFile = zipfile.ZipFile(os.path.join(ScriptDir, "APK", "OUT", Clr + os.path.basename(self.APK)), "w")
+			for fpath in find_files(self.SrcDir, "*"):
+				f = fpath.replace(self.SrcDir, '')
+				DstFile.write(fpath, f)
+			DstFile.close()
 		self.EndTheming()
 
 	def EndTheming(self):
 		NewDialog("Themed", "You can find the themed images inside Theme")
 
+	def UploadAPK(self, widget):
+		class APKFC(FileChooserFile):pass
+		FC = APKFC()
+		self.APK = FC.openFile(widget, _("Select APK..."), "*.apk", False, self.ThemeLabel.set_text)
+		self.ThemeLabel.show()
+		if self.APK: ExZip(self.APK, self.SrcDir)
+
 	def __init__(self):
+		self.APK = None
 		ThemeWindow = window
-		ThemeLabel = gtk.Label(self.msg)
+		self.ThemeLabel = gtk.Label(self.msg)
 		notebook = MainApp.notebook
 
 		self.colorsel = gtk.ColorSelection()
@@ -1365,7 +1442,13 @@ class Theme:
 			os.makedirs(self.SrcDir)
 
 		vbox = gtk.VBox()
-		vbox.pack_start(ThemeLabel, False, False, 10)
+		vbox.pack_start(self.ThemeLabel, False, False, 0)
+
+		APKBtn = gtk.Button(_("Or upload your custom APK:"))
+		APKBtn.connect("clicked", self.UploadAPK)
+		vbox.pack_start(APKBtn, False, False, 0)
+
+		vbox.pack_start(gtk.HSeparator(), False, False, 20)
 
 		vbox.pack_start(self.colorsel, False, False, 0)
 
@@ -1691,7 +1774,7 @@ def SDK():
 			print _("Extracting SDK")
 			ExZip(os.path.join(Home, 'SDK.zip'), Home)
 		elif OS == 'Lin':
-			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-linux.tgz', os.path.join(Home, 'SDK.tgz'))
+			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.3-linux.tgz', os.path.join(Home, 'SDK.tgz'))
 			print _("Extracting SDK")
 			tar = tarfile.open(os.path.join(Home, "SDK.tgz"))
 			tar.extractall(path=Home)
@@ -1711,7 +1794,7 @@ def JDK():
 		if not platform.linux_distribution()[0] == "Fedora":
 			SystemLog('sudo "apt-get -y install openjdk-7-jdk"')
 		else:
-			SystemLog('sudo yum install -y java-1.7.0-openjdk.{0}'.format(platform.machine()))
+			SystemLog('sudo yum install -y java-1.7.0-openjdk.i686')
 	else:
 		Web.open('http://www.oracle.com/technetwork/java/javase/downloads/jdk-7u4-downloads-1591156.html')
 
@@ -1722,6 +1805,25 @@ def Eclipse():
 	elif OS == "Win": 
 		if bit == 64:Web.open("http://www.eclipse.org/downloads/download.php?file=/eclipse/downloads/drops4/R-4.2-201206081400/eclipse-SDK-4.2-win32-x86_64.zip")
 		elif bit == 32: Web.open("http://www.eclipse.org/downloads/download.php?file=/eclipse/downloads/drops4/R-4.2-201206081400/eclipse-SDK-4.2-win32.zip")
+
+class DevTools:
+	def __init__(self):
+		vbox = NewPageBox()
+		self.EclipseBtn = gtk.CheckButton(_("Install eclipse"))
+		self.JDKBtn = gtk.CheckButton(_("Install Java JDK"))
+		self.SDKBtn = gtk.CheckButton(_("Install Android SDK"))
+		InstallBtn = gtk.Button(_("Install"))
+		InstallBtn.connect("clicked", StartThread, self.Install)
+		for x in [self.EclipseBtn,self.JDKBtn,self.SDKBtn,InstallBtn]:
+			vbox.pack_start(x, True, False)
+		MainApp.notebook.insert_page(vbox, gtk.Label(_("Development tools")))
+		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
+		window.show_all()
+	def Install(self, widget):
+		if self.EclipseBtn.get_active():Eclipse()
+		if self.JDKBtn.get_active(): JDK()
+		if self.SDKBtn.get_active(): SDK()
+		
 
 class BuildSource:
 	class WorkingFolderFC(FileChooserD):pass
@@ -1852,20 +1954,20 @@ class BuildSource:
 		hbox.pack_start(vbox3)
 		self.deviceVbox.pack_start(hbox, False, False, 0)
 		Number = len(self.Sources)
-		NameBtn = None
+		self.NameBtn = gtk.RadioButton(None, "None")
 		for num in range(0, Number):
 			Name = self.Sources[num]
 			if Name == 'divide':
 				vbox3.pack_start(gtk.HSeparator(), False)
 			else:
-				NameBtn = gtk.RadioButton(NameBtn, Name)
+				NameBtn = gtk.RadioButton(self.NameBtn, Name)
 				NameBtn.connect("toggled", self.SetURL, num)
 				NameBtn.get_group()[-1].set_active(True)
 				if range(0, Number)[num] < (Number /  3): vbox1.pack_start(NameBtn, False, False, 0)
 				elif Number / 3 <= range(0, Number)[num] < (Number /  3) * 2: vbox2.pack_start(NameBtn, False, False, 0)
 				elif range(0, Number)[num] > Number /  3: vbox3.pack_start(NameBtn, False, False, 0)
 				else: print num
-		self.SetURL(NameBtn.get_group()[-1], 0)
+		self.NameBtn.get_group()[-2].set_active(True)
 		window.show_all()
 
 	def SetWorkingDir(self, widget):
@@ -1891,46 +1993,35 @@ class BuildSource:
 
 	def StartBuild(self, widget):
 		if not os.path.exists(os.path.join(self.SourceDir, ".repo")):
-			NewDialog("ERROR", _(SourceDir + " does not exist!\nPress SYNC instead."))
+			NewDialog("ERROR", _(self.SourceDir + " does not exist!\nPress SYNC instead."))
 		else:
 			self.notebook.remove_page(self.notebook.get_n_pages() -1)
+			vbox = NewPageBox()
 			sw = gtk.ScrolledWindow()
-			BuildLabel = NewPage("Build", sw)
-			BuildLabel.show_all()
-			vbox = gtk.VBox()
-			NameBtn = None
+			vbox.pack_start(sw)
+			vbox1 = gtk.VBox()
+			self.DeviceBuildBtn = gtk.RadioButton(None, "None")
 
-			for devi in find_files(os.path.join(SourceDir, "device"), "vendorsetup.sh"):
-				for line in open(devi).readlines():
-					if not line.startswith('#') and 'add_lunch_combo' in line:
-						Text = line.replace('\n', '')
-						Text = Text.replace('add_lunch_combo', '')
-						Text = Text.replace('_', '--')
-						if NameBtn == None:
-							NameBtn = gtk.RadioButton(NameBtn, Text)
-							NameBtn.set_active(True)
-						else:NameBtn = gtk.RadioButton(NameBtn, Text)
-						vbox.pack_start(NameBtn)
-			for devi in find_files(os.path.join(SourceDir, "vendor"), "vendorsetup.sh"):
-				for line in open(devi).readlines():
-					if not line.startswith('#') and 'add_lunch_combo' in line:
-						Text = line.replace('\n', '')
-						Text = Text.replace('add_lunch_combo', '')
-						Text = Text.replace('_', '--')
-						NameBtn = gtk.RadioButton(NameBtn, Text)
-						vbox.pack_start(NameBtn)
+			for devi in find_files(os.path.join(self.SourceDir, "vendor"), "vendorsetup.sh") + find_files(os.path.join(self.SourceDir, "device"), "vendorsetup.sh"):
+				with open(devi) as f:
+					Devices = [str(str(line.replace("add_lunch_combo ", '')).replace('_', '--')).replace("\n", "") for line in f.readlines() if not line.startswith("#")]
+					for Text in Devices:
+						NameBtn = gtk.RadioButton(self.DeviceBuildBtn, Text)
+						vbox1.pack_start(NameBtn)
+
+			self.DeviceBuildBtn.get_group()[-2].set_active(True)
 
 			StartButton = gtk.Button("Build!")
-			vbox.pack_start(StartButton)
-			StartButton.connect("clicked", self.Make, NameBtn)
+			vbox.pack_start(StartButton, False, False, 0)
+			StartButton.connect("clicked", StartThread, self.Make, (self.DeviceBuildBtn,))
 
-			sw.add_with_viewport(vbox)
-			self.notebook.insert_page(sw, BuildLabel, 4)
+			sw.add_with_viewport(vbox1)
+			self.notebook.insert_page(vbox, gtk.Label(_("Choose device")))
 			window.show_all()
-			self.notebook.set_current_page(4)
+			self.notebook.set_current_page(self.notebook.get_n_pages() - 1)
 	def Make(self, widget, Group):
-		os.chdir(SourceDir)
-		active = str([r for r in GroupStandard.get_group() if r.get_active()][0].get_label().replace('--', '_')).replace(' ', '')
+		os.chdir(self.SourceDir)
+		active = str([r for r in Group.get_group() if r.get_active()][0].get_label().replace('--', '_')).replace(' ', '')
 		print >>open(os.path.join(ScriptDir, "Source", "makeswitches"), "w"), self.build_switches
 		SystemLog("%s make %s&" %(os.path.join(ScriptDir, "Source", "Build.sh"), active))			
 
@@ -2088,7 +2179,9 @@ class DeCompile:
 						APK = os.path.join(self.InDir, APK)
 						OutDir = os.path.join(self.DecDir, ApkDir)
 						SystemLog("java -jar %s d -f '%s' '%s'" %(ApkJar, APK, OutDir))
-						print _("Decompiled %s" % APK)
+						if os.path.exists(os.path.join(OutDir, "apktool.yml")):
+							print _("Decompiled %s" % APK)
+						else: print _("Unable to decompile. Framework installed? Version > 4.2?")
 			self.Refresh(widget, self.vbox)
 		if self.SecondButton.get_active():
 			Number = len(secnames)
@@ -2102,8 +2195,17 @@ class DeCompile:
 						ApkName = os.path.join(self.OutDir, "Unsigned-" + Dec + ".apk")
 						os.chdir(UtilDir)
 						SystemLog("java -jar '%s' b -f '%s' '%s'" %(ApkJar, ApkFolder, ApkName))
-						print _("Compiled %s" % ApkName)
+						if os.path.exists(ApkName):
+							print _("Compiled %s" % ApkName)
+						else: print _("Unable to compile %s... please report!" % ApkName)
 			callback(widget, self.chainFunc)
+	def InstallFramework(self, widget):
+		class FCFramework(FileChooserFile):pass
+		FrameworkFC = FCFramework()
+		Framework = FrameworkFC.openFile(widget, _("Select framework-res.apk"), "*.apk")
+		if Framework:
+			os.system("java -jar %s if '%s'" %(ApkJar, Framework))
+			NewDialog(_("Framework"), _("Your framework is installed to the system"))
 
 	def Refresh(self, widget, vbox):
 		KillPage(widget)
@@ -2118,6 +2220,10 @@ class DeCompile:
 
 		InfoLabel = gtk.Label(self.text)
 		self.vbox.pack_start(InfoLabel, False, False, 0)
+
+		FrameworkButton = gtk.Button(_("If it's a framework APK (like SystemUI), select your framework-res.apk"))
+		FrameworkButton.connect("clicked", self.InstallFramework)
+		self.vbox.pack_start(FrameworkButton, False, False)
 
 		self.FirstButton = gtk.RadioButton(None, self.firstText)
 		self.vbox.pack_start(self.FirstButton, False, False, 10)
@@ -3634,6 +3740,9 @@ class OmegaSB(Theme, CopyFrom):
 			if find_files(os.path.join(self.PreviewDir), type[1]) != []:
 				self.ThemeVbox.pack_start(ThemesFrame, True, False)		
 		#
+		self.CenterClockBtn = gtk.RadioButton(None, "Center clock")
+		self.LeftClockBtn = gtk.RadioButton(self.CenterClockBtn, "Left clock")
+		self.RightClockBtn = gtk.RadioButton(self.CenterClockBtn, "Right clock")
 
 		# COLORIZE TAB
 		self.vbox = gtk.VBox()
@@ -3768,7 +3877,6 @@ class OmegaSB(Theme, CopyFrom):
 			urllib.urlretrieve(ToolAttr.DropboxLink + self.Name + ".zip", Zip)
 		ExZip(Zip, os.path.dirname(Zip), Overwrite=False)
 		stringFile = find_files(os.path.dirname(Zip), "strings.xml")[0]
-		strings = open(stringFile, "r")
 		i = 0
 		hbox = gtk.HBox()
 		vbox.pack_start(hbox)
@@ -3776,15 +3884,16 @@ class OmegaSB(Theme, CopyFrom):
 		vbox2 = gtk.VBox()
 		hbox.pack_start(vbox1)
 		hbox.pack_start(vbox2)
-		for line in strings.read().split("\n"):
-			if i > 0 and '"' in line:
-				value = strip_esc(line).split('"')[1]
-				sett = str(strip_esc(line).split(">", 1)[1]).split("<")[0]
-				try:
-					if int(sett) in range(0,23):self.intList.append([value, sett])
-				except:
-					self.strList.append([value, sett])
-			i += 1
+		with open(stringFile, "r") as strings:
+			for line in strings.read().split("\n"):
+				if i > 0 and '"' in line:
+					value = strip_esc(line).split('"')[1]
+					sett = str(strip_esc(line).split(">", 1)[1]).split("<")[0]
+					try:
+						if int(sett) in range(0,23):self.intList.append([value, sett])
+					except:
+						self.strList.append([value, sett])
+				i += 1
 		for x in self.strList:
 			frame = gtk.Frame(x[0])
 			entry = gtk.Entry()
@@ -3804,9 +3913,6 @@ class OmegaSB(Theme, CopyFrom):
 		vbox = gtk.VBox()
 
 		hbox = gtk.HBox()
-		self.CenterClockBtn = gtk.RadioButton(None, "Center clock")
-		self.LeftClockBtn = gtk.RadioButton(self.CenterClockBtn, "Left clock")
-		self.RightClockBtn = gtk.RadioButton(self.CenterClockBtn, "Right clock")
 		for x in [self.LeftClockBtn, self.CenterClockBtn, self.RightClockBtn]:
 			hbox.pack_start(x, True, False)
 			x.connect("toggled", self.CustomClock)
@@ -4271,35 +4377,6 @@ class OmegaSB(Theme, CopyFrom):
 		Compile()
 
 
-class MissingTools(Utils):
-	i = 0
-	PageTitle = _("Missing tools")
-	LabelText = _("These tools are not found on your system, and quite necessary!\nPlease install them.")
-	if not OS == "Win": Java = False
-	elif os.getenv("JAVA_HOME") == None: 
-		Java = True
-		i += 1
-	if OS == "Win":
-		try: import pywin32
-		except ImportError: 
-			PyWin32 = True
-			i += 1
-		else: PyWin = False
-	else: PyWin = False
-	if ToolAttr.PIL == True: PIL = False
-	else: 
-		PIL = True
-		i += 1
-	if os.path.exists(os.path.join(ScriptDir, "test.jpg")): os.remove(os.path.join(ScriptDir, "test.jpg"))
-	os.system("convert %s %s" %(os.path.join(ScriptDir, "images", "Empty.png"), os.path.join(ScriptDir, "test.jpg")))
-	if os.path.exists(os.path.join(ScriptDir, "test.jpg")):
-		IM = False
-		os.remove(os.path.join(ScriptDir, "test.jpg"))
-	else: 
-		IM = True
-		i += 1
-
-
 class Customize:
 	def __init__(self):
 		vbox = NewPageBox()
@@ -4408,12 +4485,12 @@ class Customize:
 			ToolAttr.OmegaVersion = 1
 			KillPage(widget, MainApp.AndroidVBox, False, False)
 			KillPage(widget, MainApp.AdvanceVBox, False, False)
-			MainApp.notebook.insert_page(MainApp.OmegaVbox, MainApp.OmegaLabel, 3)
+			MainApp.notebook.insert_page(MainApp.OmegaVbox, MainApp.OmegaLabel, 4)
 		else:
 			ToolAttr.OmegaVersion = 0
 			KillPage(widget, MainApp.OmegaVbox, False, False)
-			MainApp.notebook.insert_page(MainApp.AdvanceVBox, MainApp.AdvanceLabel, 3)
-			MainApp.notebook.insert_page(MainApp.AndroidVBox, MainApp.AndroidLabel, 4)
+			MainApp.notebook.insert_page(MainApp.AdvanceVBox, MainApp.AdvanceLabel, 4)
+			MainApp.notebook.insert_page(MainApp.AndroidVBox, MainApp.AndroidLabel, 5)
 		ToolAttr.SetSettings()
 		window.show_all()
 
@@ -4541,15 +4618,11 @@ class Update():
 		LatestTags = urllib.urlopen("https://github.com/mDroidd/StudioAndroid-GtkUI/tags")
 		newestTag = [line for line in LatestTags.readlines() if "/mDroidd/StudioAndroid-GtkUI/archive/" in line][0].split('"')[3]
 		LatestTags.close()
-		NewestChangelog = urllib.urlopen("https://raw.github.com/mDroidd/StudioAndroid-GtkUI/master/changelog")
-		NewestChanges = len(NewestChangelog.read().split("##")[-2:])
-		NewestChangelog.close()
 		with open(os.path.join(ScriptDir, "changelog"), "r") as f:
-			text = f.read()
-			currentChangelog = len(text.split("##")[-2:])
-			currentTag = text.split("##")[-2]
+			currentTag = f.read().split("##")[-2]
 
-		if NewestChanges != currentChangelog or currentTag != newestTag:
+		if float(currentTag.replace("v0.", "")) < float(newestTag.replace("v0.", "")):
+			print '"%s"' %currentTag, '"%s"'%newestTag
 			UpdateQ = ChooseDialog("Update", "An update is available, do you want to update?", ["No", "Yes"])
 			if UpdateQ == 1: self.PrepareUpdate()
 		return True
@@ -4577,6 +4650,10 @@ class About:
 		CustomizeButton = gtk.Button(_("Customize StudioAndroid!"))
 		CustomizeButton.connect("clicked", lambda w: Customize())
 		vbox1.pack_start(CustomizeButton, False, False, 0)
+		if not MissingTools.i == 0:
+			MissingButton = gtk.Button(_("Warning! %d missing tools!" % MissingTools.i))
+			MissingButton.connect("clicked", lambda w:MissingTools())
+			vbox1.pack_start(MissingButton, True, False)
 		label = gtk.Label()
 		label.set_markup('<a href="http://bit.ly/SA-XDA">StudioAndroid - XDA</a>\n<a href="mailto:martijn.ruijzendaal@gmail.com?subject=StudioAndroid">martijn.ruijzendaal@gmail.com</a>')
 		label.set_justify(gtk.JUSTIFY_CENTER)
@@ -4592,33 +4669,34 @@ class About:
 		me.set_from_file(os.path.join(ScriptDir, "images", "mDroidd.png"))
 		me.show()
 		#hbox.pack_start(me, False, False, 30)
+		Ads = self.GetAd()
+		vbox.pack_start(Ads, False, False)
 
-
-
-		# ADS!
-		try:
-			import webkit
-		except: 
-			if ToolAttr.FirstRun == True:
-				webbrowser.open_new(os.path.join(ScriptDir, "Utils", "Block.html"))
-				window.hide()
-				time.sleep(2)
-				window.show_all()
-			AdsButton = gtk.Button(_("Click to open browser window.\nThis will keep this project running!"))
-			AdsButton.connect("clicked", lambda w: webbrowser.open_new(os.path.join(ScriptDir, "Utils", "Block.html")))
-			vbox.pack_start(AdsButton, False, False, 0)
-		else:
-			web = webkit.WebView()
-			settings = web.get_settings()
-			settings.set_property('enable-file-access-from-file-uris', 1)
-			web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
-			vbox.pack_start(web, False, False, 0)
-			web.show()
-	
-	
 		notebook.insert_page(vbox, gtk.Label("Home"), 0)
 		window.show_all()
 		notebook.set_current_page(0)
+
+	def GetAd(self):
+		# ADS!
+		if ToolAttr.Webkit == False:
+			AdsButton = gtk.Button(_("Click to install webkit.\nThis will install a banner ad in this place to keep the project running!"))
+			AdsButton.connect("clicked", lambda w: MissingTools())
+			return AdsButton
+		else:
+			web = ToolAttr.webkit.WebView()
+			settings = web.get_settings()
+			settings.set_property('enable-file-access-from-file-uris', 1)
+			web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
+			web.connect("hovering-over-link", self.linkFocus)
+        		web.connect("create-web-view", self.openNew)
+        		web.connect("populate-popup", self.openNew)
+			web.show()
+			return web
+	def linkFocus(self, view, title, uri):
+		self.LINK = uri
+	def openNew(self, web_view, web_frame):
+		Web.open(self.LINK)
+
 
 if not os.path.exists(ToolAttr.SettingsFile):
 	Customize()
@@ -4626,6 +4704,7 @@ if not os.path.exists(ToolAttr.SettingsFile):
 def main():
 	About()
 	threading.Thread(target=Update().CheckForUpdates).start()
+	if ToolAttr.FirstRun == True: MissingTools()
 	try:
 		gobject.threads_init()
 		gtk.main()

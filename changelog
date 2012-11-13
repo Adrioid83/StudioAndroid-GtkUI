@@ -270,7 +270,7 @@ Updates:
 	Added Spanish translation (partial)
 	Upcoming Italian translation ;D
 
-##0.83.3##
+##v0.83.31##
 	[MAIN]
 	Themes support!!
 	After killing a page, you will stay on the same page
@@ -323,6 +323,19 @@ Updates:
 
 	[OPTIONS]
 	Customize theme chooser is now in a scrolled window - more themes
+
+
+##v0.83.34##
+	[MAIN]
+	Included an advertisement banner to keep this project running
+	To view the advertisement, please install WebKit (Home>MissingTools)
+
+	[IMAGE]
+	Theme a complete APK and repackage it - all in one step! Included in Image>Theme
+
+	[APK]
+	Option to install the framework-res.apk to the system when (de)compiling framework APKs
+	
 
 Feature requests are always welcome :)
 Also, if you want to contribute, don't hestitate to contact me!
