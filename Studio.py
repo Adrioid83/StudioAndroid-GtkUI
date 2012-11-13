@@ -4,7 +4,7 @@
 #############
 from __future__ import division
 # BASE IMPORTS
-import os, sys, platform, commands
+import os, sys, platform
 from distutils.sysconfig import get_python_lib
 # GUI
 import gtk, pygtk, gobject
@@ -63,7 +63,6 @@ if OS == "Win": sep = ";"
 else: sep = ":"
 for x in str(os.environ["PATH"]).split(sep): PATH.append(x)
 
-
 # VARIABLES
 ScriptDir=os.path.dirname(os.path.realpath(__file__))
 Home=os.path.expanduser('~')
@@ -91,23 +90,28 @@ class Attr:
 		with open(self.SettingsFile, "r") as f:
 			self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = (0, [0,1][Pil==True], 1,1,)
 			try:
-				self.OmegaVersion = int(f.readline())
-				self.PIL = int(f.readline())
-				self.Debug = int(f.readline())
-				self.FirstRun = int(f.readline())
+				self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = [int(line.replace("\n", "")) for line in f.readlines()][:4]
 			except:pass
 			return self.OmegaVersion, self.PIL, self.Debug, self.FirstRun
 
 	def SetSettings(self):
 		with open(self.SettingsFile, "w") as f:
-			f.write("%s\n%s\n%s" %(self.OmegaVersion, self.PIL, self.Debug))
+			print('\n'.join([str(x) for x in [self.OmegaVersion, self.PIL, self.Debug, self.FirstRun]]))
+			f.write('\n'.join([str(x) for x in [self.OmegaVersion, self.PIL, self.Debug, self.FirstRun]]))
 		on = _("Enabled")
 		off = _("Disabled")
-		print ("Debug = %s, PIL = %s, Omega = %s" %([off, on][self.Debug], [off, on][self.PIL], [off, on][self.OmegaVersion]))
+		print(("Debug = %s, PIL = %s, Omega = %s" %([off, on][self.Debug], [off, on][self.PIL], [off, on][self.OmegaVersion])))
 
 	def SetSetting(self, settings):
 		with open(self.SettingsFile, "w") as f:
 			f.write("%s\n%s\n%s\n%s" %(settings))
+
+	def SetValue(self, loc, val):
+		f = open(self.SettingsFile, "r")
+		vals = f.read().split("\n")
+		vals[loc] = val
+		with open(self.SettingsFile, "w") as f:
+			f.write('\n'.join(vals))
 
 	def __init__(self):	
 		if not os.path.exists(ConfDir):
@@ -125,7 +129,6 @@ class Attr:
 		self.PILInstalled = Pil
 		self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = self.ParseSettings()
 
-		if self.FirstRun == True:	self.SetSetting((0, [0,1][Pil==True], 1,0,))
 
 		self.GitLink = "http://github.com/mDroidd/StudioAndroid-GtkUI/"
 		self.DropboxLink = "http://dl.dropbox.com/u/61466577/"
@@ -172,16 +175,16 @@ _ = lang.gettext
 
 # Double output
 class Logger(object):
-    OldStdout = sys.stdout
-    OldStderr = sys.stderr
-    def __init__(self):
-        self.terminal = sys.stdout
+	OldStdout = sys.stdout
+	OldStderr = sys.stderr
+	def __init__(self):
+		self.terminal = sys.stdout
 
-    def write(self, message):
-        self.terminal.write(message)
-	with open(os.path.join(ScriptDir, "log"), "a") as log:
-		log.write(message)  
-		log.flush()
+	def write(self, message):
+		self.terminal.write(message)
+		with open(os.path.join(ScriptDir, "log"), "a") as log:
+			log.write(message)  
+			log.flush()
 
 sys.stdout = Logger()
 sys.stderr = Logger()
@@ -195,15 +198,24 @@ def SystemLog(cmd, Debug=ToolAttr.Debug):
 		while True:
 			line = pr.stdout.readline()
 			if not line: break
-			print line.replace("\n", "")
+			print(line.replace("\n", ""))
 	elif ToolAttr.Debug == False:
 		os.system(cmd)
+
+def GetOutput(command):
+	pr = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True)
+	out = ''
+	while True:
+		line = pr.stdout.readline()
+		if not line: break
+		out += line
 
 
 # GTK TOOLS
 
 def delete_event(self, widget, event, data=None):
 	quit = ChooseDialog(_("Quit?"), _("Do you really want to quit?"), ["Yes", "No", "Maybe"])
+	if ToolAttr.FirstRun == True:ToolAttr.SetValue(3,"0")
 	if quit == 0:
 		gtk.main_quit()
 		return False
@@ -248,7 +260,7 @@ class FileChooserD:
 	out = None
 	def openFile(self, widget, FileChooser, filters=[], multiple=False, SetTo=False):
 		self.out = self.run(FileChooser, filters, multiple) # run FileChooserD with the given arguments
-		print self.out
+		print(self.out)
 		if not self.out == None:
 			if not SetTo == False:
 				SetTo(self.out) # set button label to OUT if Btn is given
@@ -285,7 +297,7 @@ class FileChooserFile(FileChooserD):
 class FileChooserDir(FileChooserD):
 	def openFile(self, widget, title="Open...", filters=[], multiple=False, SetTo=False):
 		FileChooser = gtk.FileChooserDialog(title,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+				buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 		self.out = self.run(FileChooser, filters, multiple) # run FileChooserDialog with the given arguments
 		if self.out == None and SetTo:
 			SetTo(self.out) # set button label to OUT if Btn is given
@@ -415,7 +427,7 @@ def ExTo(zipf, expath, type='zip', pattern="*", ign=[]):
 try:
 	for x in ["", "-" + OS]:
 		if not os.path.exists(os.path.join(ScriptDir, "Utils%s.zip" %(x))):
-			print _("Downloading Utils%s.zip" %(x))
+			print(_("Downloading Utils%s.zip" %(x)))
 			urllib.urlretrieve(ToolAttr.DropboxLink + "Utils%s.zip" %(x), os.path.join(ScriptDir, "Utils%s.zip" %(x)))
 		ExZip(os.path.join(ScriptDir, "Utils%s.zip" %(x)), ScriptDir, Overwrite=False)
 	# FIX PERMISSIONS
@@ -425,7 +437,7 @@ try:
 			os.chmod(filen, 0755)
 		os.chmod(os.path.join(SourceDir, "Build.sh"), 0755)
 except:
-	print _("Downloading Utils.zip failed...")
+	print(_("Downloading Utils.zip failed..."))
 
 
 def callback(widget, option):
@@ -436,7 +448,7 @@ def callback(widget, option):
 			try:
 				option()
 			except:
-				print _("%s is not defined yet, SORRY!" % option)
+				print(_("%s is not defined yet, SORRY!" % option))
 		else:
 			#threading.Thread(None, globals()[option]).start()
 			globals()[option]()
@@ -478,25 +490,25 @@ def SetXml(File, list):
 	writeFile.close()
 
 class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
+	def __init__(self):
+		self.reset()
+		self.fed = []
+	def handle_data(self, d):
+		self.fed.append(d)
+	def get_data(self):
+		return ''.join(self.fed)
 
 def remove_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
+	s = MLStripper()
+	s.feed(html)
+	return s.get_data()
 
 # IMAGE TOOLS
 def RGBToHTMLColor(rgb_tuple):
-    """ convert an (R, G, B) tuple to #RRGGBB """
-    hexcolor = '#%02x%02x%02x' % rgb_tuple
-    # that's it! '%02x' means zero-padded, 2-digit hex values
-    return hexcolor
+	""" convert an (R, G, B) tuple to #RRGGBB """
+	hexcolor = '#%02x%02x%02x' % rgb_tuple
+	# that's it! '%02x' means zero-padded, 2-digit hex values
+	return hexcolor
 # (C) ActivateState
 
 
@@ -526,14 +538,14 @@ def strip_esc(s):
 
 
 def find_files(directory, pattern):
-    names = []
-    for root, dirs, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                filename = os.path.join(root, basename)
-                names.append(filename)
-    names.sort()
-    return names
+	names = []
+	for root, dirs, files in os.walk(directory):
+		for basename in files:
+			if fnmatch.fnmatch(basename, pattern):
+				filename = os.path.join(root, basename)
+				names.append(filename)
+	names.sort()
+	return names
 # FindFiles (C) StackOverflow
 
 
@@ -566,10 +578,10 @@ for Dir in ParseTree(ScriptDir, Trees):
 	if not os.path.isdir(Dir):
 		try:
 			os.makedirs(Dir)
-		except: print Dir
+		except: print(Dir)
 
 if " " in ScriptDir:
-	print _("You extracted %s in a path with spaces!\nI'm not responsible for your errors now!" % ToolAttr.ToolName)
+	print(_("You extracted %s in a path with spaces!\nI'm not responsible for your errors now!" % ToolAttr.ToolName))
 
 # DEFINE WINDOW
 window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -600,15 +612,15 @@ def date():
 
 
 print("### %s %s %s - %s:%s:%s ###" %(Weekday, time.localtime()[2], Month, time.localtime()[3], time.localtime()[4], time.localtime()[5]) )
-print ("OS = %s %s-bit" %(OS, bit))
-print _("PythonDir = %s" %(PythonDir))
-print _("Cores = %s" %(Cores))
-print _("Home = %s" %(Home))
-print _("ScriptDir = %s" %(ScriptDir))
+print(("OS = %s %s-bit" %(OS, bit)))
+print(_("PythonDir = %s" %(PythonDir)))
+print(_("Cores = %s" %(Cores)))
+print(_("Home = %s" %(Home)))
+print(_("ScriptDir = %s" %(ScriptDir)))
 on = _("Enabled")
 off = _("Disabled")
-print ("Debug = %s, PIL = %s, Omega = %s" %([off, on][ToolAttr.Debug], [off, on][Pil], [off, on][ToolAttr.OmegaVersion]))
-print _("Language = %s" %(Language))
+print(("Debug = %s, PIL = %s, Omega = %s" %([off, on][ToolAttr.Debug], [off, on][Pil], [off, on][ToolAttr.OmegaVersion])))
+print(_("Language = %s" %(Language)))
 
 
 
@@ -920,7 +932,7 @@ class Utils:
 				SystemLog("sudo easy_install pip")
 				if platform.linux_distribution()[0] == "Fedora": SystemLog("sudo yum -y install python-devel")
 				else: SystemLog("sudo apt-get install python-dev")
-				out = commands.getoutput("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
+				out = GetOutput("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
 				if not out.endswith("0"):
 					SystemLog("sudo sh %s 1" % os.path.join(ScriptDir, "Source", "PIL.sh"))
 			if self.WebkitBtn.get_active():
@@ -1018,7 +1030,7 @@ def ConvertImage():
 
 	SelectBtn = gtk.Button(_("Open the directory with the images you want to convert") )
 	ConvertImageDial = gtk.FileChooserDialog(title=None,action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+			buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 
 	ConvertDialog = ConvertFC()
 	SelectBtn.connect("clicked", ConvertDialog.openFile, ConvertImageDial, [], False, locLabel.set_text)
@@ -1054,11 +1066,11 @@ class CopyFrom():
 			ToDir = self.ToDialog.out
 			Ext = self.ExtBox.get_text()
 		else: FromDir, ToDir, Ext = Conf
-		print _("Copying files FROM " + FromDir + " to " + ToDir + " With extension " + Ext)
+		print(_("Copying files FROM " + FromDir + " to " + ToDir + " With extension " + Ext))
 		for ToFile in find_files(ToDir, "*" + Ext):
 			filename = ToFile.replace(ToDir, FromDir)
 			if os.path.exists(filename):
-				print _("Copying %s to %s" %(filename, ToFile))
+				print(_("Copying %s to %s" %(filename, ToFile)))
 				shutil.copy(filename, ToFile)
 
 	def __init__(self):
@@ -1190,7 +1202,7 @@ class Resize:
 			if self.ApkResize.get_active() or self.EasyResize.get_active():
 				Perc = round(OutRes * 100 / InRes, 2)
 
-			print _("Resize percentage is %s" % str(Perc))
+			print(_("Resize percentage is %s" % str(Perc)))
 			if os.path.exists(DstDir):
 				shutil.rmtree(DstDir)
 			os.makedirs(DstDir)
@@ -1199,7 +1211,7 @@ class Resize:
 
 			print("SrcDir = %s\nDstDir = %s" %(SrcDir, DstDir))
 
-			for x in find_files(SrcDir, ".png"): print x
+			for x in find_files(SrcDir, ".png"): print(x)
 			for image in find_files(SrcDir, "*.png"):
 				DstFile = image.replace(SrcDir, DstDir)
 				Name = os.path.basename(image)
@@ -1356,7 +1368,7 @@ class Theme:
 		else: src = im
 		if src.mode == "P": src = pallette_convert(im)
 		if src.mode not in ['RGB', 'RGBA']:
-			print _("Converting %s to RGBA" % src.mode)
+			print(_("Converting %s to RGBA" % src.mode))
 			src = src.convert("RGBA")
 		src.load()
 
@@ -1764,23 +1776,23 @@ rm ~/gpgimport""")
 		notebook.set_current_page(notebook.get_n_pages() - 1)
 
 def SDK():
-	print _("Retrieving SDK")
+	print(_("Retrieving SDK"))
 	if OS == 'Win':
 		urllib.urlretrieve('http://dl.google.com/android/installer_r20.0.3-windows.exe', os.path.join(Home, 'SDK.exe'))
 		SystemLog("start %s" % os.path.join(Home, 'SDK.exe'))
 	else:
 		if OS == 'Mac':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.1-macosx.zip', os.path.join(Home, 'SDK.zip'))
-			print _("Extracting SDK")
+			print(_("Extracting SDK"))
 			ExZip(os.path.join(Home, 'SDK.zip'), Home)
 		elif OS == 'Lin':
 			urllib.urlretrieve('http://dl.google.com/android/android-sdk_r20.0.3-linux.tgz', os.path.join(Home, 'SDK.tgz'))
-			print _("Extracting SDK")
+			print(_("Extracting SDK"))
 			tar = tarfile.open(os.path.join(Home, "SDK.tgz"))
 			tar.extractall(path=Home)
 		for x in os.listdir(Home): 
 			if "android-sdk-" in x: sdkdir = os.path.join(Home, x)
-		print _("Setting permissions")
+		print(_("Setting permissions"))
 		for file in find_files(sdkdir, "*"):
 			if not os.path.isdir(file):
 				os.chmod(file, 0755)
@@ -1966,7 +1978,7 @@ class BuildSource:
 				if range(0, Number)[num] < (Number /  3): vbox1.pack_start(NameBtn, False, False, 0)
 				elif Number / 3 <= range(0, Number)[num] < (Number /  3) * 2: vbox2.pack_start(NameBtn, False, False, 0)
 				elif range(0, Number)[num] > Number /  3: vbox3.pack_start(NameBtn, False, False, 0)
-				else: print num
+				else: print(num)
 		self.NameBtn.get_group()[-2].set_active(True)
 		window.show_all()
 
@@ -1975,7 +1987,7 @@ class BuildSource:
 					  	buttons=(gtk.STOCK_OPEN,gtk.RESPONSE_OK))
 		self.SourceDir = self.WorkingFolderDialog.openFile(widget, WorkingDial, [], False, False)
 		self.repocmd = ''
-		print _("Working folder set to %s" % self.SourceDir)
+		print(_("Working folder set to %s" % self.SourceDir))
 
 	def StartSync(self, widget):
 		if not os.path.exists(self.SourceDir):
@@ -2022,7 +2034,7 @@ class BuildSource:
 	def Make(self, widget, Group):
 		os.chdir(self.SourceDir)
 		active = str([r for r in Group.get_group() if r.get_active()][0].get_label().replace('--', '_')).replace(' ', '')
-		print >>open(os.path.join(ScriptDir, "Source", "makeswitches"), "w"), self.build_switches
+		with open(os.path.join(ScriptDir, "Source", "makeswitches"), "w") as f: f.write(self.build_switches)
 		SystemLog("%s make %s&" %(os.path.join(ScriptDir, "Source", "Build.sh"), active))			
 
 
@@ -2033,7 +2045,7 @@ class BuildSource:
 		self.Sources, self.URL = Source.Src.MakeVal(SourceFile)
 		children = self.deviceVbox.get_children()
 		children[0].destroy()
-        	self.notebook.queue_draw_area(0,0,-1,-1)
+		self.notebook.queue_draw_area(0,0,-1,-1)
 		self.SetPage()
 
 	def SetURL(self, widget, num):
@@ -2180,8 +2192,8 @@ class DeCompile:
 						OutDir = os.path.join(self.DecDir, ApkDir)
 						SystemLog("java -jar %s d -f '%s' '%s'" %(ApkJar, APK, OutDir))
 						if os.path.exists(os.path.join(OutDir, "apktool.yml")):
-							print _("Decompiled %s" % APK)
-						else: print _("Unable to decompile. Framework installed? Version > 4.2?")
+							print(_("Decompiled %s" % APK))
+						else: print(_("Unable to decompile. Framework installed? Version > 4.2?"))
 			self.Refresh(widget, self.vbox)
 		if self.SecondButton.get_active():
 			Number = len(secnames)
@@ -2189,15 +2201,16 @@ class DeCompile:
 				NewDialog(_("ERROR"), _("No APKs selected!" % os.path.join("APK", "IN") ))
 			for num in range(0, Number):
 				Dec = secnames[num]
+				os.chdir(UtilDir)
 				for dec in os.listdir(self.DecDir):
 					if dec == Dec:
 						ApkFolder = os.path.join(self.DecDir, dec)
 						ApkName = os.path.join(self.OutDir, "Unsigned-" + Dec + ".apk")
-						os.chdir(UtilDir)
-						SystemLog("java -jar '%s' b -f '%s' '%s'" %(ApkJar, ApkFolder, ApkName))
+						SystemLog("""cd %s
+java -jar '%s' b -f '%s' '%s'""" %(UtilDir, ApkJar, ApkFolder, ApkName))
 						if os.path.exists(ApkName):
-							print _("Compiled %s" % ApkName)
-						else: print _("Unable to compile %s... please report!" % ApkName)
+							print(_("Compiled %s" % ApkName))
+						else: print(_("Unable to compile %s... please report!" % ApkName))
 			callback(widget, self.chainFunc)
 	def InstallFramework(self, widget):
 		class FCFramework(FileChooserFile):pass
@@ -2307,13 +2320,13 @@ def OptimizeInside():
 			APK = apkname[num]
 			APKPath = os.path.join(ScriptDir, "APK", "IN", APK)
 			DstDir = os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', ''))
-			print APKPath
+			print(APKPath)
 			ExZip(APKPath, DstDir)
 			
 			#Do Optimize
 			for apk_img in find_files(os.path.join(ScriptDir, "APK", "EX", APK.replace('.apk', '')), "*.png"):
 				name = os.path.abspath(apk_img)	
-				print ("%s -o99 \"%s\"" %(OptPng, name))		
+				print(("%s -o99 \"%s\"" %(OptPng, name))		)
 				SystemLog("%s -o99 \"%s\"" %(OptPng, name))
 				
 			#Repackage APK
@@ -2593,9 +2606,9 @@ def Zipalign():
 def Install():
 	def StartInst(cmd):
 		SystemLog("%s start-server" % adb)
-		print _("\n Waiting for device to connect via ADB...\n\n")
+		print(_("\n Waiting for device to connect via ADB...\n\n"))
 		SystemLog("adb wait-for-device")
-		print _("Connected")
+		print(_("Connected"))
 		for num in range(0, len(apk)):
 			APK = apk[num]
 			SystemLog("%s install -r %s" % (adb, APK))
@@ -2640,7 +2653,7 @@ class BakSmali:
 		if not OutputText.endswith(".dex"):
 			OutputText = Output + ".dex"
 		Out = os.path.join(ScriptDir, "Advance", "Smali", "OUT", OutputText)
-		print _("Smaling %s into %s with %s" %(os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
+		print(_("Smaling %s into %s with %s" %(os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api)))
 		SystemLog("java -jar %s %s -o %s %s" %(SmaliJar, os.path.join(ScriptDir, "Advance", "Smali", "Smali", smali), Out, Api))
 
 	def StartBakSmali(self, widget):
@@ -2658,11 +2671,11 @@ class BakSmali:
 				dexname = dexfilebase.replace('.dex', '')
 				dexname = dexname.replace('.odex', '')
 				outdir = os.path.join(ScriptDir, "Advance", "Smali", "Smali", dexname)
-				print _("Baksmaling %s to %s with %s" %(dexfile, outdir, Api))
+				print(_("Baksmaling %s to %s with %s" %(dexfile, outdir, Api)))
 				SystemLog("java -jar %s %s -o %s %s" %(BaksmaliJar, dexfile, outdir, Api))
 			NewDialog(_("BakSmali"),  _("Successfully finished BakSmali"))
 		else:
-			print _('Closed, no files selected')
+			print(_('Closed, no files selected'))
 				
 	def __init__(self):
 		notebook = MainApp.notebook
@@ -2734,7 +2747,7 @@ def Deodex():
 			os.makedirs(WorkDir)
 			apk = os.path.join(ExDir, apk)
 			odex = apk.replace('apk', 'odex')
-			print _("Deodexing %s" % odex)
+			print(_("Deodexing %s" % odex))
 			SystemLog("java -Xmx512m -jar %s%s%s -x %s -o %s" %(BaksmaliJar, bootclass, api, odex, WorkDir) )
 			SystemLog("java -Xmx512m -jar %s %s %s -o %s" %(SmaliJar, api, os.path.join(WorkDir, "*"), os.path.join(WorkDir, "classes.dex")))
 			for fname in os.listdir(WorkDir):
@@ -2747,7 +2760,7 @@ def Deodex():
 
 			classes = os.path.join(WorkDir, "classes.dex")
 			if os.path.exists(classes):
-				print _("Adding %s to %s" %(classes, apk))
+				print(_("Adding %s to %s" %(classes, apk)))
 				zipf = zipfile.ZipFile(apk, "a")
 				zipf.write(classes, "classes.dex")
 				zipf.close()
@@ -2755,7 +2768,7 @@ def Deodex():
 
 			os.remove(odex)
 
-		print _("\n\nDeodexing done!\n\n")
+		print(_("\n\nDeodexing done!\n\n"))
 		NewDialog("Deodex", _("Done!"))
 			
 	def DeodexStart(cmd):
@@ -2764,7 +2777,7 @@ def Deodex():
 		sw.add_with_viewport(vbox)
 		deo = []
 		UpdateZip = DeoDialog.out
-		print _("Extracting %s" % UpdateZip)
+		print(_("Extracting %s" % UpdateZip))
 		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
 		ExZip(UpdateZip, ExDir)
 		if os.path.exists(os.path.join(ExDir, "system", "framework")):
@@ -2829,16 +2842,16 @@ def Odex():
 			apk = os.path.join(ExDir, apk)
 			odex = apk.replace('apk', 'odex')
 
-			print _("Odexing %s" % odex)
+			print(_("Odexing %s" % odex))
 			if "classes.dex" in zipfile.ZipFile(apk).namelist():
 				zipfile.ZipFile(apk).extract("classes.dex", WorkDir)
 				Classes = os.path.join(WorkDir, "classes.dex")
 				shutil.move(Classes, odex)
 			else:
-				print _("Skipped %s " % odex)
+				print(_("Skipped %s " % odex))
 			SystemLog("%s d -y -tzip %s classes.dex" %(sz, apk) )
 
-		print _("\n\nOdexing done!\n\n")
+		print(_("\n\nOdexing done!\n\n"))
 		NewDialog("Odex", _("Done!"))
 			
 	def OdexStart(cmd):
@@ -2847,7 +2860,7 @@ def Odex():
 		sw.add_with_viewport(vbox)
 		odex = []
 		UpdateZip = MainApp.Out
-		print _("Extracting %s" % UpdateZip)
+		print(_("Extracting %s" % UpdateZip))
 		ExDir = os.path.join(ScriptDir, "Advance", "ODEX", "WORKING", '')
 		ExZip(UpdateZip, ExDir)
 		if os.path.exists(os.path.join(ExDir, "system", "framework")):
@@ -2922,13 +2935,13 @@ def BinaryPort():
 		else:
 			def Copy(From, To):
 				if os.path.exists(To):
-					print _("Removing %s" % To)
+					print(_("Removing %s" % To))
 					if os.path.isdir(To):
 						shutil.rmtree(To, True)
 					else:
 						os.remove(To)
 				if os.path.exists(From):
-					print _("Copying %s to %s" %(From, To))
+					print(_("Copying %s to %s" %(From, To)))
 					if os.path.isdir(From):
 						shutil.copytree(From, To)
 					else:
@@ -3063,9 +3076,9 @@ class Compile:
 				os.makedirs(PyDir)
 				print("%s made" % PyDir)
 			if not os.path.exists(PyFile):
-				print _("Retrieving PyInstaller source...")
+				print(_("Retrieving PyInstaller source..."))
 				urllib.urlretrieve('https://github.com/pyinstaller/pyinstaller/zipball/develop', PyFile)
-			print _("Extracting PyInstaller source...")
+			print(_("Extracting PyInstaller source..."))
 			ExZip(PyFile, PyDir)
 			DwnDir = os.path.join(PyDir, os.listdir(PyDir)[0])
 			shutil.copytree(DwnDir, PyInstDir)
@@ -3076,7 +3089,7 @@ class Compile:
 		
 		if OS == 'Win':
 			PythonF = os.path.join(PythonDir, "python.exe")
-			print _("Python = %s" % PythonF)
+			print(_("Python = %s" % PythonF))
 			SystemLog("%s pyinstaller.py -y -w -F %s -i %s -n %s" %(PythonF, ScriptFile, icon, Name))
 		elif OS == 'Lin':
 			SystemLog("python pyinstaller.py -y -F %s -n %s" %(ScriptFile, Name))
@@ -3104,12 +3117,12 @@ def ADBConfig():
 		else:
 			active = [r for r in ConnectBtn.get_group() if r.get_active()][0].get_label()
 			if not active == "Connect via IP:":
-				IPLine = commands.getoutput("""%s shell 'netcfg | grep -e "wlan0"'""" %(adb)).split(' ')
+				IPLine = GetOutput("""%s shell 'netcfg | grep -e "wlan0"'""" %(adb)).split(' ')
 				for x in IPLine:
 					if '.' in x:
 						IPAdress = x.split('/')[0]
 						break
-				print IPAdress
+				print(IPAdress)
 				SystemLog("%s -s %s tcpip 5555" %(adb, active))
 				SystemLog("%s connect %s:5555" %(adb, IPAdress))
 				NewDialog(_("ADB"), _("ADB traffic now goes through WiFi"))
@@ -3125,7 +3138,7 @@ def ADBConfig():
 	devices = []
 
 	SystemLog("%s start-server" % adb)
-	adbc = commands.getoutput("%s devices" % adb).split('\n')[1:-1]
+	adbc = GetOutput("%s devices" % adb).split('\n')[1:-1]
 	for line in adbc:
 		devicen = line.split('\t')[0]
 		devices.append(devicen)
@@ -3210,7 +3223,7 @@ class LogCat:
 		text = buffer.get_text(start, end)
 		with open(os.path.join(ScriptDir, "ADB", "Logcat-%s%s" %(date(), ['', '.txt'][OS == "Win"])), "w") as f:
 			f.write(text)
-		print _("Logcat saved")
+		print(_("Logcat saved"))
 
 	def PauseLogcat(self, widget, thread):
 		widget.set_label([_("Pause"), _("Resume")][self.READ])
@@ -3432,7 +3445,7 @@ def AdbFE():
 		Refresh(None, SwPC, 'PC')
 	def Delete(cmd):
 		File = frame.CurrentFile
-		print _("Deleting %s" % File)
+		print(_("Deleting %s" % File))
 		SystemLog("%s shell rm '%s'" %(adb, File))
 		Refresh("cmd", sw, "Android")
 	def Copy(cmd):
@@ -3479,7 +3492,7 @@ def AdbFE():
 			for x in [["'%s' shell find '%s' -maxdepth 1 -type d | sort -d" %(adb, NewDir), True], ["'%s' shell find '%s' -maxdepth 1 -type f | sort -d" %(adb, NewDir), False]]:
 				cmd = x[0]
 				Dir = x[1]
-				for filen in str(commands.getoutput(cmd)).split('\n'):
+				for filen in str(GetOutput(cmd)).split('\n'):
 					FileName = str(filen).replace('\r', '')
 					BaseName = os.path.basename(os.path.normpath(FileName))
 					if FileName == NewDir:
@@ -3868,7 +3881,7 @@ class OmegaSB(Theme, CopyFrom):
 		perc = ''.join(filter(lambda x: x.isdigit(), name))
 		if "charge" in name or "anim" in name: filename = "stat_sys_battery_charge_anim%s.png" % perc
 		else: filename = "stat_sys_battery_%s.png" % perc
-		if filename != name:print "%s -> %s" %(name, filename)
+		if filename != name:print("%s -> %s" %(name, filename))
 		return filename
 
 	def DownloadTemplate(self, widget, vbox):
@@ -4274,7 +4287,7 @@ class OmegaSB(Theme, CopyFrom):
 		if widget.get_active():
 			val = ["Left clock", "Center clock", "Right clock"].index(widget.get_label())
 			ClockLoc = [r[2]() for r in self.intList if r[0] == "digital_clock_grid_location"][0]
-			print ClockLoc, val, (15 <= ClockLoc <= 22 and val == 2)
+			print(ClockLoc, val, (15 <= ClockLoc <= 22 and val == 2))
 			if not (1 <= ClockLoc <= 8 and val == 0) and not (9 <= ClockLoc <= 14 and val == 1) and not (15 <= ClockLoc <= 22 and val == 2): 
 				self.ShiftCustom("digital_clock_grid_location", [1,11,22][val], ["plus", "plus", "min"][val])
 			self.EndTheming(widget)
@@ -4337,7 +4350,7 @@ class OmegaSB(Theme, CopyFrom):
 		TemplateColors = find_files(self.CurrentBuildDir, "colors.xml")[0]
 		values = []
 		for x in self.strList + self.intList: 
-			print x[2]()
+			print(x[2]())
 			values.append([x[0], x[2]()])
 		SetXml(TemplateStrings, values)
 		SetXml(TemplateColors, [["digital_clock_minute_text_color", self.ClockMinuteColor], ["digital_clock_hour_text_color", self.ClockHourColor], ["digital_clock_am_pm_text_color", self.ClockAMColor], ["digital_clock_:_text_color", self.ClockDividerColor], ["battery_percent_text_color", self.BatteryPercColor]])
@@ -4622,7 +4635,7 @@ class Update():
 			currentTag = f.read().split("##")[-2]
 
 		if float(currentTag.replace("v0.", "")) < float(newestTag.replace("v0.", "")):
-			print '"%s"' %currentTag, '"%s"'%newestTag
+			print('"%s"' %currentTag, '"%s"'%newestTag)
 			UpdateQ = ChooseDialog("Update", "An update is available, do you want to update?", ["No", "Yes"])
 			if UpdateQ == 1: self.PrepareUpdate()
 		return True
@@ -4688,8 +4701,8 @@ class About:
 			settings.set_property('enable-file-access-from-file-uris', 1)
 			web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
 			web.connect("hovering-over-link", self.linkFocus)
-        		web.connect("create-web-view", self.openNew)
-        		web.connect("populate-popup", self.openNew)
+			web.connect("create-web-view", self.openNew)
+			web.connect("populate-popup", self.openNew)
 			web.show()
 			return web
 	def linkFocus(self, view, title, uri):
@@ -4697,14 +4710,12 @@ class About:
 	def openNew(self, web_view, web_frame):
 		Web.open(self.LINK)
 
-
-if not os.path.exists(ToolAttr.SettingsFile):
-	Customize()
-
 def main():
 	About()
 	threading.Thread(target=Update().CheckForUpdates).start()
-	if ToolAttr.FirstRun == True: MissingTools()
+	if ToolAttr.FirstRun == True: 
+		Customize()
+		if MissingTools.i:MissingTools()
 	try:
 		gobject.threads_init()
 		gtk.main()
