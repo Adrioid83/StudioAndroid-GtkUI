@@ -325,7 +325,7 @@ Updates:
 	Customize theme chooser is now in a scrolled window - more themes
 
 
-##v0.83.34##
+##v0.83.35##
 	[MAIN]
 	Included an advertisement banner to keep this project running
 	To view the advertisement, please install WebKit (Home>MissingTools)
@@ -333,8 +333,15 @@ Updates:
 	[IMAGE]
 	Theme a complete APK and repackage it - all in one step! Included in Image>Theme
 
+	[ADVANCED]
+	Quick start on Aroma installer menu  ;)
+
 	[APK]
 	Option to install the framework-res.apk to the system when (de)compiling framework APKs
+
+	[OMEGA]
+	Fixed a few bugs
+	Updated to newest template
 	
 
 Feature requests are always welcome :)

@@ -107,11 +107,13 @@ class Attr:
 			f.write("%s\n%s\n%s\n%s" %(settings))
 
 	def SetValue(self, loc, val):
-		f = open(self.SettingsFile, "r")
-		vals = f.read().split("\n")
-		vals[loc] = val
-		with open(self.SettingsFile, "w") as f:
-			f.write('\n'.join(vals))
+		try:
+			with open(self.SettingsFile, "r") as f:
+				vals = f.read().split("\n")
+				vals[loc] = val
+			with open(self.SettingsFile, "w") as f:
+				f.write('\n'.join(vals))
+		except:pass
 
 	def __init__(self):	
 		if not os.path.exists(ConfDir):
@@ -186,6 +188,9 @@ class Logger(object):
 			log.write(message)  
 			log.flush()
 
+class Stdout(sys.stdout):pass
+class Stderr(sys.stderr):pass
+
 sys.stdout = Logger()
 sys.stderr = Logger()
 
@@ -202,13 +207,14 @@ def SystemLog(cmd, Debug=ToolAttr.Debug):
 	elif ToolAttr.Debug == False:
 		os.system(cmd)
 
-def GetOutput(command):
+def GetOutput(cmd):
 	pr = subprocess.Popen(cmd, stdout = subprocess.PIPE, stderr = subprocess.STDOUT, shell = True)
 	out = ''
 	while True:
 		line = pr.stdout.readline()
 		if not line: break
 		out += line
+	return out
 
 
 # GTK TOOLS
@@ -773,7 +779,7 @@ class MainApp:
 	image.show()
 	AdvanceVBox.pack_start(image, False, False, 10)
 
-	for opt in [[_("(Bak)Smali"), "BakSmali"], [_("ODEX"), "Odex"], [_("DE-ODEX"), "Deodex"], [_("Aroma Menu"), "Aroma"], [_("Compile to an exe"), "Compile"]]:
+	for opt in [[_("(Bak)Smali"), "BakSmali"], [_("ODEX"), "Odex"], [_("DE-ODEX"), "Deodex"], [_("Aroma Menu"), "AromaInstaller"], [_("Compile to an exe"), "Compile"]]:
 		OptBtn = gtk.Button(opt[0])
 		OptBtn.connect("clicked", callback, opt[1])
 		AdvanceVBox.pack_start(OptBtn, True, False, 10)
@@ -843,6 +849,8 @@ def Clean():
 		shutil.rmtree(tree, True)
 	shutil.rmtree(os.path.join(ConfDir), True)
 	os.remove(os.path.join(ScriptDir, "log"))
+	sys.stdout = Stdout()
+	sys.stderr = Stderr()
 	shutil.rmtree(UtilDir)
 	try:
 		os.remove(os.path.join(ScriptDir, 'Source', 'syncswitches'))
@@ -2199,15 +2207,14 @@ class DeCompile:
 			Number = len(secnames)
 			if Number == 0:
 				NewDialog(_("ERROR"), _("No APKs selected!" % os.path.join("APK", "IN") ))
+			os.chdir(UtilDir)
 			for num in range(0, Number):
 				Dec = secnames[num]
-				os.chdir(UtilDir)
 				for dec in os.listdir(self.DecDir):
 					if dec == Dec:
 						ApkFolder = os.path.join(self.DecDir, dec)
 						ApkName = os.path.join(self.OutDir, "Unsigned-" + Dec + ".apk")
-						SystemLog("""cd %s
-java -jar '%s' b -f '%s' '%s'""" %(UtilDir, ApkJar, ApkFolder, ApkName))
+						SystemLog("java -jar '%s' b -f '%s' '%s'" %(ApkJar, ApkFolder, ApkName))
 						if os.path.exists(ApkName):
 							print(_("Compiled %s" % ApkName))
 						else: print(_("Unable to compile %s... please report!" % ApkName))
@@ -2902,6 +2909,89 @@ def Odex():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
+class AromaInstaller:
+	class AromaROM(FileChooserFile):pass
+	AromaFC = AromaROM()
+	def __init__(self):
+		vbox = NewPageBox()
+		if not os.path.exists(os.path.join(ScriptDir, "Aroma.zip")):
+			urllib.urlretrieve("http://forum.xda-developers.com/attachment.php?attachmentid=1375224&stc=1&d=1349361271", os.path.join(ScriptDir, "Aroma.zip"))
+		ExZip(os.path.join(ScriptDir, "Aroma.zip"), os.path.join(ScriptDir, "Aroma"))
+		self.Values = []
+		self.Set = []
+		hbox = gtk.HBox(True)
+		vbox1 = gtk.VBox()
+		vbox2 = gtk.VBox()
+		vbox.pack_start(hbox)
+		hbox.pack_start(vbox1)
+		hbox.pack_start(vbox2)
+		with open(os.path.join(ScriptDir, "Aroma", "META-INF", "com", "google", "android", "aroma-config"), "r") as f:
+			lines = f.read().split("\n")
+			sellines = [line for line in lines[:136] if "ini_set" in line and not line.startswith("#")]
+			for line in sellines:
+				_value = line.split('"')[1]
+				_set = line.split('"')[3]
+				Entry = gtk.Entry()
+				Entry.set_text(_set)
+				Frame = gtk.Frame(_value)
+				Frame.add(Entry)
+				self.Values.append(_value)
+				self.Set.append(Entry)
+				if sellines.index(line) < len(sellines) / 2: vbox1.pack_start(Frame)
+				else: vbox2.pack_start(Frame)
+
+		ChooseRomBTN = gtk.Button(_("Choose ROM you want to apply AROMA on:"))
+		vbox.pack_start(ChooseRomBTN, True, False, 0)
+
+		ApplyBtn = gtk.Button(_("Apply Aroma on this ROM"))
+		ApplyBtn.connect("clicked", self.ApplyAroma)
+		vbox.pack_start(ApplyBtn, True, False, 0)	
+		ChooseRomBTN.connect("clicked", lambda w: self.AromaFC.openFile(w, _("Select ROM..."), "*.zip", False))
+		ChooseRomBTN.connect("clicked", lambda w: ApplyBtn.show())
+
+		
+		MainApp.notebook.insert_page(vbox, gtk.Label(_("Aroma installer")))
+		window.show_all()
+		ApplyBtn.hide()
+		MainApp.notebook.set_current_page(MainApp.notebook.get_n_pages() - 1)
+	def ApplyAroma(self, widget):
+		ExZip(self.AromaFC.out, os.path.join(ScriptDir, "Advance", "AROMAROM"))
+		with open(os.path.join(ScriptDir, "Aroma", "META-INF", "com", "google", "android", "aroma-config"), "r") as f:
+			lines = f.read().split("\n")
+		newlines = []
+		for line in lines:
+			if "ini_set" in line and line.split('"')[1] in self.Values:
+				line = line.replace(line.split('"')[3], self.Set[self.Values.index(line.split('"')[1])].get_text())
+			newlines.append(line)
+		newtext = '\n'.join(newlines)
+		if True:
+			newtext = newtext.replace('\n'.join(newlines[138:147]), '') # Splash
+			newtext = newtext.replace('\n'.join(newlines[176:289]), '') # DEMO intro
+			newtext = newtext.replace('\n'.join(newlines[344:368]), '') # ROM Info
+			newtext = newtext.replace('\n'.join(newlines[373:391]), '') # License
+			newtext = newtext.replace('\n'.join(newlines[396:422]), '') # Changelog
+			
+		with open(os.path.join(ScriptDir, "Aroma", "META-INF", "com", "google", "android", "aroma-config"), "w") as f:
+			f.write(newtext)
+			
+		
+'''
+selectbox(
+      "Main Features",
+      "Please select installer theme that you want to use in this installation test:",
+      "@default",
+      "mods.prop",
+
+	"Kernel","",2,
+		"{0} Kernel",        "{1}",1,
+		{2}
+
+	"Boot Animation","",2,
+		"Default bootanimation",     "Default bootanimation",                      1,
+		{3}
+);'''
+
+
 def BinaryPort():
 	class ToFC(FileChooserD):pass
 	class FromFC(FileChooserD):pass
@@ -3415,56 +3505,50 @@ def BackupRestore():
 	window.show_all()
 	notebook.set_current_page(notebook.get_n_pages() - 1)
 
-def AdbFE():
-	class Data():
-		PrevDir = '/sdcard/'
-		MainPrevDir = ScriptDir
-		FromFile = None
-	def Previous(cmd, type='Android'):
+class AdbFE:
+	def Previous(self, widget, type='Android'):
 		if type == 'Android':
-			Update(None, Data.PrevDir, sw, type)
-		elif type == 'PC':
-			Update(None, Data.MainPrevDir, SwPC, type)
-	def Refresh(cmd, sw, type='Android'):
-		if type == 'Android':
-			Update(None, Data.CurrentDir, sw, type)
-		elif type == 'PC':
-			Update(None, Data.MainCurrentDir, sw, type)
-	def Push(cmd, Btn):
-		print("%s -> %s" %(Btn.realname, Data.CurrentDir))
+			self.Update(widget, self.PrevDir, type)
+		else:
+			self.Update(widget, self.MainPrevDir, type)
+	def Refresh(self, widget):
+		self.Update(widget, self.CurrentDir, 'Android')
+		self.Update(widget, self.MainCurrentDir, 'PC')
+	def Push(self, widget, Btn):
+		print("%s -> %s" %(Btn.realname, self.CurrentDir))
 		if os.path.isdir(Btn.realname):
-			ToDir = os.path.join(Data.CurrentDir, os.path.basename(os.path.normpath(Btn.realname)))
+			ToDir = os.path.join(self.CurrentDir, os.path.basename(os.path.normpath(Btn.realname)))
 			SystemLog("%s shell mkdir -p %s" %(adb, ToDir))
-		else: ToDir = Data.CurrentDir
+		else: ToDir = self.CurrentDir
 		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, ToDir))
-		Refresh(None, sw, 'Android')
-	def Pull(cmd, Btn):
-		print("%s -> %s" %(Btn.realname, Data.MainCurrentDir))
-		subprocess.Popen([adb, "pull", Btn.realname, Data.MainCurrentDir])
-		#SystemLog("%s pull '%s' '%s'" %(adb, Btn.realname, Data.MainCurrentDir))
-		Refresh(None, SwPC, 'PC')
-	def Delete(cmd):
-		File = frame.CurrentFile
+		Refresh(None, self.sw, 'Android')
+	def Pull(self, widget, Btn):
+		print("%s -> %s" %(Btn.realname, self.MainCurrentDir))
+		subprocess.Popen([adb, "pull", Btn.realname, self.MainCurrentDir])
+		Refresh(None, self.SwPC, 'PC')
+	def Delete(self, widget):
+		File = self.frame.CurrentFile
 		print(_("Deleting %s" % File))
 		SystemLog("%s shell rm '%s'" %(adb, File))
+		Refresh("cmd", self.sw, "Android")
+		self.frame.hide()
+	def Copy(self, widget):
+		self.FromFile = frame.CurrentFile
+		self.DeleteFile = False
+	def Paste(self, widget):
+		if not self.FromFile == None:
+			SystemLog('%s shell cp "%s" "%s"' %(adb, self.FromFile, self.CurrentDir))
+			if self.DeleteFile == True:
+				SystemLog("%s shell rm %s" %(adb, self.FromFile))
 		Refresh("cmd", sw, "Android")
-	def Copy(cmd):
-		Data.FromFile = frame.CurrentFile
-		Data.DeleteFile = False
-	def Paste(cmd):
-		if not Data.FromFile == None:
-			SystemLog('%s shell cp "%s" "%s"' %(adb, Data.FromFile, Data.CurrentDir))
-			if Data.DeleteFile == True:
-				SystemLog("%s shell rm %s" %(adb, Data.FromFile))
-		Refresh("cmd", sw, "Android")
-	def Cut(cmd):
-		Data.FromFile = frame.CurrentFile
-		Data.DeleteFile = True
-	def SetPerm(cmd):
-		file = frame.CurrentFile
+	def Cut(self, widget):
+		self.FromFile = frame.CurrentFile
+		self.DeleteFile = True
+	def SetPerm(self, widget):
+		file = self.frame.CurrentFile
 		perm = ''
 		curvalue = 0
-		for btn in permissions:
+		for btn in self.permissions:
 			txt = btn.pos
 			row = txt.split(',')[0]
 			col = txt.split(',')[-1]
@@ -3476,23 +3560,45 @@ def AdbFE():
 				perm = perm + str(curvalue)
 				curvalue = 0
 		SystemLog("%s shell chmod %s %s" %(adb, perm, file))
-	def EditFile(cmd, file):
-		frame.set_label(os.path.basename(file))
-		frame.CurrentFile = file
-		frame.show_all()	
-	def Update(cmd, Dir, sw, type='Android'):
+	def EditFile(self, widget, file):
+		self.frame.set_label(os.path.basename(file))
+		self.frame.CurrentFile = file
+		FilePermission = str(GetOutput(adb + r" shell stat -c %a " + file)).replace("\n", '')
+		perm = []
+		for i in [j for j in FilePermission if j in ['9','8','7','6','5','4','3','2','1','0'] ]:perm.append(int(i))
+		if perm:
+			print perm
+			for set in perm:
+				cur = perm.index(set)
+				for btn in [btn for btn in self.permissions if int(btn.pos.split(",")[0]) == cur]:
+					txt = btn.pos
+					row = int(txt.split(',')[0])
+					col = int(txt.split(',')[-1])
+					if set % 2 == 1 and col == 0: btn.set_active(True)
+					elif set >= 4 and col == 2: btn.set_active(True)
+					elif (set >= 4 and (set - 4) > 1) and col == 1: btn.set_active(True)
+		self.frame.show_all()
+			
+		
+	def Update(self, widget, Dir, type='Android'):
 		NewDir = os.path.join(Dir, '')
-		child = sw.get_child()
-		if not child == None: child.destroy()
 		vbox1 = gtk.VBox()
-		sw.add_with_viewport(vbox1)
 		if type == 'Android':
-			Data.PrevDir = os.path.dirname(os.path.normpath(NewDir))
-			Data.CurrentDir = NewDir
-			for x in [["'%s' shell find '%s' -maxdepth 1 -type d | sort -d" %(adb, NewDir), True], ["'%s' shell find '%s' -maxdepth 1 -type f | sort -d" %(adb, NewDir), False]]:
-				cmd = x[0]
+			child = self.sw.get_child()
+			if child: child.destroy()
+			self.sw.add_with_viewport(vbox1)
+			self.PrevDir = os.path.dirname(os.path.normpath(NewDir))
+			self.CurrentDir = NewDir
+			a = GetOutput("%s shell ls" % adb)
+			dirs = str(GetOutput("'%s' shell find '%s' -maxdepth 1 -type d | sort -d" %(adb, NewDir))).split('\n')
+			dirs.sort
+			files = str(GetOutput("'%s' shell find '%s' -maxdepth 1 -type f | sort -d" %(adb, NewDir))).split('\n')
+			files.sort
+			
+			for x in [[dirs, True], [files, False]]:
+				list = x[0]
 				Dir = x[1]
-				for filen in str(GetOutput(cmd)).split('\n'):
+				for filen in list:
 					FileName = str(filen).replace('\r', '')
 					BaseName = os.path.basename(os.path.normpath(FileName))
 					if FileName == NewDir:
@@ -3506,26 +3612,29 @@ def AdbFE():
 					Btn = gtk.Button(BaseName)
 					Btn.realname = FileName
 					if Dir == True:
-						Btn.connect("clicked", Update, FileName, sw, 'Android')
+						Btn.connect("clicked", self.Update, FileName, 'Android')
 					else:
-						Btn.connect("clicked", EditFile, FileName)
-						
+						Btn.connect("clicked", self.EditFile, FileName)			
 					Btn.set_relief(gtk.RELIEF_NONE)
 					# Set PULL BTN
 					PullBtn = gtk.Button()
 					im = gtk.Image()
 					im.set_from_stock(gtk.STOCK_GO_FORWARD, gtk.ICON_SIZE_MENU)
 					PullBtn.set_image(im)
-					PullBtn.connect("clicked", Pull, Btn)
+					PullBtn.connect("clicked", self.Pull, Btn)
 					box.pack_start(PullBtn, False)
 					# 
 					box.pack_start(image, False, False, 4)
 					box.pack_start(Btn, False)
 					vbox1.pack_start(box, False, False, 0)
-			location.set_text(NewDir)
+			self.location.set_text(NewDir)
+			self.sw.show_all()
 		else:
-			Data.MainPrevDir = os.path.dirname(os.path.normpath(NewDir))
-			Data.MainCurrentDir = NewDir
+			child = self.SwPC.get_child()
+			if child: child.destroy()
+			self.SwPC.add_with_viewport(vbox1)
+			self.MainPrevDir = os.path.dirname(os.path.normpath(NewDir))
+			self.MainCurrentDir = NewDir
 			dirlist = []
 			for dir in os.listdir(NewDir):
 				if os.path.isdir(os.path.join(NewDir, dir)): dirlist.append(os.path.join(NewDir, dir))
@@ -3544,14 +3653,14 @@ def AdbFE():
 				image.set_from_file(imf)
 				Btn = gtk.Button(BaseName)
 				Btn.realname = files
-				if os.path.isdir(files): Btn.connect("clicked", Update, files, SwPC, 'PC')
+				if os.path.isdir(files): Btn.connect("clicked", self.Update, files, 'PC')
 				Btn.set_relief(gtk.RELIEF_NONE)
 				#Set PUSH Button
 				PushBtn = gtk.Button()
 				im = gtk.Image()
 				im.set_from_stock(gtk.STOCK_GO_BACK, gtk.ICON_SIZE_MENU)
 				PushBtn.set_image(im)
-				PushBtn.connect("clicked", Push, Btn)
+				PushBtn.connect("clicked", self.Push, Btn)
 				box.pack_start(PushBtn, False)
 				#
 				box.pack_start(image, False, False, 4)
@@ -3561,119 +3670,116 @@ def AdbFE():
 				label = gtk.Label(_("Empty directory..."))
 				vbox1.pack_start(label)
 				
-			
-			LocationPC.set_text(NewDir)
-		sw.show_all()
-		
-	notebook = MainApp.notebook
-	vbox = gtk.VBox()
-	AdbFELabel = NewPage("ADB FE",vbox)
-	AdbFELabel.show_all()
+			self.LocationPC.set_text(NewDir)
+			self.SwPC.show_all()
+	def __init__(self):		
+		notebook = MainApp.notebook
+		vbox = gtk.VBox()
+		AdbFELabel = NewPage("ADB FE",vbox)
+		AdbFELabel.show_all()
 
-	SwPC = gtk.ScrolledWindow()
-	sw = gtk.ScrolledWindow()
+		self.SwPC = gtk.ScrolledWindow()
+		self.sw = gtk.ScrolledWindow()
 
-	# Set Android frame
-	hbox = gtk.HBox()
-	location = gtk.Label('')
-	BackBtn = gtk.Button()
-	BackBtn.connect("clicked", Previous, "Android")
-	BackImage = gtk.Image()
-	BackImage.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
-	BackBtn.set_image(BackImage)
-	RefreshImage = gtk.Image()
-	RefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
-	RefreshBtn = gtk.Button()
-	RefreshBtn.set_image(RefreshImage)
-	RefreshBtn.connect("clicked", Refresh, sw, 'Android')
-	hbox.pack_start(BackBtn, False, False, 0)
-	hbox.pack_start(RefreshBtn, False, False, 0)
-	hbox.pack_start(location, False, False, 4)
-	vbox.pack_start(hbox, False, False, 0)
+		# Set Android frame
+		hbox = gtk.HBox()
+		self.location = gtk.Label('')
+		BackBtn = gtk.Button()
+		BackBtn.connect("clicked", self.Previous, "Android")
+		BackImage = gtk.Image()
+		BackImage.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
+		BackBtn.set_image(BackImage)
+		RefreshImage = gtk.Image()
+		RefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+		RefreshBtn = gtk.Button()
+		RefreshBtn.set_image(RefreshImage)
+		RefreshBtn.connect("clicked", self.Refresh)
+		hbox.pack_start(BackBtn, False, False, 0)
+		hbox.pack_start(RefreshBtn, False, False, 0)
+		hbox.pack_start(self.location, False, False, 4)
+		vbox.pack_start(hbox, False, False, 0)
 	
-	# Set PC frame
-	LocationPC = gtk.Label('')
-	PcBackBtn = gtk.Button()
-	PcBackBtn.connect("clicked", Previous, "PC")
-	image = gtk.Image()
-	image.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
-	PcBackBtn.set_image(image)
-	PcRefreshImage = gtk.Image()
-	PcRefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
-	PcRefreshBtn = gtk.Button()
-	PcRefreshBtn.set_image(PcRefreshImage)
-	PcRefreshBtn.connect("clicked", Refresh, SwPC, 'PC')
-	hbox.pack_end(PcBackBtn, False, False, 0)
-	hbox.pack_end(PcRefreshBtn, False, False, 0)
-	hbox.pack_end(LocationPC, False, False, 4)
+		# Set PC frame
+		self.LocationPC = gtk.Label('')
+		PcBackBtn = gtk.Button()
+		PcBackBtn.connect("clicked", self.Previous, "PC")
+		image = gtk.Image()
+		image.set_from_file(os.path.join(ScriptDir, "images", "back.png"))
+		PcBackBtn.set_image(image)
+		PcRefreshImage = gtk.Image()
+		PcRefreshImage.set_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU)
+		PcRefreshBtn = gtk.Button()
+		PcRefreshBtn.set_image(PcRefreshImage)
+		PcRefreshBtn.connect("clicked", self.Refresh)
+		hbox.pack_end(PcBackBtn, False, False, 0)
+		hbox.pack_end(PcRefreshBtn, False, False, 0)
+		hbox.pack_end(self.LocationPC, False, False, 4)
 
 
-	HboxFM = gtk.HBox(True)
-	VboxAFM = gtk.VBox()
-	vbox1 = gtk.VBox()
-	sw.add_with_viewport(vbox1)
-	VboxAFM.pack_start(sw)
-	HboxFM.pack_start(VboxAFM)
+		HboxFM = gtk.HBox(True)
+		VboxAFM = gtk.VBox()
+		vbox1 = gtk.VBox()
+		self.sw.add_with_viewport(vbox1)
+		VboxAFM.pack_start(self.sw)
+		HboxFM.pack_start(VboxAFM)
 
-	HboxFM.pack_end(SwPC)
-	Update(None, ScriptDir, SwPC, 'PC')
+		HboxFM.pack_end(self.SwPC)
+		self.Update(None, ScriptDir, 'PC')
 
-	Update(None, '/sdcard', sw, 'Android')
-	vbox.pack_start(HboxFM)
-
-
-	# SET THE EDIT PART
-	vbox2 = gtk.VBox()
-	hboxx = gtk.HBox(True)
-	hboxx.pack_start(vbox2)
-	frame = gtk.Frame("Edit")
-	frame.add(hboxx)
-	permissions = []
-	for x in range(0,4):
-		hbox2 = gtk.HBox(True)
-		if not int(x) == 0:
-			x = x - 1
-			label = gtk.Label(["owner", "group", "others"][x])
-			hbox2.pack_start(label)
-			for y in range(0,3):
-				CheckButton = gtk.CheckButton()
-				CheckButton.pos = "%s,%s" %(x, y)
-				permissions.append(CheckButton)
-				hbox2.pack_start(CheckButton, False)
-		else:
-			for y in range(0,4):
-				label = gtk.Label(["", "read", "write", "execute"][y])
-				hbox2.pack_start(label, False)
+		self.Update(None, '/sdcard', 'Android')
+		vbox.pack_start(HboxFM)
 
 
+		# SET THE EDIT PART
+		vbox2 = gtk.VBox()
+		hboxx = gtk.HBox(True)
+		hboxx.pack_start(vbox2)
+		self.frame = gtk.Frame("Edit")
+		self.frame.add(hboxx)
+		self.permissions = []
+		for x in range(0,4):
+			hbox2 = gtk.HBox(True)
+			if not int(x) == 0:
+				x = x - 1
+				label = gtk.Label(["owner", "group", "others"][x])
+				hbox2.pack_start(label)
+				for y in range(0,3):
+					CheckButton = gtk.CheckButton()
+					CheckButton.pos = "%s,%s" %(x, y)
+					self.permissions.append(CheckButton)
+					hbox2.pack_start(CheckButton, False)
+			else:
+				for y in range(0,4):
+					label = gtk.Label(["", "read", "write", "execute"][y])
+					hbox2.pack_start(label, False)
 			
-		vbox2.pack_start(hbox2, False, False, 0)
-	PermBtn = gtk.Button(_("Set permissions"))
-	PermBtn.connect("clicked", SetPerm)
-	vbox2.pack_start(PermBtn, False, False, 0)
+			vbox2.pack_start(hbox2, False, False, 0)
+		PermBtn = gtk.Button(_("Set permissions"))
+		PermBtn.connect("clicked", self.SetPerm)
+		vbox2.pack_start(PermBtn, False, False, 0)
 
-	sep = gtk.HSeparator()
-	vbox2.pack_start(sep, False, False, 2)
+		sep = gtk.HSeparator()
+		vbox2.pack_start(sep, False, False, 2)
 
-	vbox3 = gtk.VBox()
-	ToolHBox = gtk.HBox(True)
-	for x in [[gtk.STOCK_DELETE, Delete], [gtk.STOCK_COPY, Copy], [gtk.STOCK_CUT, Cut], [gtk.STOCK_PASTE, Paste]]:
-		im = gtk.Image()
-		im.set_from_stock(x[0], gtk.ICON_SIZE_MENU)
-		Btn = gtk.Button()
-		Btn.connect("clicked", x[1])
-		Btn.set_image(im)
-		ToolHBox.pack_start(Btn)
-	vbox2.pack_start(ToolHBox, False, False, 0)
+		vbox3 = gtk.VBox()
+		ToolHBox = gtk.HBox(True)
+		for x in [[gtk.STOCK_DELETE, self.Delete], [gtk.STOCK_COPY, self.Copy], [gtk.STOCK_CUT, self.Cut], [gtk.STOCK_PASTE, self.Paste]]:
+			im = gtk.Image()
+			im.set_from_stock(x[0], gtk.ICON_SIZE_MENU)
+			Btn = gtk.Button()
+			Btn.connect("clicked", x[1])
+			Btn.set_image(im)
+			ToolHBox.pack_start(Btn)
+		vbox2.pack_start(ToolHBox, False, False, 0)
 
-	VboxAFM.pack_end(frame, False)
-	frame.show_all()
-	vbox.show_all()
+		VboxAFM.pack_end(self.frame, False)
+		self.frame.show_all()
+		vbox.show_all()
 
-	notebook.insert_page(vbox, AdbFELabel)
-	notebook.set_current_page(notebook.get_n_pages() - 1)
-	window.show_all()
-	frame.hide()
+		notebook.insert_page(vbox, AdbFELabel)
+		notebook.set_current_page(notebook.get_n_pages() - 1)
+		window.show_all()
+		self.frame.hide()
 
 class OmegaSB(Theme, CopyFrom):
 	class OmegaThemeFC(FileChooserD): pass
@@ -3890,26 +3996,28 @@ class OmegaSB(Theme, CopyFrom):
 			urllib.urlretrieve(ToolAttr.DropboxLink + self.Name + ".zip", Zip)
 		ExZip(Zip, os.path.dirname(Zip), Overwrite=False)
 		stringFile = find_files(os.path.dirname(Zip), "strings.xml")[0]
-		i = 0
 		hbox = gtk.HBox()
 		vbox.pack_start(hbox)
 		vbox1 = gtk.VBox()
 		vbox2 = gtk.VBox()
 		hbox.pack_start(vbox1)
 		hbox.pack_start(vbox2)
+		i = 0
 		with open(stringFile, "r") as strings:
 			for line in strings.read().split("\n"):
 				if i > 0 and '"' in line:
 					value = strip_esc(line).split('"')[1]
 					sett = str(strip_esc(line).split(">", 1)[1]).split("<")[0]
-					try:
-						if int(sett) in range(0,23):self.intList.append([value, sett])
-					except:
-						self.strList.append([value, sett])
+					if sett != "true" and sett != "false":
+						try:
+							if int(sett) in range(0,23):self.intList.append([value, sett])
+						except:
+							self.strList.append([value, sett])
 				i += 1
 		for x in self.strList:
 			frame = gtk.Frame(x[0])
 			entry = gtk.Entry()
+			entry.set_text(x[1])
 			frame.add(entry)
 			if self.strList.index(x) < len(self.strList) / 2 : vbox1.pack_start(frame)
 			else: vbox2.pack_start(frame)
