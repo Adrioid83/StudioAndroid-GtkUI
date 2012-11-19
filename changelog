@@ -336,6 +336,11 @@ Updates:
 	[ADVANCED]
 	Quick start on Aroma installer menu  ;)
 
+	[ANDROID]
+	AdbFe update
+	AdbFe now recognizes permissions (Part #1)
+	
+
 	[APK]
 	Option to install the framework-res.apk to the system when (de)compiling framework APKs
 

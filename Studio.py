@@ -87,12 +87,13 @@ Trees = ["Omega", ["Working", "Templates", "Download", "Build"], "ADB", "Advance
 # TO FIX OTS <-> SA DEPENDENCIES
 class Attr:
 	def ParseSettings(self):
-		with open(self.SettingsFile, "r") as f:
-			self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = (0, [0,1][Pil==True], 1,1,)
-			try:
+		try:
+			with open(self.SettingsFile, "r") as f:
 				self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = [int(line.replace("\n", "")) for line in f.readlines()][:4]
-			except:pass
-			return self.OmegaVersion, self.PIL, self.Debug, self.FirstRun
+		except:
+			self.OmegaVersion, self.PIL, self.Debug, self.FirstRun = (0, [0,1][Pil==True], 1,1,)
+			os.remove(self.SettingsFile)
+		return self.OmegaVersion, self.PIL, self.Debug, self.FirstRun
 
 	def SetSettings(self):
 		with open(self.SettingsFile, "w") as f:
@@ -188,8 +189,8 @@ class Logger(object):
 			log.write(message)  
 			log.flush()
 
-class Stdout(sys.stdout):pass
-class Stderr(sys.stderr):pass
+Stdout = sys.stdout
+Stderr = sys.stderr
 
 sys.stdout = Logger()
 sys.stderr = Logger()
@@ -849,8 +850,8 @@ def Clean():
 		shutil.rmtree(tree, True)
 	shutil.rmtree(os.path.join(ConfDir), True)
 	os.remove(os.path.join(ScriptDir, "log"))
-	sys.stdout = Stdout()
-	sys.stderr = Stderr()
+	sys.stdout = Stdout
+	sys.stderr = Stderr
 	shutil.rmtree(UtilDir)
 	try:
 		os.remove(os.path.join(ScriptDir, 'Source', 'syncswitches'))
@@ -3521,16 +3522,16 @@ class AdbFE:
 			SystemLog("%s shell mkdir -p %s" %(adb, ToDir))
 		else: ToDir = self.CurrentDir
 		SystemLog("%s push '%s' '%s'" %(adb, Btn.realname, ToDir))
-		Refresh(None, self.sw, 'Android')
+		self.Refresh(widget)
 	def Pull(self, widget, Btn):
 		print("%s -> %s" %(Btn.realname, self.MainCurrentDir))
 		subprocess.Popen([adb, "pull", Btn.realname, self.MainCurrentDir])
-		Refresh(None, self.SwPC, 'PC')
+		self.Refresh(widget)
 	def Delete(self, widget):
 		File = self.frame.CurrentFile
 		print(_("Deleting %s" % File))
 		SystemLog("%s shell rm '%s'" %(adb, File))
-		Refresh("cmd", self.sw, "Android")
+		self.Refresh(widget)
 		self.frame.hide()
 	def Copy(self, widget):
 		self.FromFile = frame.CurrentFile
@@ -3540,7 +3541,7 @@ class AdbFE:
 			SystemLog('%s shell cp "%s" "%s"' %(adb, self.FromFile, self.CurrentDir))
 			if self.DeleteFile == True:
 				SystemLog("%s shell rm %s" %(adb, self.FromFile))
-		Refresh("cmd", sw, "Android")
+		self.Refresh(widget)
 	def Cut(self, widget):
 		self.FromFile = frame.CurrentFile
 		self.DeleteFile = True
