@@ -611,7 +611,7 @@ hbox = gtk.HBox(False, 5)
 Weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 Months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 Weekday = Weekdays[time.localtime()[6]]
-Month = Months[time.localtime()[1]]
+Month = Months[time.localtime()[1] - 1]
 
 def date():
 	date = "%s-%s-%s--%s.%s.%s" %(time.localtime()[0], time.localtime()[1], time.localtime()[2], time.localtime()[3], time.localtime()[4], time.localtime()[5])
