@@ -347,7 +347,12 @@ Updates:
 	[OMEGA]
 	Fixed a few bugs
 	Updated to newest template
-	
 
-Feature requests are always welcome :)
-Also, if you want to contribute, don't hestitate to contact me!
+##v0.83.37##
+	FROM NOW ON, 
+	UPDATES WILL BE ONLY TO FIX BUGS AND MAKE THIS SOLID!
+
+	[MAIN]
+	Fixed downloading with urllib (?)
+	Fixed wrong date, and December ERROR
+	Removed ads

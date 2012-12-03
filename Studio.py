@@ -195,6 +195,11 @@ Stderr = sys.stderr
 sys.stdout = Logger()
 sys.stderr = Logger()
 
+def urlretrieve(link, file):
+	e = urllib2.urlopen(link)
+	with open(file, "wb") as downloadfile:
+		downloadfile.write(e.read())
+
 # External Output redirection
 
 def SystemLog(cmd, Debug=ToolAttr.Debug):
@@ -435,7 +440,7 @@ try:
 	for x in ["", "-" + OS]:
 		if not os.path.exists(os.path.join(ScriptDir, "Utils%s.zip" %(x))):
 			print(_("Downloading Utils%s.zip" %(x)))
-			urllib.urlretrieve(ToolAttr.DropboxLink + "Utils%s.zip" %(x), os.path.join(ScriptDir, "Utils%s.zip" %(x)))
+			urlretrieve(ToolAttr.DropboxLink + "Utils%s.zip" %(x), os.path.join(ScriptDir, "Utils%s.zip" %(x)))
 		ExZip(os.path.join(ScriptDir, "Utils%s.zip" %(x)), ScriptDir, Overwrite=False)
 	# FIX PERMISSIONS
 	if not OS == "Win":
@@ -952,7 +957,7 @@ class Utils:
 
 		if OS == 'Win':
 			if self.PyWin32Btn.get_active():
-				urllib.urlretrieve("http://sourceforge.net/projects/pywin32/files/pywin32/Build%20217/pywin32-217.win32-py2.7.exe/download", os.path.join(ConfDir, "PyWin32.exe"))
+				urlretrieve("http://sourceforge.net/projects/pywin32/files/pywin32/Build%20217/pywin32-217.win32-py2.7.exe/download", os.path.join(ConfDir, "PyWin32.exe"))
 				os.system("start %s" % os.path.join(ConfDir, "PyWin32.exe"))
 			if self.ImageBtn.get_active():
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/", os.path.join(ConfDir, "index.html"))
@@ -964,10 +969,10 @@ class Utils:
 				urllib.urlretrieve("http://www.imagemagick.org/download/binaries/%s" % version, os.path.join(ConfDir, "IM.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "IM.exe"))
 			if self.PILBtn.get_active():
-				urllib.urlretrieve("https://www.dropbox.com/s/x7okd0u4e8uk5po/PIL-fork-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
+				urlretrieve("https://www.dropbox.com/s/x7okd0u4e8uk5po/PIL-fork-1.1.7.win32-py2.7.exe", os.path.join(ConfDir, "PIL.exe"))
 				SystemLog("start %s" % os.path.join(ConfDir, "PIL.exe"))
 			if self.WebkitBtn.get_active():
-				urllib.urlretrieve("http://builds.nightly.webkit.org/files/trunk/win/WebKit-SVN-r131444.zip", os.path.join(ConfDir, "Webkit.exe"))
+				urlretrieve("http://builds.nightly.webkit.org/files/trunk/win/WebKit-SVN-r131444.zip", os.path.join(ConfDir, "Webkit.exe"))
 				os.system("open %s" % os.path.join(ConfDir, "Webkit.exe"))
 			if self.JavaBtn.get_active():
 				Web.open("http://www.oracle.com/technetwork/java/javase/downloads/index.html")
@@ -4808,7 +4813,7 @@ class About:
 			web = ToolAttr.webkit.WebView()
 			settings = web.get_settings()
 			settings.set_property('enable-file-access-from-file-uris', 1)
-			web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
+			#web.open("file://%s" %(os.path.join(ScriptDir, "Utils", "Banner.html")))
 			web.connect("hovering-over-link", self.linkFocus)
 			web.connect("create-web-view", self.openNew)
 			web.connect("populate-popup", self.openNew)
